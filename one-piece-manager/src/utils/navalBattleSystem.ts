@@ -60,10 +60,12 @@ export class NavalBattleSystem {
         player: playerMembers.length,
         enemy: enemyMembers.length
       })
+
+      const devilFruits = await db.devilFruits.toArray()
       
       // Calcular poder de combate
-      const playerPower = await this.calculateCrewPower(playerMembers)
-      const enemyPower = await this.calculateCrewPower(enemyMembers)
+      const playerPower = GameLogic.calculateCrewPower(playerMembers, devilFruits)
+      const enemyPower = GameLogic.calculateCrewPower(enemyMembers, devilFruits)
       
       console.log('💪 NavalBattleSystem - Poder de combate:', {
         player: playerPower,
@@ -99,12 +101,6 @@ export class NavalBattleSystem {
       console.error('❌ NavalBattleSystem - Erro na batalha:', error)
       throw error
     }
-  }
-  
-  // ✅ CALCULAR PODER DO CREW
-  static async calculateCrewPower(members: Character[]): Promise<number> {
-    const devilFruits = await db.devilFruits.toArray()
-    return await GameLogic.calculateCrewPower(members, devilFruits)
   }
   
   // ✅ BONUS DE PODER POR TIPO

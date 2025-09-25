@@ -114,7 +114,7 @@
                   rounded
                 >
                   <template v-slot:default="{ value }">
-                    <small :class="Math.ceil(value)> 45 ? 'text-white' : 'text-black'">{{ Math.ceil(value) }}%</small>
+                    <small :class="Math.ceil(value)> 52 ? 'text-white' : 'text-black'">{{ Math.ceil(value) }}%</small>
                   </template>
                 </v-progress-linear>
                 

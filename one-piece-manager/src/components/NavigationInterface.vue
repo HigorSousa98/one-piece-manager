@@ -160,7 +160,7 @@
               class="mb-2"
             >
               <template v-slot:default>
-                <strong :class="navigationPercentage > 45 ? 'text-white' : 'text-black'">{{ navigationPercentage }}%</strong>
+                <strong :class="navigationPercentage > 52 ? 'text-white' : 'text-black'">{{ navigationPercentage }}%</strong>
               </template>
             </v-progress-linear>
             

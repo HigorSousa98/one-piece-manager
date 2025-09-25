@@ -222,7 +222,7 @@
                           rounded
                         >
                           <template v-slot:default>
-                            <strong :class="winChance > 45 ? 'text-white' : 'text-black'">{{ winChance }}% chance de vitória</strong>
+                            <strong :class="winChance > 52 ? 'text-white' : 'text-black'">{{ winChance }}% chance de vitória</strong>
                           </template>
                         </v-progress-linear>
                       </div>
@@ -447,7 +447,7 @@
                     size="large"
                     class="mr-4"
                     @click="showRecruitmentModal = true"
-                    :disabled="recruitmentAttempting"
+                    :disabled="recruitmentAttempting || recruitmentTryed"
                     variant="elevated"
                   >
                     <v-icon left>
@@ -460,7 +460,7 @@
                     color="grey"
                     size="large"
                     @click="skipRecruitment"
-                    :disabled="recruitmentAttempting"
+                    :disabled="recruitmentAttempting || recruitmentTryed"
                     variant="elevated"
                   >
                     <v-icon left>mdi-close</v-icon>
@@ -682,6 +682,7 @@ const recruitmentData = ref<RecruitmentAttempt | null>(null)
 const recruitmentInfo = ref<any>(null)
 const showRecruitmentModal = ref(false)
 const recruitmentAttempting = ref(false)
+const recruitmentTryed = ref(false)
 const recruitmentResult = ref<any>(null)
 
 // 📊 COMPUTED
@@ -915,6 +916,7 @@ const attemptRecruitment = async () => {
   if (!playerCharacter.value || !lastBattleResult.value || !recruitmentData.value) return
   
   recruitmentAttempting.value = true
+  recruitmentTryed.value = true
   showRecruitmentModal.value = false
   
   try {
@@ -953,6 +955,7 @@ const retreatFromEncounter = () => {
   lastBattleResult.value = null
   recruitmentData.value = null
   recruitmentResult.value = null
+  recruitmentTryed.value = false
 }
 
 const resetAdventure = () => {
@@ -961,6 +964,7 @@ const resetAdventure = () => {
   lastBattleResult.value = null
   recruitmentData.value = null
   recruitmentResult.value = null
+  recruitmentTryed.value = false
 }
 
 const viewCrew = () => {

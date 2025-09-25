@@ -70,7 +70,8 @@ export class NavigationSystem {
   // ✅ CALCULAR TEMPO DE NAVEGAÇÃO
   static calculateNavigationTime(shipLevel: number): number {
     // Fórmula: 30 - (level-1)*5, mínimo 5 minutos
-    const timeInMinutes = Math.max(5, 30 - (shipLevel - 1) * 5)
+    //const timeInMinutes = Math.max(5, 25 - (shipLevel - 1) * 5)
+    const timeInMinutes = 1
     return timeInMinutes
   }
   
@@ -615,6 +616,20 @@ static getTypeDescription(type: string): string {
       })
       
       console.log('✅ NavigationSystem - Navegação completada com sucesso!')
+
+      // ✅ DISPARAR MOVIMENTAÇÃO MUNDIAL
+      setTimeout(async () => {
+        console.log('🌍 Iniciando movimentação mundial após navegação do player...');
+        const worldMovement = await AdventureSystem.onPlayerIslandChange();
+        
+        if (worldMovement.success) {
+          // Disparar evento para notificar a interface
+          const worldEvent = new CustomEvent('worldMovementCompleted', {
+            detail: worldMovement
+          });
+          window.dispatchEvent(worldEvent);
+        }
+      }, 1000); // Aguardar 1 segundo para não conflitar
       
       return {
         success: true,

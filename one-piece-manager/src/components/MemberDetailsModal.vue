@@ -178,6 +178,18 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <v-expansion-panels class="mb-4">
+                <v-expansion-panel>
+                  <v-expansion-panel-title>
+                    <v-icon left>mdi-account-details</v-icon>
+                    Dados Completos do Personagem
+                  </v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <pre class="debug-json">{{ JSON.stringify(member, null, 2) }}</pre>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
       
       <!-- EXPERIÊNCIA (apenas para capitão) -->
       <div class="experience-section mb-4">
@@ -195,7 +207,7 @@
               class="mb-2"
             >
               <template v-slot:default>
-                <strong :class="Math.round(experiencePercentage) > 45 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
+                <strong :class="Math.round(experiencePercentage) > 52 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
               </template>
             </v-progress-linear>
             <div class="text-caption text-center">

@@ -216,7 +216,7 @@
                   class="mb-2"
                 >
                   <template v-slot:default>
-                    <strong :class="Math.round(experiencePercentage) > 45 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
+                    <strong :class="Math.round(experiencePercentage) > 52 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
                   </template>
                 </v-progress-linear>
                 <div class="text-caption text-center">

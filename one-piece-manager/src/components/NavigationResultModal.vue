@@ -212,6 +212,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import router from '@/router'
 import type { Island, Crew } from '@/utils/database'
 
 // 📊 PROPS
@@ -253,7 +254,7 @@ const handleAvoidBattle = () => {
 
 const handleExploreIsland = () => {
   console.log('🗺️ Redirecionando para exploração da ilha...')
-  // Aqui você pode implementar redirecionamento para /islands
+  router.push('/adventure')
   handleClose()
 }
 

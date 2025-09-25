@@ -167,7 +167,7 @@ export class AdventureSystem {
       const prioritized = this.prioritizeOpponents(player, levelCompatible);
       
       // Escolher aleatoriamente entre os 3 melhores
-      const topOpponents = prioritized.slice(0, Math.min(3, prioritized.length));
+      const topOpponents = prioritized.slice(0, Math.min(12, prioritized.length));
       return topOpponents[Math.floor(Math.random() * topOpponents.length)];
       
     } catch (error) {
@@ -310,7 +310,7 @@ export class AdventureSystem {
   
   // 🛠️ FUNÇÕES AUXILIARES
   private static calculateLevelRange(level: number): { min: number; max: number } {
-    const variance = Math.max(3, Math.floor(level * 0.2)); // 20% de variação, mínimo 3
+    const variance = Math.max(5, Math.floor(level * 0.2)); // 20% de variação, mínimo 3
     
     return {
       min: Math.max(1, level - variance),
@@ -327,13 +327,13 @@ export class AdventureSystem {
       if ((player.type === 'Pirate' && a.type === 'Marine') ||
           (player.type === 'Marine' && a.type === 'Pirate') ||
           (player.type === 'BountyHunter' && a.type === 'Pirate')) {
-        scoreA += 5;
+        scoreA += 1;
       }
       
       if ((player.type === 'Pirate' && b.type === 'Marine') ||
           (player.type === 'Marine' && b.type === 'Pirate') ||
           (player.type === 'BountyHunter' && b.type === 'Pirate')) {
-        scoreB += 5;
+        scoreB += 1;
       }
       
       // Priorizar levels próximos
