@@ -1,0 +1,9 @@
+[build]
+  base = "one-piece-manager"
+  publish = "one-piece-manager/dist"
+  command = "npm run build --prefix ./one-piece-manager"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
