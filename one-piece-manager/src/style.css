@@ -1,0 +1,23 @@
+/* src/style.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos customizados para o tema One Piece */
+@layer components {
+  .card-pirate {
+    @apply bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-300 rounded-lg shadow-lg;
+  }
+  
+  .btn-primary {
+    @apply bg-pirate-gold text-gray-900 font-bold py-2 px-4 rounded hover:bg-yellow-400 transition-colors;
+  }
+  
+  .stat-bar {
+    @apply bg-gray-200 rounded-full h-2 overflow-hidden;
+  }
+  
+  .stat-fill {
+    @apply h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300;
+  }
+}
