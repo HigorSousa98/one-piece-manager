@@ -527,9 +527,17 @@ export class TerritoryLiberationSystem {
         )
         .toArray()
 
+        const hasActiveTask = await db.tasks
+        .where('characterId')
+        .equals(characterId)
+        .and(task => 
+          !task.isCompleted
+        )
+        .toArray()
+
       const completedSteps = completedTasks.length
       const currentStep = completedSteps + 1
-      const canStart = !isLiberated && currentStep <= island.difficulty
+      const canStart = !isLiberated && currentStep <= island.difficulty && !hasActiveTask
 
       return {
         currentStep,

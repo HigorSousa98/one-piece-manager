@@ -565,18 +565,18 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   // 7. 🏴‍☠️ BONUS POR POSIÇÃO E TIPO
   let positionMultiplier = 1.0;
   
-  switch (character.position) {
+  /*switch (character.position) {
     case 'Captain':
       positionMultiplier = 1.3; // Líderes são mais fortes
       break;
     case 'First Mate':
       positionMultiplier = 1.2;
       break;
-  }
+  }*/
   
   // Bonus por tipo de personagem
   let typeMultiplier = 1.0;
-  switch (character.type) {
+  /*switch (character.type) {
     case 'Government':
       typeMultiplier = 1.15; // Governo tem recursos superiores
       break;
@@ -586,7 +586,7 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
     case 'Pirate':
       typeMultiplier = 1.05; // Piratas têm experiência de combate
       break;
-  }
+  }*/
   
   
   // 8. 🎲 FATOR IMPREVISIBILIDADE (baseado em kindness)
@@ -613,7 +613,7 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   totalPower *= unpredictabilityFactor;
   
   // 10. 🏆 SISTEMA DE BOUNTY INFLUENCE (personagens famosos são mais perigosos)
-  const bountyInfluence = Math.log10(character.bounty + 1) * 5; // Influência logarítmica do bounty
+  const bountyInfluence = Math.pow(2, Math.log10(character.bounty + 1)) * (1 + Math.random()) * 5;; // Influência logarítmica do bounty
   totalPower += bountyInfluence;
   
   // Garantir que o poder mínimo seja 1
