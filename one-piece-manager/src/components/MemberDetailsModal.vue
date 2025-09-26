@@ -35,10 +35,11 @@
                 <strong>{{ style }}</strong>
               </v-chip>
             </div>
-            <v-chip color="purple-darken-2" variant="elevated">
-              <v-icon left>mdi-treasure-chest</v-icon>
-              <strong>{{ formatBounty(member.bounty) }}</strong>
-            </v-chip>
+            <CharacterBountyDisplay 
+              :character="member" 
+              size="small" 
+              variant="elevated" 
+            />
           </div>
         </div>
       </div>
@@ -207,7 +208,7 @@
               class="mb-2"
             >
               <template v-slot:default>
-                <strong :class="Math.round(experiencePercentage) > 52 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
+                <strong :class="Math.round(experiencePercentage) >= 52 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
               </template>
             </v-progress-linear>
             <div class="text-caption text-center">
@@ -256,6 +257,7 @@ import { ref, computed } from 'vue'
 import { GameLogic } from '@/utils/gameLogic'
 import RemoveMemberConfirmationModal from '@/components/RemoveMemberConfirmationModal.vue'
 import type { Character, DevilFruit } from '@/utils/database'
+import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 
 interface Props {
   member: Character

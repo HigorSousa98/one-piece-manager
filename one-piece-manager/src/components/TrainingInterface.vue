@@ -60,7 +60,7 @@
               class="mb-2"
             >
               <template v-slot:default>
-                <strong :class="trainingPercentage > 52 ? 'text-white' : 'text-black'">{{ trainingPercentage }}%</strong>
+                <strong :class="trainingPercentage >= 52 ? 'text-white' : 'text-black'">{{ trainingPercentage }}%</strong>
               </template>
             </v-progress-linear>
             

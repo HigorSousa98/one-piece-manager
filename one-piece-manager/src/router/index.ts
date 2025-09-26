@@ -43,6 +43,16 @@ const router = createRouter({
       path: '/navigation',
       name: 'Navigation',
       component: () => import('@/views/Navigation.vue')
+    },
+    {
+      path: '/character-creation',
+      name: 'Character Creation',
+      component: () => import('@/views/CharacterCreation.vue')
+    },
+    {
+      path: '/territory-liberation',
+      name: 'territory-liberation',
+      component: () => import('@/views/TerritoryLiberation.vue')
     }
   ]
 })

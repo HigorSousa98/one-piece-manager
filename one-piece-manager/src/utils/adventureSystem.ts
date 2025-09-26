@@ -327,14 +327,14 @@ export class AdventureSystem {
       if ((player.type === 'Pirate' && a.type === 'Marine') ||
           (player.type === 'Marine' && a.type === 'Pirate') ||
           (player.type === 'BountyHunter' && a.type === 'Pirate')) {
-        scoreA += 1;
+        scoreA += 5;
       }
       
       if ((player.type === 'Pirate' && b.type === 'Marine') ||
           (player.type === 'Marine' && b.type === 'Pirate') ||
           (player.type === 'BountyHunter' && b.type === 'Pirate')) {
-        scoreB += 1;
-      }
+        scoreB += 5;
+      } 
       
       // Priorizar levels próximos
       const levelDiffA = Math.abs(player.level - a.level);
@@ -935,6 +935,8 @@ export class AdventureSystem {
         return { recruited, attempts };
       }
 
+      eligibleMembers.sort((a, b) => a.loyalty - b.loyalty)
+
       // Tentar recrutar cada membro elegível
       for (const member of eligibleMembers) {
         if (capacity.currentMembers + recruited.length >= capacity.maxCapacity) {
@@ -944,8 +946,8 @@ export class AdventureSystem {
 
         attempts++;
 
-        // 20% de chance de recrutamento
-        const recruitmentChance = 0.2;
+        // 20-40% de chance de recrutamento  depender da loyalty do membro
+        const recruitmentChance = 0.2 + (1 - member.loyalty / 100) * 0.1;
         const roll = Math.random();
 
         if (roll <= recruitmentChance) {
@@ -1165,11 +1167,13 @@ export class AdventureSystem {
         .above(0)
         .toArray();
 
-      // Filtrar crews do player
+      // Filtrar crews do player e crews donos de território
       const playerCrews = await this.getPlayerCrews();
       const playerCrewIds = playerCrews.map(crew => crew.id);
+      const territories = await db.territories.toArray()
+      const territoriesCrewIds = territories.map(territory => territory.crewId);
       
-      const nonPlayerCrews = allCrews.filter(crew => !playerCrewIds.includes(crew.id));
+      const nonPlayerCrews = allCrews.filter(crew => !playerCrewIds.includes(crew.id) && !territoriesCrewIds.includes(crew.id));
       
       if (nonPlayerCrews.length === 0) {
         console.log('⚠️ Nenhum crew não-player encontrado');
@@ -1220,7 +1224,7 @@ export class AdventureSystem {
     }
   }
 
-  // ✅ FASE 2: MOVER CREWS DOCKED (20% DE CHANCE DE MOVIMENTO)
+  // ✅ FASE 2: MOVER CREWS DOCKED (40% DE CHANCE DE MOVIMENTO)
   static async moveDockedCrews(): Promise<{
     moved: number;
     movementsByDifficulty: {
@@ -1272,8 +1276,8 @@ export class AdventureSystem {
       for (const crew of dockedCrews) {
         const moveRoll = Math.random();
         
-        // 20% de chance de se mover
-        if (moveRoll <= 0.2) {
+        // 40% de chance de se mover
+        if (moveRoll <= 0.4) {
           const currentIsland = islandMap.get(crew.currentIsland);
           
           if (!currentIsland) {

@@ -61,6 +61,12 @@ export interface Crew {
   type: 'Pirate' | 'Marine' | 'BountyHunter'
 }
 
+export interface Territory {
+  id?: number
+  crewId: number
+  islandId: number
+}
+
 export interface Ship {
   id?: number
   name: string
@@ -130,6 +136,9 @@ export interface Battle {
 export interface GameState {
   id?: number
   key: string
+  playerCharacterCreated?: boolean
+  worldGenerated?: boolean
+  lastWorldUpdate?: Date
   value: any
   updatedAt: Date
 }
@@ -145,8 +154,8 @@ export interface Island {
 export interface Task {
   id?: number;
   characterId: number;
-  helpType: '' | 'help_civilian' | 'rescue_mission' | 'delivery' | 'construction' | 'medical_aid';
-  type: 'exploration'  | 'ship_upgrade' | 'ship_repair' | 'training' | 'navigation';
+  helpType?: '' | 'help_civilian' | 'rescue_mission' | 'delivery' | 'construction' | 'medical_aid' | 'liberation';
+  type: 'exploration'  | 'ship_upgrade' | 'ship_repair' | 'training' | 'navigation' | 'island_liberation';
   description: string;
   startTime: Date;
   endTime: Date;
@@ -154,13 +163,17 @@ export interface Task {
   kindnessReward?: number;
   experienceReward?: number;
   bountyReward?: number;
-  targetId?: number; // ID do civil ajudado (se aplicável)
+  targetId?: number; // ID do civil ajudado (se aplicável) ou  Id do ship ou id da island
   difficulty: 'easy' | 'medium' | 'hard';
   completedAt?: number;
   createdAt: Date;
   isCompleted: boolean;
   location: string;
-  crewId?: number
+  crewId?: number;
+  step?: number // Para island_liberation
+  stepCompleted?: boolean // Para island_liberation
+  targetIslandId?: number // Para island_liberation (redundante com targetId mas mais claro)
+  targetCrewId?: number // Para island_liberation
 }
 
 class OnePieceGameDB extends Dexie {
@@ -173,6 +186,7 @@ class OnePieceGameDB extends Dexie {
   admirals!: Table<Admiral>
   cypherPols!: Table<CypherPol>
   crews!: Table<Crew>
+  territories!: Table<Territory>
   ships!: Table<Ship>
   gorouseis!: Table<Gorousei>
   battles!: Table<Battle>
@@ -194,6 +208,7 @@ class OnePieceGameDB extends Dexie {
       cypherPols: '++id, captainId, currentIsland',
       gorouseis: '++id, govId, currentIsland',
       crews: '++id, name, captainId, reputation, currentIsland, docked',
+      territories: '++id, crewId, islandId',
       ships: '++id, name, crewId',
       battles: '++id, timestamp, winner, challenger, opponent, challengerCrewId, opponentCrewId',
       gameState: '++id, key',

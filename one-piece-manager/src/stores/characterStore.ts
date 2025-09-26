@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia'
 import { db, Character, Crew, Ship, DevilFruit, StyleCombat } from '@/utils/database'
 import { GenerationConfig } from '@/utils/generationConfig'
+import { WorldResetSystem } from '@/utils/worldResetSystem'
 
 export const useCharacterStore = defineStore('character', {
   state: () => ({
@@ -115,6 +116,6 @@ export const useCharacterStore = defineStore('character', {
       } catch (error) {
         console.error('❌ CharacterStore - Erro ao carregar player crew:', error)
       }
-    }
+    },
   }
 })

@@ -123,9 +123,11 @@
                   </div>
                   <div class="text-body-2">
                     <strong>Recompensa:</strong> 
-                    <v-chip color="purple-darken-2" size="small" class="ml-2" variant="elevated">
-                      <strong>{{ formatBounty(playerCharacter?.bounty || 0) }}</strong>
-                    </v-chip>
+                    <CharacterBountyDisplay 
+                      :character="playerCharacter" 
+                      size="small" 
+                      variant="elevated" 
+                    />
                   </div>
                   <div class="text-body-2 mt-2">
                     <strong>Kindness:</strong> 
@@ -200,17 +202,20 @@
                       <v-chip color="blue-darken-2" class="mb-2 ml-2" variant="elevated">
                         <strong>Level {{ currentEncounter.opponent.level }}</strong>
                       </v-chip>
-                      <v-chip color="purple-darken-2" class="mb-2 ml-2" variant="elevated">
-                        <strong>{{ formatBounty(currentEncounter.opponent.bounty) }}</strong>
-                      </v-chip>
                       <v-chip color="acent-darken-2" class="mb-2 ml-2" variant="elevated">
                         <strong>{{ opponentStyle(currentEncounter.opponent.styleCombatId) }}</strong>
                       </v-chip>
                       <v-chip v-if="currentEncounter.opponent.devilFruitId != 0"color="amber-darken-2" class="mb-2 ml-2" variant="elevated">
                         <strong>Akuma no Mi User</strong>
                       </v-chip>
-
+                      <v-divider class="my-0"></v-divider>
+                      <CharacterBountyDisplay 
+                        :character="currentEncounter.opponent" 
+                        size="small" 
+                        variant="elevated" 
+                      />
                       <v-divider class="my-4"></v-divider>
+                      
 
                       <!-- Stats Resumidos -->
                       <div class="text-center">
@@ -222,7 +227,7 @@
                           rounded
                         >
                           <template v-slot:default>
-                            <strong :class="winChance > 52 ? 'text-white' : 'text-black'">{{ winChance }}% chance de vitória</strong>
+                            <strong :class="winChance >= 52 ? 'text-white' : 'text-black'">{{ winChance }}% chance de vitória</strong>
                           </template>
                         </v-progress-linear>
                       </div>
@@ -645,6 +650,7 @@ import { IslandExplorationSystem } from '@/utils/islandExplorationSystem'
 import { GameLogic } from '@/utils/gameLogic'
 import { db } from '@/utils/database'
 import type { Character, Crew, Task, StyleCombat } from '@/utils/database'
+import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 
 const characterStore = useCharacterStore()
 const battleStore = useBattleStore()

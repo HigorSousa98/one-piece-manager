@@ -160,7 +160,7 @@
               class="mb-2"
             >
               <template v-slot:default>
-                <strong :class="navigationPercentage > 52 ? 'text-white' : 'text-black'">{{ navigationPercentage }}%</strong>
+                <strong :class="navigationPercentage >= 52 ? 'text-white' : 'text-black'">{{ navigationPercentage }}%</strong>
               </template>
             </v-progress-linear>
             
@@ -333,6 +333,7 @@ import { NavigationSystem } from '@/utils/navigationSystem'
 import { TrainingSystem } from '@/utils/trainingSystem'
 import { db } from '@/utils/database'
 import type { Island, Ship } from '@/utils/database'
+import { useTimeRemaining } from '@/composables/useTimeRemaining'
 
 interface Props {
   crewId: number
@@ -340,6 +341,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
 
 const emit = defineEmits<{
   navigationCompleted: [event: any]

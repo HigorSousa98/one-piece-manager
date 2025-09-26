@@ -182,20 +182,6 @@
                 <v-icon left>mdi-walk</v-icon>
                 {{ exploring ? 'Explorando...' : 'EXPLORAR ILHA' }}
               </v-btn>
-              
-              <div v-if="!canExplore && nextExplorationTime" class="mt-2">
-                <v-chip color="orange" variant="elevated">
-                  <v-icon left size="small">mdi-clock</v-icon>
-                  Próxima exploração: 
-                  <TimeRemaining 
-                    :end-time="nextExplorationTime"
-                    format="compact"
-                    :show-icon="false"
-                    :color-coded="false"
-                    @completed="onExplorationAvailable"
-                  />
-                </v-chip>
-              </div>
             </v-card-text>
           </v-card>
         </v-col>
@@ -544,7 +530,7 @@ const exploreIsland = async () => {
     
     // Atualizar cooldown de exploração
     nextExplorationTime.value = result.nextExplorationAvailable
-    canExplore.value = new Date() >= result.nextExplorationAvailable
+    //canExplore.value = new Date() >= result.nextExplorationAvailable
     
   } catch (error) {
     console.error('❌ Erro na exploração:', error)
@@ -661,7 +647,7 @@ const onTaskCompleted = async (taskId: number) => {
   await loadActiveTasks()
 }
 
-const onTaskTimeUpdate = (taskId: number, remaining: number, percentage: number) => {
+const onTaskTimeUpdate = (taskId: number, remaining: number) => {
   // Opcional: fazer algo quando o tempo atualiza
   if (remaining <= 60000 && remaining > 59000) {
     console.log(`⚠️ Tarefa ${taskId} será completada em 1 minuto!`)

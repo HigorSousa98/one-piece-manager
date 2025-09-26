@@ -27,13 +27,13 @@ export const useGameStore = defineStore('game', {
           console.log('🌊 Primeira inicialização - gerando mundo de One Piece...')
           
           const generator = new GameDataGenerator('EPIC')
-          await generator.generateInitialData()
+          //await generator.generateInitialData()
           
-          await db.gameState.add({
+          /*await db.gameState.add({
             key: 'initialized',
             value: true,
             updatedAt: new Date()
-          })
+          })*/
           
           console.log('✅ Mundo de One Piece gerado com sucesso!')
         } else {

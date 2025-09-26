@@ -1,5 +1,5 @@
 // src/utils/gameDataGenerator.ts
-import { db, Character, Crew, Island, DevilFruit, StyleCombat, Yonkou, Shichibukai, Admiral, MarineBase, CypherPol, Gorousei, Ship } from './database'
+import { db, Character, Crew, Island, DevilFruit, StyleCombat, Yonkou, Shichibukai, Admiral, MarineBase, CypherPol, Gorousei, Ship, Territory } from './database'
 import { GameLogic } from '@/utils/gameLogic'
 import { GenerationConfig, type GenerationSettings } from '@/utils/generationConfig'
 import { NameGenerator } from '@/data/characterNames'
@@ -17,8 +17,14 @@ export class GameDataGenerator {
     // Mostrar relatório de configuração
     console.log(this.config.generateReport())
   }
-
-  async generateInitialData(): Promise<void> {
+  public async generateInitialData(characterData: {
+    name: string;
+    type: string;
+    combatStyle: string;
+    devilFruitId?: number;
+    crewName: string;
+    shipName: string
+  }): Promise<void> {
     console.log('🏴‍☠️ Iniciando geração do mundo de One Piece...')
 
     try {
@@ -31,7 +37,7 @@ export class GameDataGenerator {
       await this.generateDevilFruits()
 
       // 2.5. Criar personagem do jogador PRIMEIRO
-      await this.createPlayerCharacter()
+      await this.createPlayerCharacter(characterData)
 
       // 3. Gerar personagens
       console.log('⚔️ Gerando personagens...')
@@ -53,7 +59,11 @@ export class GameDataGenerator {
       console.log('🚢 Criando tripulações e bases...')
       await this.createCrewsAndBases()
 
-      // 7. Gerar navios para todas as tripulações
+      // 7. Criar territorios e bases
+      console.log('🏝️ Criando territórios')
+      await this.createTerritories()
+
+      // 8. Gerar navios para todas as tripulações
       console.log('⛵ Gerando navios para as tripulações...')
       await this.generateShipsForAllCrews()
 
@@ -82,10 +92,109 @@ export class GameDataGenerator {
       db.gorouseis.clear(),
       db.devilFruits.clear(),
       db.styleCombats.clear(),
-      db.islands.clear()
+      db.islands.clear(),
+      db.battles.clear(),
+      db.tasks.clear()
     ])
   }
 
+  async createPlayerCharacter(characterData: {
+      name: string;
+      type: string;
+      combatStyle: string;
+      devilFruitId?: number;
+      crewName: string;
+      shipName: string
+    }){
+      try {
+        console.log('👤 Criando personagem do player:', characterData);
+  
+        // Verificar se já existe personagem do player
+        const existingPlayer = await db.characters
+          .where('isPlayer')
+          .equals(1)
+          .first();
+  
+        if (existingPlayer) {
+          console.log('⚠️ Removendo personagem existente:', existingPlayer.name);
+          await db.characters.delete(existingPlayer.id!);
+          
+          // Remover crew se existir
+          if (existingPlayer.crewId) {
+            await db.crews.delete(existingPlayer.crewId);
+          }
+        }
+  
+        // Buscar style de combate
+        const combatStyle = await db.styleCombats
+          .where('name')
+          .equals(characterData.combatStyle)
+          .first();
+  
+        if (!combatStyle) {
+          throw new Error(`Style de combate não encontrado: ${characterData.combatStyle}`);
+        }
+
+        const allIslands = await db.islands.toArray()
+  
+        // Criar crew para o personagem
+        const crewId = await db.crews.add({
+          name: characterData.crewName,
+          type: characterData.type as "Pirate" | "Marine" | "BountyHunter",
+          captainId: 0, // Será atualizado depois
+          currentIsland: 0, // Ilha inicial
+          docked: 1,
+          reputation: 0,
+          foundedAt: new Date(),
+          treasury: 0
+        });
+  
+        const newCharacter: Omit<Character, 'id'> = {
+        name: characterData.name,
+        type: characterData.type as "Pirate" | "Marine" | "BountyHunter" | "Civillian" | "Government",
+        level: 1,
+        experience: 0,
+        bounty: 0,
+        stats: {
+          attack: combatStyle.attack,
+          defense: combatStyle.defense,
+          speed: combatStyle.speed,
+          armHaki: 0,
+          obsHaki: 0,
+          kingHaki: 0,
+          devilFruit: characterData.devilFruitId ? 5 : 0
+        },
+        styleCombatId: combatStyle.id!, // ✅ PROPRIEDADE FALTANTE
+        devilFruitId: 0,
+        crewId: crewId,
+        position: "Captain",
+        isPlayer: 1,
+        kindness: 50 + Math.ceil(Math.random() * 20),
+        potentialToHaveKngHaki: Math.random(),
+        defendingBase: 0, 
+        loyalty: 100, 
+        createdAt: new Date()
+      };
+  
+        const characterId = await db.characters.add(newCharacter);
+  
+        // Atualizar crew com o ID do capitão
+        await db.crews.update(crewId, {
+          captainId: characterId, currentIsland: this.selectIslandForCrew(newCharacter, allIslands)
+        });
+  
+        // Criar navio inicial
+        await db.ships.add({
+          crewId: crewId,
+          level: 1 as 1 | 2 | 3 | 4 | 5,
+          name: characterData.shipName,
+          needRepair: false,
+          destroyed: false
+        });
+      } catch (error) {
+        console.error('❌ Erro ao criar personagem do player:', error);
+      }
+    }
   private async generateStyleCombats(): Promise<void> {
     const styleCombats: Omit<StyleCombat, 'id'>[] = [
       { name: 'Fighter', attack: 4, defense: 2, speed: 3, armHaki: 3, obsHaki: 2 },
@@ -95,6 +204,16 @@ export class GameDataGenerator {
     ]
 
     await db.styleCombats.bulkAdd(styleCombats)
+  }
+
+  public async mockStyleCombact() : Promise<StyleCombat[]> {
+    const styleCombats: Omit<StyleCombat, 'id'>[] = [
+      { name: 'Fighter', attack: 4, defense: 2, speed: 3, armHaki: 3, obsHaki: 2 },
+      { name: 'Swordsman', attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 2 },
+      { name: 'Sniper', attack: 2, defense: 2, speed: 5, armHaki: 1, obsHaki: 4 },
+      { name: 'Support', attack: 2, defense: 5, speed: 3, armHaki: 2, obsHaki: 2 }
+    ]
+    return styleCombats
   }
 
   private async generateIslands(): Promise<void> {
@@ -148,7 +267,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: this.calculateBounty(level, 'Pirate'),
         type: 'Pirate',
-        stats: this.generateStats(level, styleCombatId),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
         styleCombatId,
         devilFruitId: 0, // Será atribuído depois
         potentialToHaveKngHaki: Math.random(),
@@ -179,7 +298,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: this.calculateBounty(level, 'BountyHunter'),
         type: 'BountyHunter',
-        stats: this.generateStats(level, styleCombatId),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
         styleCombatId,
         devilFruitId: 0, // Será atribuído depois
         potentialToHaveKngHaki: Math.random(),
@@ -208,9 +327,9 @@ export class GameDataGenerator {
         name: NameGenerator.generateRandomName('Marine'),
         level,
         experience: 0,
-        bounty: 0, // Marines não têm bounty
+        bounty: this.calculateBounty(level, 'Marine'),
         type: 'Marine',
-        stats: this.generateStats(level, styleCombatId),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
         styleCombatId,
         devilFruitId: 0,
         potentialToHaveKngHaki: Math.random(),
@@ -241,7 +360,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: 0,
         type: 'Government',
-        stats: this.generateStats(level, styleCombatId),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
         styleCombatId,
         devilFruitId: 0,
         potentialToHaveKngHaki: Math.random(),
@@ -272,7 +391,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: 0,
         type: 'Civillian',
-        stats: this.generateStats(level, styleCombatId),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
         styleCombatId,
         devilFruitId: 0,
         potentialToHaveKngHaki: Math.random(),
@@ -289,14 +408,14 @@ export class GameDataGenerator {
     return civillian.map((civ, index) => ({ ...civ, id: civIds[index] }))
   }
 
-  private generateStats(level: number, styleCombatId: number): Character['stats'] {
+  private generateStats(level: number, styleCombat: string): Character['stats'] {
     // Buscar o estilo de combate (assumindo IDs 1-4)
     const styleMultipliers = [
-      { attack: 4, defense: 2, speed: 3, armHaki: 4, obsHaki: 2 }, // Fighter
-      { attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 3 }, // Swordsman
-      { attack: 2, defense: 2, speed: 5, armHaki: 2, obsHaki: 4 }, // Sniper
-      { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3 }  // Support
-    ][styleCombatId - 1]
+      { attack: 4, defense: 2, speed: 3, armHaki: 4, obsHaki: 2, name: 'Fighter' }, // Fighter
+      { attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 3, name: 'Swordsman' }, // Swordsman
+      { attack: 2, defense: 2, speed: 5, armHaki: 2, obsHaki: 4, name: 'Sniper' }, // Sniper
+      { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3, name: 'Support' }  // Support
+    ].find(st => st.name == styleCombat)
 
     const quantPoints = Math.ceil(((level - 1) / 2) * (2 + level) * 0.5)
     const basePoints = quantPoints + 9 
@@ -318,8 +437,6 @@ export class GameDataGenerator {
   }
 
   private calculateBounty(level: number, type: string): number {
-    if (type !== 'Pirate') return 0
-    
     let baseBounty = 0;
 
     if (level >= 95) {
@@ -429,12 +546,13 @@ export class GameDataGenerator {
   private async distributeDevilFruits(): Promise<void> {
     const allCharacters = await db.characters.toArray()
     const allDevilFruits = await db.devilFruits.toArray()
+    const allCharactersFiltered = allCharacters.filter(char => char.type != 'Civillian')
     
     // Calcular quantos personagens devem ter Devil Fruit
-    const charactersWithDF = Math.floor(allCharacters.length * this.config.devilFruitDistributionRate)
+    const charactersWithDF = Math.floor(allCharactersFiltered.length * this.config.devilFruitDistributionRate)
     
     // Selecionar personagens aleatoriamente
-    const shuffledCharacters = this.shuffleArray([...allCharacters])
+    const shuffledCharacters = this.shuffleArray([...allCharactersFiltered])
     const selectedCharacters = shuffledCharacters.slice(0, Math.min(charactersWithDF, allDevilFruits.length))
     
     // Distribuir Devil Fruits
@@ -456,6 +574,57 @@ export class GameDataGenerator {
       })
     }
   }
+
+  private async createTerritories(): Promise<void> {
+    console.log('🏴‍☠️ Criando territorios...')
+    try{
+      const allIslands = await db.islands.toArray();
+      const allCrews = await db.crews.where('docked').equals(1).toArray();
+      const allDevilFruits = await db.devilFruits.toArray();
+      const allCharacters = await db.characters.toArray()
+      const mapStrongestCrewByIsland = new Map<number, Crew | null>()
+
+      allIslands.forEach(island => {
+        mapStrongestCrewByIsland.set(island.id, null);
+      })
+
+      allCrews.forEach(crew => {
+        if(mapStrongestCrewByIsland.has(crew.currentIsland)){
+          if(mapStrongestCrewByIsland.get(crew.currentIsland)){
+            const currentCrew = mapStrongestCrewByIsland.get(crew.currentIsland)
+            const currentCrewPower = GameLogic.calculateCrewPower(allCharacters.filter(char => char.crewId === currentCrew.id), allDevilFruits);
+            const thisCrewPower = GameLogic.calculateCrewPower(allCharacters.filter(char => char.crewId === crew.id), allDevilFruits);
+            if(thisCrewPower > currentCrewPower){
+              mapStrongestCrewByIsland.set(crew.currentIsland, crew)
+            }
+          }
+          else{
+            mapStrongestCrewByIsland.set(crew.currentIsland, crew)
+          }
+        }
+      })
+
+      const territories = await this.generateTerritories(Array.from(mapStrongestCrewByIsland.values()))
+
+    } catch (error) {
+      console.error('❌ Erro ao criar territórios:', error)
+      throw error
+    }
+  }
+
+  private async generateTerritories(crews: Crew[]): Promise<Territory[]> {
+    const territory: Omit<Territory, 'id'>[] = []
+
+    for(let i = 0; i < crews.length; i++){
+      const crew = crews[i]
+      territory.push({
+        islandId: crew.currentIsland,
+        crewId: crew.id
+      })
+    }
+    const territoriesIds = await db.territories.bulkAdd(territory, { allKeys: true }) as number[]
+    return territory.map((civ, index) => ({ ...civ, id: territoriesIds[index] }))
+  }
   
 
   private async createCrewsAndBases(): Promise<void> {
@@ -464,9 +633,9 @@ export class GameDataGenerator {
     try {
       // Buscar todos os capitães e dados necessários
       const [pirateCaptains, marineCaptains, bountyHuntersCaptains, allIslands, allCharacters] = await Promise.all([
-        db.characters.where('type').equals('Pirate').and(char => char.position === 'Captain').toArray(),
-        db.characters.where('type').equals('Marine').and(char => char.position === 'Captain').toArray(),
-        db.characters.where('type').equals('BountyHunter').and(char => char.position === 'Captain').toArray(),
+        db.characters.where('type').equals('Pirate').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
+        db.characters.where('type').equals('Marine').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
+        db.characters.where('type').equals('BountyHunter').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
         db.islands.toArray(),
         db.characters.toArray() // Buscar todos NPCs
       ])
@@ -568,7 +737,7 @@ export class GameDataGenerator {
             }
           })
 
-          console.log(`⚓ ${captain.name} agora comanda ${selectedMembers.length} membros (max: ${maxCrewSize} - 1 [Ele mesmo])`)
+          //console.log(`⚓ ${captain.name} agora comanda ${selectedMembers.length} membros (max: ${maxCrewSize} - 1 [Ele mesmo])`)
         }
       }
 
@@ -967,48 +1136,6 @@ export class GameDataGenerator {
     const selectedDifficulty = minDiff + Math.floor(Math.random() * difficultyRange)
     const islandIndex = ((selectedDifficulty - 1) * 4) + Math.floor(Math.random() * 4) + 1
     return islandIndex
-  }
-
-  private async createPlayerCharacter(): Promise<void> {
-    console.log('👤 Criando personagem do jogador...')
-    
-    // Verificar se já existe um jogador
-    const existingPlayer = await db.characters.where('isPlayer').equals(1).first()
-    
-    if (existingPlayer) {
-      console.log('✅ Personagem do jogador já existe:', existingPlayer.name)
-      return
-    }
-
-    // Criar personagem do jogador
-    const playerCharacter: Omit<Character, 'id'> = {
-      name: 'Monkey D. Luffy',
-      level: 1,
-      experience: 0,
-      bounty: 0,
-      type: 'Pirate',
-      stats: {
-        attack: 3,
-        defense: 3,
-        speed: 3,
-        armHaki: 0,
-        obsHaki: 0,
-        kingHaki: 0,
-        devilFruit: 0
-      },
-      styleCombatId: 1, // Fighter
-      devilFruitId: 1, // Sem Devil Fruit inicialmente
-      potentialToHaveKngHaki: 1, // Alto potencial
-      position: 'Captain',
-      isPlayer: 1,
-      createdAt: new Date(),
-      defendingBase: 0,
-      kindness: 80,
-      loyalty: 100
-    }
-
-    const playerId = await db.characters.add(playerCharacter)
-    console.log('✅ Personagem do jogador criado com ID:', playerId)
   }
 
   // ✅ MÉTODO PÚBLICO PARA GERAR NAVIO PARA TRIPULAÇÃO ESPECÍFICA

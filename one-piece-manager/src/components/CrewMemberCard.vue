@@ -65,10 +65,11 @@
           <v-icon left size="16">mdi-flash</v-icon>
           <strong>{{ calculatePower(member) }}</strong>
         </v-chip>
-        <v-chip color="orange-darken-2" size="small" variant="elevated">
-          <v-icon left size="16">mdi-treasure-chest</v-icon>
-          <strong>{{ formatBounty(member.bounty) }}</strong>
-        </v-chip>
+        <CharacterBountyDisplay 
+          :character="member" 
+          size="small" 
+          variant="elevated" 
+        />
       </div>
       
       <!-- LOYALTY (apenas para membros) -->
@@ -106,6 +107,7 @@
 <script setup lang="ts">
 import { GameLogic } from '@/utils/gameLogic'
 import type { Character } from '@/utils/database'
+import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 
 interface Props {
   member: Character

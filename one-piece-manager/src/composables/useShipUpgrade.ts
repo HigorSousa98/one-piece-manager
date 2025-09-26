@@ -128,7 +128,7 @@ export function useShipUpgrade(
       
       // Usar crewId em vez de ship.id
       const crewId = ship.value.crewId
-      const activeTask = await ShipUpgradeSystem.hasActiveUpgradeTask(crewId)
+      const activeTask = await ShipUpgradeSystem.hasActiveUpgradeTask(ship.value.id)
       
       console.log('🔍 useShipUpgrade - Task ativa encontrada:', !!activeTask, activeTask?.type)
       

@@ -12,7 +12,7 @@ export class TrainingSystem {
       // Verificar se há alguma task de exploração ativa
       const activeExplorationTask = await db.tasks
         .where('type')
-        .anyOf(['exploration', 'ship_upgrade', 'navigation']) 
+        .anyOf(['exploration', 'ship_upgrade', 'navigation', 'island_liberation']) 
         .and(task => {
             const now = new Date()
           return !task.isCompleted && new Date(task.endTime) > now

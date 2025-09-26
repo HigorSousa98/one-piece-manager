@@ -90,7 +90,7 @@ export class ShipUpgradeSystem {
       }
       
       // Calcular tempo de upgrade (30 minutos)
-      const upgradeTimeMinutes = 30
+      const upgradeTimeMinutes = 1
       
       // Criar task de upgrade
       const now = new Date()

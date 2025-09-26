@@ -1,7 +1,6 @@
 <!-- src/views/Dashboard.vue -->
 <template>
   <div class="dashboard-container">
-    
     <!-- LOADING STATE GLOBAL -->
     <div v-if="!allDataLoaded" class="loading-container">
       <v-row justify="center">
@@ -56,6 +55,123 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- ✅ NOVA SEÇÃO: CONTROLE DO MUNDO -->
+      <v-row>
+        <v-col cols="12">
+          <v-card variant="outlined" class="world-control-panel mb-4">
+            <v-card-title class="bg-primary text-white">
+              <v-icon left color="white">mdi-earth</v-icon>
+              🌍 Controle do Mundo
+            </v-card-title>
+            
+            <v-card-text class="pa-4">
+              
+              <!-- STATUS COMPACTO -->
+              <div class="d-flex align-center justify-space-between mb-4">
+                <div class="status-compact">
+                  <v-chip
+                    :color="worldStatus.canStartGame ? 'success' : 'warning'"
+                    :prepend-icon="worldStatus.canStartGame ? 'mdi-check-circle' : 'mdi-alert-circle'"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{ worldStatus.canStartGame ? 'Mundo Pronto' : 'Configuração Pendente' }}
+                  </v-chip>
+                </div>
+                
+                <div class="world-actions">
+                  <!-- CRIAR PERSONAGEM -->
+                  <v-btn
+                    v-if="worldStatus.needsCharacterCreation"
+                    color="primary"
+                    variant="elevated"
+                    size="small"
+                    prepend-icon="mdi-account-plus"
+                    @click="goToCharacterCreation"
+                    class="mr-2"
+                  >
+                    Criar Personagem
+                  </v-btn>
+                  
+                  <!-- RESETAR MUNDO -->
+                  <v-btn
+                    color="error"
+                    variant="outlined"
+                    size="small"
+                    prepend-icon="mdi-earth-off"
+                    @click="showResetDialog = true"
+                  >
+                    Novo Mundo
+                  </v-btn>
+                </div>
+              </div>
+              
+              <!-- DETALHES EXPANSÍVEIS -->
+              <v-expansion-panels v-model="worldPanelOpen" variant="accordion">
+                <v-expansion-panel>
+                  <v-expansion-panel-title>
+                    <v-icon left>mdi-information</v-icon>
+                    Detalhes do Status Mundial
+                  </v-expansion-panel-title>
+                  <v-expansion-panel-text>
+                    <v-row>
+                      <v-col cols="12" md="3">
+                        <v-card variant="outlined" class="text-center pa-3">
+                          <v-icon :color="worldStatus.hasGameState ? 'success' : 'error'" size="30">
+                            {{ worldStatus.hasGameState ? 'mdi-check' : 'mdi-close' }}
+                          </v-icon>
+                          <div class="text-body-2 mt-1">
+                            <strong>GameState</strong>
+                          </div>
+                          <div class="text-caption">{{ worldStatus.hasGameState ? 'Ativo' : 'Inativo' }}</div>
+                        </v-card>
+                      </v-col>
+                      
+                      <v-col cols="12" md="3">
+                        <v-card variant="outlined" class="text-center pa-3">
+                          <v-icon :color="!worldStatus.needsCharacterCreation ? 'success' : 'warning'" size="30">
+                            {{ !worldStatus.needsCharacterCreation ? 'mdi-check' : 'mdi-account-plus' }}
+                          </v-icon>
+                          <div class="text-body-2 mt-1">
+                            <strong>Personagem</strong>
+                          </div>
+                          <div class="text-caption">{{ !worldStatus.needsCharacterCreation ? 'Criado' : 'Pendente' }}</div>
+                        </v-card>
+                      </v-col>
+                      
+                      <v-col cols="12" md="3">
+                        <v-card variant="outlined" class="text-center pa-3">
+                          <v-icon :color="worldStatus.isWorldGenerated ? 'success' : 'warning'" size="30">
+                            {{ worldStatus.isWorldGenerated ? 'mdi-check' : 'mdi-earth-plus' }}
+                          </v-icon>
+                          <div class="text-body-2 mt-1">
+                            <strong>Mundo</strong>
+                          </div>
+                          <div class="text-caption">{{ worldStatus.isWorldGenerated ? 'Gerado' : 'Pendente' }}</div>
+                        </v-card>
+                      </v-col>
+                      
+                      <v-col cols="12" md="3">
+                        <v-card variant="outlined" class="text-center pa-3">
+                          <v-icon :color="worldStatus.canStartGame ? 'success' : 'error'" size="30">
+                            {{ worldStatus.canStartGame ? 'mdi-play' : 'mdi-pause' }}
+                          </v-icon>
+                          <div class="text-body-2 mt-1">
+                            <strong>Jogo</strong>
+                          </div>
+                          <div class="text-caption">{{ worldStatus.canStartGame ? 'Pronto' : 'Não Pronto' }}</div>
+                        </v-card>
+                      </v-col>
+                    </v-row>
+                  </v-expansion-panel-text>
+                </v-expansion-panel>
+              </v-expansion-panels>
+              
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
       
       <v-row>
         <!-- INFORMAÇÕES DO JOGADOR -->
@@ -83,11 +199,13 @@
                       <v-chip color="blue-darken-2" size="small" variant="elevated">
                         <strong>Level {{ playerCharacter.level }}</strong>
                       </v-chip>
-                      <v-chip color="purple-darken-2" size="small" variant="elevated">
-                        <strong>{{ formatBounty(playerCharacter.bounty) }}</strong>
-                      </v-chip>
+                      <CharacterBountyDisplay 
+                        :character="playerCharacter" 
+                        size="small" 
+                        variant="elevated" 
+                      />
                       <v-chip color="accent-darken-2" size="small" variant="elevated">
-                        <strong>{{ playerStyleCombat.name }}</strong>
+                        <strong>{{ playerStyleCombat?.name || 'Carregando...' }}</strong>
                       </v-chip>
                     </div>
                   </div>
@@ -186,11 +304,9 @@
                   <div class="text-h5 mt-1 text-teal-darken-3">
                     <strong>{{ playerCharacter.stats.devilFruit }}</strong>
                   </div>
-                  <div class="text-body-2">{{ playerDevilFruit.name }} - {{ playerDevilFruit.type }}<strong>{{playerCharacter.level >= playerDevilFruit.awakeningOn ? ' (Despertada)' : ''}}</strong></div>
+                  <div class="text-body-2">{{ playerDevilFruit?.name || 'Carregando...' }} - {{ playerDevilFruit?.type || '' }}<strong>{{playerCharacter.level >= (playerDevilFruit?.awakeningOn || 999) ? ' (Despertada)' : ''}}</strong></div>
                 </v-card-text>
               </v-card>
-              
-              <!-- EXPERIÊNCIA -->
               
               <!-- PODER TOTAL -->
               <v-card variant="outlined" color="deep-purple-darken-1" class="mb-4">
@@ -216,23 +332,13 @@
                   class="mb-2"
                 >
                   <template v-slot:default>
-                    <strong :class="Math.round(experiencePercentage) > 52 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
+                    <strong :class="Math.round(experiencePercentage) >= 52 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
                   </template>
                 </v-progress-linear>
                 <div class="text-caption text-center">
                   Faltam {{ expForNextLevel - playerCharacter.experience }} XP para o próximo level
                 </div>
               </div>
-            </v-card-text>
-            
-            <!-- Nenhum personagem -->
-            <v-card-text v-else class="text-center pa-6">
-              <v-icon size="80" color="grey" class="mb-4">mdi-account-off</v-icon>
-              <div class="text-h6 mb-4">Nenhum personagem encontrado</div>
-              <v-btn color="primary" size="large" @click="createCharacter" variant="elevated">
-                <v-icon left>mdi-account-plus</v-icon>
-                Criar Personagem
-              </v-btn>
             </v-card-text>
           </v-card>
         </v-col>
@@ -267,6 +373,31 @@
                     Procurar Aventura
                   </v-btn>
                   <div v-if="hasActiveTasks" class="text-caption text-center mt-1 text-warning">
+                    Complete suas tarefas ativas primeiro
+                  </div>
+                </v-card-text>
+              </v-card>
+
+              <v-card variant="outlined" color="grey-darken-1" class="mb-3">
+                <v-card-text class="pa-3">
+                  <div class="d-flex align-center mb-2">
+                    <v-icon color="grey-darken-2" class="mr-2">mdi-sword-cross</v-icon>
+                    <div>
+                      <div class="text-h6 text-grey-darken-3">Liberação de ilhas</div>
+                      <div class="text-caption">Libere a ilha que está da tirania</div>
+                    </div>
+                  </div>
+                  <v-btn 
+                    color="grey-darken-2" 
+                    block 
+                    @click="$router.push('/territory-liberation')"
+                    :disabled="!playerCharacter || (hasActiveTasks && taskType != 'island_liberation')"
+                    variant="elevated"
+                  >
+                    <v-icon left>mdi-fencing</v-icon>
+                    Liberar ilha!
+                  </v-btn>
+                  <div v-if="hasActiveTasks && taskType != 'island_liberation'" class="text-caption text-center mt-1 text-warning">
                     Complete suas tarefas ativas primeiro
                   </div>
                 </v-card-text>
@@ -380,14 +511,16 @@
                     <v-chip color="blue-darken-2" size="small" variant="elevated">
                       <strong>Level {{ playerCharacter.level }}</strong>
                     </v-chip>
-                    <v-chip color="purple-darken-2" size="small" variant="elevated">
-                      <strong>{{ formatBounty(playerCharacter.bounty) }}</strong>
-                    </v-chip>
+                    <CharacterBountyDisplay 
+                      :character="playerCharacter" 
+                      size="small" 
+                      variant="elevated" 
+                    />
                     <v-chip color="deep-purple-darken-2" size="small" variant="elevated">
                       <strong>{{ calculatePower(playerCharacter) }} Power</strong>
                     </v-chip>
                     <v-chip color="accent-darken-2" size="small" variant="elevated">
-                      <strong>{{ playerStyleCombat.name }}</strong>
+                      <strong>{{ playerStyleCombat?.name || 'N/A' }}</strong>
                     </v-chip>
                   </div>
                 </v-card-text>
@@ -525,6 +658,109 @@
       </v-row>
       
     </div>
+
+    <!-- ✅ MODAIS DO CONTROLE DO MUNDO -->
+    
+    <!-- MODAL DE RESET -->
+    <v-dialog v-model="showResetDialog" max-width="600" persistent>
+      <v-card>
+        <v-card-title class="bg-error text-white">
+          <v-icon left color="white">mdi-alert</v-icon>
+          Confirmar Novo Mundo
+        </v-card-title>
+        
+        <v-card-text class="pa-6">
+          <div class="text-center">
+            <v-icon size="80" color="error" class="mb-4">mdi-earth-off</v-icon>
+            <div class="text-h5 mb-4">Tem certeza absoluta?</div>
+            <div class="text-body-1 mb-4">
+              Esta ação irá <strong>apagar completamente</strong> o mundo atual:
+            </div>
+            
+            <v-alert type="error" variant="tonal" class="mb-4">
+              <v-list>
+                <v-list-item>🗑️ Todos os dados do mundo atual</v-list-item>
+                <v-list-item>👤 Seu personagem atual</v-list-item>
+                <v-list-item>🏴‍☠️ Todas as tripulações e ilhas</v-list-item>
+                <v-list-item>⚔️ Histórico de batalhas</v-list-item>
+              </v-list>
+            </v-alert>
+            
+            <v-alert type="warning" variant="tonal">
+              <strong>Esta ação NÃO pode ser desfeita!</strong>
+            </v-alert>
+          </div>
+        </v-card-text>
+        
+        <v-card-actions class="pa-6">
+          <v-btn
+            color="grey"
+            variant="outlined"
+            @click="showResetDialog = false"
+          >
+            Cancelar
+          </v-btn>
+          
+          <v-spacer></v-spacer>
+          
+          <v-btn
+            color="error"
+            variant="elevated"
+            :loading="isResetting"
+            @click="executeReset"
+          >
+            <v-icon left>mdi-delete-forever</v-icon>
+            Sim, Criar Novo Mundo
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    
+    <!-- MODAL DE RESULTADO -->
+    <v-dialog v-model="showResultDialog" max-width="700" persistent>
+      <v-card>
+        <v-card-title :class="lastResult?.success ? 'bg-success' : 'bg-error'" class="text-white">
+          <v-icon left color="white">
+            {{ lastResult?.success ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+          </v-icon>
+          {{ lastResult?.success ? 'Sucesso!' : 'Erro!' }}
+        </v-card-title>
+        
+        <v-card-text class="pa-6">
+          <div class="text-h6 mb-4">{{ lastResult?.message }}</div>
+          
+          <div v-if="lastResult?.steps && lastResult.steps.length > 0" class="mb-4">
+            <div class="text-subtitle-1 mb-2">Passos executados:</div>
+            <v-list>
+              <v-list-item v-for="step in lastResult.steps" :key="step">
+                <v-list-item-title>{{ step }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </div>
+          
+          <div v-if="lastResult?.errors && lastResult.errors.length > 0" class="mb-4">
+            <div class="text-subtitle-1 mb-2 text-error">Erros encontrados:</div>
+            <v-list>
+              <v-list-item v-for="error in lastResult.errors" :key="error">
+                <v-list-item-title class="text-error">{{ error }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </div>
+        </v-card-text>
+        
+        <v-card-actions class="pa-6">
+          <v-spacer></v-spacer>
+          <v-btn
+            color="primary"
+            variant="elevated"
+            @click="closeResultDialog"
+          >
+            Entendi
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    
   </div>
 </template>
 
@@ -536,13 +772,30 @@ import { IslandExplorationSystem } from '@/utils/islandExplorationSystem'
 import { GameLogic } from '@/utils/gameLogic'
 import { useRouter } from 'vue-router'
 import type { Character, DevilFruit, StyleCombat } from '@/utils/database'
+// ✅ IMPORTS PARA CONTROLE DO MUNDO
+import { WorldResetSystem, type WorldResetResult } from '@/utils/worldResetSystem'
+import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 
 const router = useRouter()
 
 const gameStore = useGameStore()
 const characterStore = useCharacterStore()
 
-// �� LOADING STATES
+// 🌍 ESTADOS DO CONTROLE DO MUNDO
+const worldPanelOpen = ref(null)
+const isResetting = ref(false)
+const showResetDialog = ref(false)
+const showResultDialog = ref(false)
+const lastResult = ref<WorldResetResult | null>(null)
+
+const worldStatus = ref({
+  hasGameState: false,
+  needsCharacterCreation: false,
+  isWorldGenerated: false,
+  canStartGame: false
+})
+
+// 📊 LOADING STATES
 const gameInitialized = ref(false)
 const characterLoaded = ref(false)
 const hasActiveTasks = ref(false)
@@ -571,6 +824,61 @@ const expForNextLevel = computed(() => {
   if (!playerCharacter.value) return 0
   return GameLogic.nextLevelUp(playerCharacter.value)
 })
+
+// 🌍 MÉTODOS DO CONTROLE DO MUNDO
+const loadWorldStatus = async () => {
+  try {
+    worldStatus.value = await WorldResetSystem.getGameStatus()
+    console.log('🌍 Status do mundo carregado:', worldStatus.value)
+  } catch (error) {
+    console.error('❌ Erro ao carregar status do mundo:', error)
+  }
+}
+
+const executeReset = async () => {
+  try {
+    isResetting.value = true
+    showResetDialog.value = false
+    
+    console.log('🌍 Executando reset do mundo...')
+    const result = await WorldResetSystem.resetWorld()
+    
+    lastResult.value = result
+    showResultDialog.value = true
+    
+    // Recarregar status
+    await loadWorldStatus()
+    
+  } catch (error) {
+    console.error('❌ Erro no reset:', error)
+    lastResult.value = {
+      success: false,
+      message: `Erro inesperado: ${error}`,
+      steps: [],
+      errors: [`${error}`]
+    }
+    showResultDialog.value = true
+  } finally {
+    isResetting.value = false
+  }
+}
+
+const goToCharacterCreation = () => {
+  router.push('/character-creation')
+}
+
+const closeResultDialog = () => {
+  showResultDialog.value = false
+  
+  // Se reset foi bem-sucedido, redirecionar para criação de personagem
+  if (lastResult.value?.success) {
+    setTimeout(() => {
+      goToCharacterCreation()
+    }, 500)
+  }
+  
+  lastResult.value = null
+}
 
 // 🎮 METHODS
 const calculatePower = (character: Character): number => {
@@ -667,7 +975,7 @@ const getKindnessIcon = (kindness: number): string => {
 // 🔧 DEBUG ACTIONS
 const createCharacter = async () => {
   try {
-    await characterStore.createPlayerCharacter('Monkey D. Luffy')
+    //await characterStore.createPlayerCharacter('Monkey D. Luffy')
     characterLoaded.value = true
   } catch (error) {
     console.error('❌ Erro ao criar personagem:', error)
@@ -719,6 +1027,9 @@ const exportData = () => {
 onMounted(async () => {
   console.log('🎮 Dashboard montado - iniciando carregamento...')
   
+  // ✅ CARREGAR STATUS DO MUNDO
+  await loadWorldStatus()
+  
   // Verificar se o jogo está inicializado
   gameInitialized.value = gameStore.isInitialized
   
@@ -729,16 +1040,18 @@ onMounted(async () => {
   // Verificar tarefas ativas
   await checkActiveTasks()
 
-  const devilFruit = await characterStore.loadDevilFruit(playerCharacter.value.devilFruitId)
+  if (playerCharacter.value) {
+    const devilFruit = await characterStore.loadDevilFruit(playerCharacter.value.devilFruitId)
+    playerDevilFruit.value = devilFruit
+    devilFruitLoaded.value = true
 
-  playerDevilFruit.value = devilFruit
-  devilFruitLoaded.value = true
-
-  const styleCombat = await characterStore.loadStyleCombat(playerCharacter.value.styleCombatId)
-
-  playerStyleCombat.value = styleCombat
-  styleCombatLoaded.value = true
-
+    const styleCombat = await characterStore.loadStyleCombat(playerCharacter.value.styleCombatId)
+    playerStyleCombat.value = styleCombat
+    styleCombatLoaded.value = true
+  } else {
+    devilFruitLoaded.value = true
+    styleCombatLoaded.value = true
+  }
 })
 </script>
 
@@ -754,6 +1067,40 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ✅ ESTILOS PARA CONTROLE DO MUNDO */
+.world-control-panel {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(25, 118, 210, 0.2);
+}
+
+.status-compact {
+  display: flex;
+  align-items: center;
+}
+
+.world-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .d-flex.align-center.justify-space-between {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .world-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .world-actions .v-btn {
+    flex: 1;
+  }
 }
 
 .loading-steps {

@@ -170,6 +170,11 @@ const menuItems = [
     title: 'Aventuras', 
     icon: 'mdi-map', 
     route: '/adventure' 
+  },
+  { 
+    title: 'Liberação de ilhas', 
+    icon: 'mdi-sword-cross', 
+    route: '/territory-liberation' 
   },{ 
     title: 'Navegação', 
     icon: 'mdi-compass', 

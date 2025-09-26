@@ -35,7 +35,7 @@ export class GenerationConfig {
     totalGovernment: 300,
     totalBountyHunter: 500,
     totalCivillians: 2000,
-    devilFruitDistributionRate: 0.001, // 0.1%
+    devilFruitDistributionRate: 0.0005, // 0.05%
     yonkouCount: 4,
     schichibukai: 7,
     admiralCount: 3,
