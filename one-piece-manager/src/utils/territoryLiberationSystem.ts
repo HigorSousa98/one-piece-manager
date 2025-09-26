@@ -537,7 +537,7 @@ export class TerritoryLiberationSystem {
 
       const completedSteps = completedTasks.length
       const currentStep = completedSteps + 1
-      const canStart = !isLiberated && currentStep <= island.difficulty && !hasActiveTask
+      const canStart = !isLiberated && currentStep <= island.difficulty && hasActiveTask.length == 0
 
       return {
         currentStep,
