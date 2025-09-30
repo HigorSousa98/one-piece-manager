@@ -206,11 +206,16 @@ export class RecruitmentSystem {
       const crews = await db.crews.toArray()
       const characters = await db.characters.toArray()
       const actualCrew = crews.find(crew => crew.captainId === target.id);
+      const allDevilFruits = await db.devilFruits.toArray()
 
       if(actualCrew){
         const characterOnCrew = characters.filter(char => char.crewId === actualCrew.id && char.id != target.id)
         if(characterOnCrew && characterOnCrew.length>0){
-          characterOnCrew.sort((a, b) => GameLogic.calculatePower(b) - GameLogic.calculatePower(a))
+          characterOnCrew.sort((a, b) => {
+            let aDF = allDevilFruits.find(df => df.id === a.devilFruitId)
+            let bDF = allDevilFruits.find(df => df.id === b.devilFruitId)
+            return GameLogic.calculatePower(b, bDF) - GameLogic.calculatePower(a, aDF)
+          })
           await db.crews.update(actualCrew.id!, {
             captainId: characterOnCrew[0].id
           });

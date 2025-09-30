@@ -508,6 +508,7 @@ export class AdventureSystem {
     try {
 
       const battleStore = useBattleStore();
+      const allDevilFruits = await db.devilFruits.toArray()
 
       // Buscar capitães dos crews
       const [captain1, captain2] = await Promise.all([
@@ -523,8 +524,8 @@ export class AdventureSystem {
         db.characters.where('crewId').equals(crew2.id!).toArray()
       ]);
       
-      const crew1Power = crew1Members.reduce((total, member) => total + GameLogic.calculatePower(member), 0);
-      const crew2Power = crew2Members.reduce((total, member) => total + GameLogic.calculatePower(member), 0);
+      const crew1Power = GameLogic.calculateCrewPower(crew1Members, allDevilFruits);
+      const crew2Power = GameLogic.calculateCrewPower(crew2Members, allDevilFruits);
       
       // Determinar vencedor
       const totalPower = crew1Power + crew2Power;

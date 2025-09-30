@@ -652,9 +652,9 @@ const filteredAndSortedMembers = computed(() => {
       case 'level_asc':
         return a.level - b.level
       case 'power':
-        return GameLogic.calculatePower(b) - GameLogic.calculatePower(a)
+        return GameLogic.calculatePower(b, devilFruit(b.devilFruitId)) - GameLogic.calculatePower(a, devilFruit(a.devilFruitId))
       case 'power_asc':
-        return GameLogic.calculatePower(a) - GameLogic.calculatePower(b)
+        return GameLogic.calculatePower(a, devilFruit(a.devilFruitId)) - GameLogic.calculatePower(b, devilFruit(b.devilFruitId))
       case 'bounty':
         return b.bounty - a.bounty
       case 'bounty_asc':

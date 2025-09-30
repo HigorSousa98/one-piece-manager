@@ -6,6 +6,7 @@ import { AdventureSystem } from '@/utils/adventureSystem';
 import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentSystem'
 import { db, Character, Battle, DevilFruit, StyleCombat } from '@/utils/database'
 import { useCharacterStore } from '@/stores/characterStore';
+import { GenerationConfig } from '@/utils/generationConfig';
 
 interface BattleResult {
   winner: Character;
@@ -93,7 +94,7 @@ export const useBattleStore = defineStore('battle', {
         const crewMember = char.crewId && (char.type != 'Marine' || !opponent || opponent.level / char.level > 2) ? await db.characters.where('crewId').equals(char.crewId).and(member => member.id != char.id).toArray() : null
         crewMember?.forEach(async member => {
           const memberDevilFruit = member.devilFruitId ? await db.devilFruits.get(member.devilFruitId) : null;
-          crewHelp += GameLogic.calculatePower(member, memberDevilFruit) * (0.1 + Math.random() * 0.2); // 10-30% de ajuda
+          crewHelp += GameLogic.calculatePower(member, memberDevilFruit) * GenerationConfig.createEpic().regularCrewHelp; // 10-30% de ajuda
         })
         return Math.round(crewHelp)
     },
@@ -219,7 +220,7 @@ export const useBattleStore = defineStore('battle', {
         // ✅ Processar capitão e membros em paralelo
         const [captainUpdates, memberUpdates] = await Promise.all([
           this.processCaptainUpdates(character, expGained, bountyGained, isWinner),
-          this.processCrewMemberUpdates(character, expGained, bountyGained, isWinner, (0.3 + Math.random() * 0.2))
+          this.processCrewMemberUpdates(character, expGained, bountyGained, isWinner, GenerationConfig.createEpic().regularCrewSharedGain)
         ])
 
         // ✅ Aplicar todas as atualizações em paralelo
@@ -263,7 +264,7 @@ export const useBattleStore = defineStore('battle', {
       
       const levelCheck = GameLogic.checkLevelUp(tempCharacter)
 
-      if (isWinner && levelCheck.shouldLevelUp) {
+      if (levelCheck.shouldLevelUp) {
         // ✅ Level up!
         const newLevel = levelCheck.newLevel!
         const remainingExp = newExp - levelCheck.expNeeded!

@@ -256,8 +256,9 @@ export class WorldSimulator {
     
     try {
       // Calcular poderes
-      const power1 = GameLogic.calculatePower(fighter1);
-      const power2 = GameLogic.calculatePower(fighter2);
+      const allDevilFruits = await db.devilFruits.toArray()  
+      const power1 = GameLogic.calculatePower(fighter1, allDevilFruits.find(df => df.id === fighter1.devilFruitId));
+      const power2 = GameLogic.calculatePower(fighter2, allDevilFruits.find(df => df.id === fighter2.devilFruitId));
       
       // Calcular probabilidade de vitória
       const totalPower = power1 + power2;

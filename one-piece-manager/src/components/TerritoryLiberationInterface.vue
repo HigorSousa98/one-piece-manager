@@ -574,6 +574,13 @@
                   <v-icon left>mdi-account-group</v-icon>
                   Dar à Tripulação
                 </v-btn>
+                  <v-btn
+                    color="primary"
+                    variant="elevated"
+                    @click="closeResultDialog"
+                  >
+                     'Continuar' 
+                  </v-btn>
               </v-btn-group>
             </div>
             

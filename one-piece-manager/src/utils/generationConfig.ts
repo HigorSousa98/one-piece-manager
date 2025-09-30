@@ -26,6 +26,9 @@ export interface GenerationSettings {
   dockedFactor: number
   devilFruitDropRate: number
   civillianRecruitmentChance: number
+  regularCrewHelp: number
+  regularCrewSharedGain: number
+  lossGain: number
 }
 
 export class GenerationConfig {
@@ -56,7 +59,10 @@ export class GenerationConfig {
     allowKingHakiFor: 0.7,
     dockedFactor: 0.7,
     devilFruitDropRate: 0.05,
-    civillianRecruitmentChance: 0.3
+    civillianRecruitmentChance: 0.3,
+    regularCrewHelp: 0.2,
+    regularCrewSharedGain: 0.4,
+    lossGain: 0.1
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -79,7 +85,7 @@ export class GenerationConfig {
       allowKingHakiFor: 0.5,
       dockedFactor: 0.5,
       devilFruitDropRate: 0.05,
-      civillianRecruitmentChance: 0.3
+      civillianRecruitmentChance: 0.3,
     } as GenerationSettings,
 
     // Configuração média
@@ -100,7 +106,7 @@ export class GenerationConfig {
       allowKingHakiFor: 0.6,
       dockedFactor: 0.6,
       devilFruitDropRate: 0.05,
-      civillianRecruitmentChance: 0.3
+      civillianRecruitmentChance: 0.3,
     } as GenerationSettings,
 
     // Configuração grande (padrão)
@@ -124,7 +130,7 @@ export class GenerationConfig {
       allowKingHakiFor: 0.9,
       dockedFactor: 0.8,
       devilFruitDropRate: 0.50,
-      civillianRecruitmentChance: 1
+      civillianRecruitmentChance: 1,
     } as GenerationSettings
   }
 
@@ -169,6 +175,9 @@ export class GenerationConfig {
   get dockedFactor(): number { return this.config.dockedFactor }
   get devilFruitDropRate(): number { return this.config.devilFruitDropRate }
   get civillianRecruitmentChance(): number { return this.config.civillianRecruitmentChance }
+  get regularCrewHelp(): number { return this.config.regularCrewHelp }
+  get regularCrewSharedGain(): number { return this.config.regularCrewSharedGain }
+  get lossGain(): number { return this.config.lossGain }
 
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

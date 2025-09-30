@@ -133,7 +133,7 @@ export class TerritoryLiberationSystem {
         description: `Liberando ${island.name} - Step ${currentStep}/${island.difficulty}`,
         kindnessReward: 0,
         experienceReward: this.calculateExperienceReward(currentStep, island.difficulty),
-        bountyReward: await this.calculateBountyReward(occupyingCrew.captainId, character, currentStep),
+        bountyReward: await this.calculateBountyReward(occupyingCrew.captainId, character, currentStep, island.difficulty),
         duration: duration, // 5 minutos
         helpType: 'liberation',
         difficulty: this.getDifficultyFromStep(currentStep, island.difficulty),
@@ -290,15 +290,17 @@ export class TerritoryLiberationSystem {
       const allDevilFruits = await db.devilFruits.toArray()
       const playerCrewMembers = await db.characters.where('crewId').equals(player.crewId).and(char => char.position != 'Captain').toArray()
       const opponenteCrewMembers = await db.characters.where('crewId').equals(opponent.crewId).and(char => char.position != 'Captain').toArray()
+      const playerDevilFruit = allDevilFruits.find(df => df.id == player.devilFruitId)
+      const opponentDevilFruit = allDevilFruits.find(df => df.id == opponent.devilFruitId)
 
       // Simular batalha usando lógica similar ao AdventureSystem
-      const playerPower = GameLogic.calculatePower(player)
-      const opponentPower = GameLogic.calculatePower(opponent)
+      const playerPower = GameLogic.calculatePower(player, playerDevilFruit)
+      const opponentPower = GameLogic.calculatePower(opponent, opponentDevilFruit)
       const playerCrewPower = GameLogic.calculateCrewPower(playerCrewMembers, allDevilFruits)
       const opponentCrewPower = GameLogic.calculateCrewPower(opponenteCrewMembers, allDevilFruits)
       
-      const totalPower = isLastStep ? playerPower + opponentPower : playerPower + opponentPower + playerCrewPower + opponentCrewPower
-      const playerWinChance = (isLastStep ? playerPower : playerPower + playerCrewPower) / totalPower
+      const totalPower = isLastStep ? playerPower + opponentPower : playerPower + opponentPower + (playerCrewPower + opponentCrewPower) * 1
+      const playerWinChance = (isLastStep ? playerPower : (playerPower + playerCrewPower) * 1) / totalPower
       
       // Adicionar elemento de sorte (±10%)
       const luck = (Math.random() * 0.2) - 0.1
@@ -316,7 +318,7 @@ export class TerritoryLiberationSystem {
         // ✅ Processar capitão e membros em paralelo
         const [captainUpdates, memberUpdates] = await Promise.all([
           battleStore.processCaptainUpdates(player, expGain, bountyGain, true),
-          battleStore.processCrewMemberUpdates(player, expGain, bountyGain, true, (0.3 + Math.random() * 0.2))
+          battleStore.processCrewMemberUpdates(player, expGain, bountyGain, true, 1)
         ])
 
       // ✅ Aplicar todas as atualizações em paralelo
@@ -366,7 +368,7 @@ export class TerritoryLiberationSystem {
   }> {
     // Base rewards aumentam com o step
     const baseExp = this.calculateExperienceReward(step, maxSteps)
-    const baseBounty = await this.calculateBountyReward(captainEnemy, character, step)
+    const baseBounty = await this.calculateBountyReward(captainEnemy, character, step, maxSteps)
     const baseTreasury = 5000 + (step * 2500)
     
     // Bonus progressivo
@@ -682,14 +684,14 @@ export class TerritoryLiberationSystem {
 
   // ✅ MÉTODOS AUXILIARES
   public static calculateExperienceReward(step: number, maxSteps: number): number {
-    const baseExp = GameLogic.expNeeded(maxSteps * 3 + 1)
+    const baseExp = GameLogic.expNeeded(maxSteps * 3)
     return (1 + maxSteps) * 100  + (step * baseExp / maxSteps) + (step === maxSteps ? baseExp / maxSteps : 0) // Bonus no último step
   }
 
-  public static async calculateBountyReward(captainEnemy: number, character: Character, step: number): Promise<number> {
+  public static async calculateBountyReward(captainEnemy: number, character: Character, step: number, maxSteps: number): Promise<number> {
     const captain = await db.characters.get(captainEnemy)
     const bountySuggested = GameLogic.calculateBountyGain(character, captain)
-    return bountySuggested * step
+    return bountySuggested * step / maxSteps
   }
 
   private static getDifficultyFromStep(step: number, maxSteps: number): 'easy' | 'medium' | 'hard' {
