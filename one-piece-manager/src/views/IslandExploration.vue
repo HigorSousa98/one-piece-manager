@@ -101,7 +101,7 @@
                           :urgency-threshold="2"
                           @completed="onTaskCompleted(task.id!)"
                           @time-update="onTaskTimeUpdate(task.id!, $event)"
-                          @urgent="onTaskUrgent(task.id!)"
+                          @urgent="onTaskUrgent(task.id!, $event)"
                         />
                       </div>
                     </div>
@@ -199,7 +199,7 @@
             <v-card-text>
               <!-- DESCRIÇÃO DO ENCONTRO -->
               <v-alert 
-                :type="getEncounterAlertType(currentEncounter.urgency)"
+                :type="getEncounterAlertType(currentEncounter.urgency) as 'success' | 'error' | 'info' | 'warning'"
                 class="mb-4"
                 variant="elevated"
               >
@@ -687,16 +687,25 @@ const closeTaskResult = () => {
   taskResult.value = null
 }
 
-const handleRecruitmentSuccess = (civilian: Character, newLoyalty: number) => {
-  console.log(`🎉 Recrutamento bem-sucedido: ${civilian.name} com loyalty ${newLoyalty}`)
+const handleRecruitmentSuccess = async (civilian: Character, newLoyalty: number) => {
+  console.log(`🎉 ${civilian.name} foi recrutado com sucesso! Nova loyalty: ${newLoyalty}`)
+  
+  // Recarregar dados do personagem para refletir mudanças
+  await characterStore.loadPlayerCharacter()
+  
+  // Fechar modais
   closeRecruitmentModal()
   closeTaskResult()
 }
 
-const handleRecruitmentFailed = (civilian: Character) => {
-  console.log(`😔 Recrutamento falhou: ${civilian.name}`)
+const handleRecruitmentFailed = async (civilian: Character) => {
+  console.log(`😔 Falha ao recrutar ${civilian.name}`)
+  
+  // Fechar modal
   closeRecruitmentModal()
 }
+
+
 
 // 🎨 HELPER FUNCTIONS
 const getTaskDifficultyColor = (difficulty: string): string => {

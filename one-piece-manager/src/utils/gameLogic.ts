@@ -1,6 +1,7 @@
 // utils/gameLogic.ts
 import { Character, StyleCombat, DevilFruit, Crew } from '@/utils/database'
 import {GenerationConfig, GenerationSettings} from '@/utils/generationConfig'
+import {PowerCalculationSystem} from '@/utils/powerCalculationSystem'
 
 export class GameLogic {
   static calculateExperienceGain(winner: Character, loser: Character): number {
@@ -446,6 +447,12 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   }
 
   static calculatePower(character: Character, fruit: DevilFruit | null = null): number {
+    return PowerCalculationSystem.calculatePower(character, fruit)
+  }
+
+
+  /*
+  static calculatePower(character: Character, fruit: DevilFruit | null = null): number {
   const { attack, defense, speed, armHaki, obsHaki, kingHaki, devilFruit } = character.stats;
   
   // 1. ⚔️ PODER BASE - Combinação balanceada dos atributos físicos
@@ -486,7 +493,7 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   
   if (fruit && devilFruit > 0) {
     // Poder base da fruta baseado no nível de domínio
-    const fruitBasePower = devilFruit * 4.0;
+    const fruitBasePower = devilFruit * 10.0;
     
     // Multiplicador baseado na raridade da fruta
     const rarityMultiplier = 1.0 + (fruit.rarity * 0.4); // 40% por nível de raridade
@@ -495,7 +502,7 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
     let typeMultiplier = 1.0;
     switch (fruit.type) {
       case 'Logia':
-        typeMultiplier = 1.8; // Logias são naturalmente mais poderosas
+        typeMultiplier = 1.5; // Logias são naturalmente mais poderosas
         break;
       case 'Zoan':
         typeMultiplier = 1.2; // Zoans aumentam físico
@@ -518,12 +525,12 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
     devilFruitPower += fruitBasePower * rarityMultiplier * typeMultiplier * awakeningMultiplier;
     
     // Multiplicador geral para usuários de Devil Fruit
-    devilFruitMultiplier = 1.0 + (devilFruit * 0.1);
+    devilFruitMultiplier = 1.0 //+ (devilFruit * 0.2);
   }
   
   // 4. 📈 SISTEMA DE LEVEL E EXPERIÊNCIA
   const levelPower = character.level * 15; // Base por level
-  const levelMultiplier = 1.0 + (character.level * 0.05); // 5% por level
+  const levelMultiplier = 1.0 + (character.level * 0.01); // 1% por level
   
   // Bonus para levels altos (veteranos)
   let veteranBonus = 0;
@@ -565,18 +572,18 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   // 7. 🏴‍☠️ BONUS POR POSIÇÃO E TIPO
   let positionMultiplier = 1.0;
   
-  /*switch (character.position) {
+  switch (character.position) {
     case 'Captain':
       positionMultiplier = 1.3; // Líderes são mais fortes
       break;
     case 'First Mate':
       positionMultiplier = 1.2;
       break;
-  }*/
+  }
   
   // Bonus por tipo de personagem
   let typeMultiplier = 1.0;
-  /*switch (character.type) {
+  switch (character.type) {
     case 'Government':
       typeMultiplier = 1.15; // Governo tem recursos superiores
       break;
@@ -586,7 +593,7 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
     case 'Pirate':
       typeMultiplier = 1.05; // Piratas têm experiência de combate
       break;
-  }*/
+  }
   
   
   // 8. 🎲 FATOR IMPREVISIBILIDADE (baseado em kindness)
@@ -613,12 +620,12 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   totalPower *= unpredictabilityFactor;
   
   // 10. 🏆 SISTEMA DE BOUNTY INFLUENCE (personagens famosos são mais perigosos)
-  const bountyInfluence = Math.pow(2, Math.log10(character.bounty + 1)) * (1 + Math.random()) * 5;; // Influência logarítmica do bounty
+  const bountyInfluence = Math.pow(2, Math.log10(character.bounty + 1)); // Influência logarítmica do bounty
   totalPower += bountyInfluence;
   
   // Garantir que o poder mínimo seja 1
   return Math.max(1, Math.ceil(totalPower));
-}
+}*/
 
 // 🎯 Função auxiliar para calcular "rating" do personagem
 static getCharacterRating(character: Character, fruit: DevilFruit | null = null): string {

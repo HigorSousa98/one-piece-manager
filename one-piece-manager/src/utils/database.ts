@@ -1,6 +1,64 @@
 // src/utils/database.ts
 import Dexie, { Table } from 'dexie'
 
+// ✅ DEFINIR CONSTRAINTS DE RANGE
+export const FIELD_CONSTRAINTS = {
+  character: {
+    kindness: { min: -100, max: 100 },
+    loyalty: { min: -100, max: 100 },
+    level: { min: 1, max: 200 },
+    experience: { min: 0, max: Number.MAX_SAFE_INTEGER },
+    bounty: { min: 0, max: Number.MAX_SAFE_INTEGER },
+    potentialToHaveKngHaki: {min: 0, max:1}
+  },
+  devilFruit: {
+    rarity: { min: 0, max: 1 } // 0 = comum, 1 = raro
+  },
+  crew: {
+    reputation: { min: 0, max: Number.MAX_SAFE_INTEGER },
+    treasury: { min: 0, max: Number.MAX_SAFE_INTEGER }
+  },
+  island: {
+    difficulty: { min: 1, max: 30 }
+  }
+} as const
+
+// ✅ FUNÇÃO PARA VALIDAR CONSTRAINTS
+function validateConstraints(tableName: string, data: any): void {
+  const constraints = FIELD_CONSTRAINTS[tableName as keyof typeof FIELD_CONSTRAINTS]
+  
+  if (!constraints) return
+  
+  for (const [field, range] of Object.entries(constraints)) {
+    if (data[field] !== undefined && data[field] !== null) {
+      const value = data[field]
+      const { min, max } = range
+      
+      if (value < min || value > max) {
+        throw new Error(`Campo '${field}' deve estar entre ${min} e ${max}. Valor fornecido: ${value}`)
+      }
+    }
+  }
+}
+
+// ✅ FUNÇÃO PARA APLICAR CONSTRAINTS (CLAMP)
+function applyConstraints(tableName: string, data: any): any {
+  const constraints = FIELD_CONSTRAINTS[tableName as keyof typeof FIELD_CONSTRAINTS]
+  
+  if (!constraints) return data
+  
+  const clampedData = { ...data }
+  
+  for (const [field, range] of Object.entries(constraints)) {
+    if (clampedData[field] !== undefined && clampedData[field] !== null) {
+      const { min, max } = range
+      clampedData[field] = Math.min(max, Math.max(min, clampedData[field]))
+    }
+  }
+  
+  return clampedData
+}
+
 export interface Character {
   id?: number
   name: string
@@ -214,6 +272,85 @@ class OnePieceGameDB extends Dexie {
       gameState: '++id, key',
       islands: '++id, name, difficulty',
       tasks: '++id, characterId, targetId, startTime, endTime, isCompleted, type, helpType, crewId' 
+    })
+
+// Hook para CREATE (add)
+    this.characters.hook('creating', (primKey, obj, trans) => {
+      applyConstraintsToCharacter(obj)
+    })
+    
+    // Hook para UPDATE
+    this.characters.hook('updating', (modifications, primKey, obj, trans) => {
+      applyConstraintsToCharacter(modifications)
+    })
+    
+    // Hook para CREWS
+    this.crews.hook('creating', (primKey, obj, trans) => {
+      const clampedData = applyConstraints('crew', obj)
+      Object.assign(obj, clampedData)
+    })
+    
+    this.crews.hook('updating', (modifications, primKey, obj, trans) => {
+      const clampedData = applyConstraints('crew', modifications)
+      Object.assign(modifications, clampedData)
+    })
+    
+    // Hook para ISLANDS
+    this.islands.hook('creating', (primKey, obj, trans) => {
+      const clampedData = applyConstraints('island', obj)
+      Object.assign(obj, clampedData)
+    })
+    
+    this.islands.hook('updating', (modifications, primKey, obj, trans) => {
+      const clampedData = applyConstraints('island', modifications)
+      Object.assign(modifications, clampedData)
+    })
+    
+    // Hook para DEVIL FRUITS
+    this.devilFruits.hook('creating', (primKey, obj, trans) => {
+      const clampedData = applyConstraints('devilFruit', obj)
+      Object.assign(obj, clampedData)
+    })
+    
+    this.devilFruits.hook('updating', (modifications, primKey, obj, trans) => {
+      const clampedData = applyConstraints('devilFruit', modifications)
+      Object.assign(modifications, clampedData)
+    })
+  }
+}
+
+// ✅ FUNÇÃO ESPECÍFICA PARA CHARACTER (mais detalhada)
+function applyConstraintsToCharacter(data: Partial<Character>): void {
+  if (data.kindness !== undefined) {
+    data.kindness = Math.min(100, Math.max(-100, data.kindness))
+  }
+  
+  if (data.loyalty !== undefined) {
+    data.loyalty = Math.min(100, Math.max(-100, data.loyalty))
+  }
+  
+  if (data.level !== undefined) {
+    data.level = Math.min(999, Math.max(1, data.level))
+  }
+  
+  if (data.experience !== undefined) {
+    data.experience = Math.max(0, data.experience)
+  }
+  
+  if (data.bounty !== undefined) {
+    data.bounty = Math.max(0, data.bounty)
+  }
+  if (data.potentialToHaveKngHaki !== undefined) {
+    data.potentialToHaveKngHaki = Math.min(1, Math.max(0, data.potentialToHaveKngHaki))
+  }
+  
+  // Validar stats se existir
+  if (data.stats) {
+    const stats = data.stats
+    Object.keys(stats).forEach(statKey => {
+      if (stats[statKey as keyof typeof stats] !== undefined) {
+        stats[statKey as keyof typeof stats] = Math.min(9999, Math.max(0, stats[statKey as keyof typeof stats]))
+      }
     })
   }
 }

@@ -2,6 +2,7 @@
 
 import { db, type Character, type Task } from './database'
 import { GameLogic } from './gameLogic';
+import {GenerationConfig} from '@/utils/generationConfig'
 
 export interface CivilianEncounter {
   civilian: Character;
@@ -509,7 +510,7 @@ export class IslandExplorationSystem {
       const canRecruit = (civilian && 
                         character.kindness >= 0 && // Só kindness positivo
                         !civilian.crewId && // Civil não está em crew
-                        Math.random() < 0.3) || false; // 30% de chance
+                        Math.random() < GenerationConfig.createEpic().civillianRecruitmentChance) || false; 
       
       console.log(`✅ ${character.name} completou tarefa: ${task.description}`);
       console.log(`🎁 Recompensas: +${task.experienceReward} EXP, +${task.kindnessReward} Kindness`);

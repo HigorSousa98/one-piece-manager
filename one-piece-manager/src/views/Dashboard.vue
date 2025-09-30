@@ -882,7 +882,7 @@ const closeResultDialog = () => {
 
 // 🎮 METHODS
 const calculatePower = (character: Character): number => {
-  return GameLogic.calculatePower(character)
+  return GameLogic.calculatePower(character, playerDevilFruit.value)
 }
 
 const calculateBasePower = (character: Character): number => {

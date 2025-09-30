@@ -37,7 +37,7 @@
                       {{ liberationProgress.isLiberated ? 'LIBERADA' : 'OCUPADA' }}
                     </div>
                     <div class="text-caption">
-                      {{ liberationProgress.isLiberated ? 'Esta ilha está livre' : 'Controlada por tiranos  ' }}
+                      {{ liberationProgress.isLiberated ? 'Esta ilha está livre' : 'Controlada por tiranos' }}
                     </div>
                   </v-card-text>
                 </v-card>
@@ -58,100 +58,100 @@
             
             <!-- CREW OCUPANTE -->
             <div v-if="!liberationProgress.isLiberated && liberationProgress.occupyingCrew" class="mb-4">
-            <v-card variant="outlined" :color="getCrewCardColor(liberationProgress.occupyingCrew.type)">
+              <v-card variant="outlined" :color="getCrewCardColor(liberationProgress.occupyingCrew.type)">
                 <v-card-title :class="getCrewTitleClass(liberationProgress.occupyingCrew.type)">
-                <v-icon left :color="getCrewIconColor(liberationProgress.occupyingCrew.type)">
+                  <v-icon left :color="getCrewIconColor(liberationProgress.occupyingCrew.type)">
                     {{ getCrewIcon(liberationProgress.occupyingCrew.type) }}
-                </v-icon>
-                {{ getCrewTypeLabel(liberationProgress.occupyingCrew.type) }} Ocupante
+                  </v-icon>
+                  {{ getCrewTypeLabel(liberationProgress.occupyingCrew.type) }} Ocupante
                 </v-card-title>
                 
                 <v-card-text class="pa-4">
-                <div class="d-flex align-center mb-3">
+                  <div class="d-flex align-center mb-3">
                     <v-avatar 
-                    size="60" 
-                    :color="getCrewAvatarColor(liberationProgress.occupyingCrew.type)" 
-                    class="mr-4"
+                      size="60" 
+                      :color="getCrewAvatarColor(liberationProgress.occupyingCrew.type)" 
+                      class="mr-4"
                     >
-                    <span class="text-h5">{{ getCrewEmoji(liberationProgress.occupyingCrew.type) }}</span>
+                      <span class="text-h5">{{ getCrewEmoji(liberationProgress.occupyingCrew.type) }}</span>
                     </v-avatar>
                     
                     <div class="flex-grow-1">
-                    <div class="text-h6 mb-1" :class="getCrewNameClass(liberationProgress.occupyingCrew.type)">
+                      <div class="text-h6 mb-1" :class="getCrewNameClass(liberationProgress.occupyingCrew.type)">
                         {{ liberationProgress.occupyingCrew.name }}
-                    </div>
-                    
-                    <div class="crew-details">
+                      </div>
+                      
+                      <div class="crew-details">
                         <v-chip 
-                        :color="getCrewChipColor(liberationProgress.occupyingCrew.type)" 
-                        size="small" 
-                        variant="tonal"
-                        class="mr-2 mb-1"
+                          :color="getCrewChipColor(liberationProgress.occupyingCrew.type)" 
+                          size="small" 
+                          variant="tonal"
+                          class="mr-2 mb-1"
                         >
-                        <v-icon left size="small">{{ getCrewTypeIcon(liberationProgress.occupyingCrew.type) }}</v-icon>
-                        {{ liberationProgress.occupyingCrew.type }}
+                          <v-icon left size="small">{{ getCrewTypeIcon(liberationProgress.occupyingCrew.type) }}</v-icon>
+                          {{ liberationProgress.occupyingCrew.type }}
                         </v-chip>
                         
                         <v-chip 
-                        color="amber-darken-2" 
-                        size="small" 
-                        variant="tonal"
-                        class="mr-2 mb-1"
+                          color="amber-darken-2" 
+                          size="small" 
+                          variant="tonal"
+                          class="mr-2 mb-1"
                         >
-                        <v-icon left size="small">mdi-star</v-icon>
-                        {{ formatReputation(liberationProgress.occupyingCrew.reputation) }}
+                          <v-icon left size="small">mdi-star</v-icon>
+                          {{ formatReputation(liberationProgress.occupyingCrew.reputation) }}
                         </v-chip>
                         
                         <v-chip 
-                        color="green-darken-2" 
-                        size="small" 
-                        variant="tonal"
-                        class="mb-1"
+                          color="green-darken-2" 
+                          size="small" 
+                          variant="tonal"
+                          class="mb-1"
                         >
-                        <v-icon left size="small">mdi-treasure-chest</v-icon>
-                        {{ formatTreasury(liberationProgress.occupyingCrew.treasury) }}
+                          <v-icon left size="small">mdi-treasure-chest</v-icon>
+                          {{ formatTreasury(liberationProgress.occupyingCrew.treasury) }}
                         </v-chip>
+                      </div>
                     </div>
-                    </div>
-                </div>
-                
-                <!-- BARRA DE PODER/AMEAÇA -->
-                <div class="threat-level mb-3">
+                  </div>
+                  
+                  <!-- BARRA DE PODER/AMEAÇA -->
+                  <div class="threat-level mb-3">
                     <div class="d-flex justify-space-between mb-2">
-                    <span class="text-body-2 text-black" ><strong>Nível de Ameaça</strong></span>
-                    <span class="text-body-2">{{ getThreatLevel(liberationProgress.occupyingCrew) }}</span>
+                      <span class="text-body-2 text-black"><strong>Nível de Ameaça</strong></span>
+                      <span class="text-body-2">{{ getThreatLevel(liberationProgress.occupyingCrew) }}</span>
                     </div>
                     
                     <v-progress-linear
-                    :model-value="getThreatPercentage(liberationProgress.occupyingCrew)"
-                    :color="getThreatColor(liberationProgress.occupyingCrew)"
-                    height="12"
-                    rounded
-                    class="mb-1"
+                      :model-value="getThreatPercentage(liberationProgress.occupyingCrew)"
+                      :color="getThreatColor(liberationProgress.occupyingCrew)"
+                      height="12"
+                      rounded
+                      class="mb-1"
                     >
-                    <template v-slot:default>
+                      <template v-slot:default>
                         <strong class="text-white text-caption">
-                        {{ getThreatLevel(liberationProgress.occupyingCrew) }}
+                          {{ getThreatLevel(liberationProgress.occupyingCrew) }}
                         </strong>
-                    </template>
+                      </template>
                     </v-progress-linear>
-                </div>
-                
-                <!-- DESCRIÇÃO DINÂMICA -->
-                <v-alert 
+                  </div>
+                  
+                  <!-- DESCRIÇÃO DINÂMICA -->
+                  <v-alert 
                     :type="getCrewAlertType(liberationProgress.occupyingCrew.type)" 
                     variant="tonal" 
                     class="mb-0"
-                >
+                  >
                     <div class="text-body-2">
-                    <strong>{{ getCrewDescription(liberationProgress.occupyingCrew) }}</strong>
+                      <strong>{{ getCrewDescription(liberationProgress.occupyingCrew) }}</strong>
                     </div>
                     <div class="text-caption mt-1">
-                    {{ getCrewWarning(liberationProgress.occupyingCrew) }}
+                      {{ getCrewWarning(liberationProgress.occupyingCrew) }}
                     </div>
-                </v-alert>
+                  </v-alert>
                 </v-card-text>
-            </v-card>
+              </v-card>
             </div>
             
           </div>
@@ -242,96 +242,96 @@
         </v-card-text>
       </v-card>
       
-      <!-- TASK ATIVA DINAMICA -->
+      <!-- TASK ATIVA DINÂMICA -->
       <v-card v-if="activeTask" class="mb-4" variant="elevated">
-    <v-card-title class="bg-purple-darken-1 text-white">
-      <v-icon left color="white">{{ taskDisplayInfo?.statusIcon || 'mdi-timer-sand' }}</v-icon>
-      Missão em Andamento
-      
-      <v-spacer></v-spacer>
-      <v-chip 
-        :color="taskStatus === 'completed' ? 'success' : 'white'" 
-        :text-color="taskStatus === 'completed' ? 'white' : 'purple-darken-1'"
-        size="small"
-        variant="elevated"
-      >
-        {{ taskStatus === 'completed' ? 'Concluída!' : 'Em Andamento' }}
-      </v-chip>
-    </v-card-title>
-    
-    <v-card-text class="pa-4">
-      <div class="active-task-info">
-        
-        <!-- INFORMAÇÕES DA TASK -->
-        <div class="task-details mb-4">
-          <div class="text-h6 mb-2">{{ activeTask.description }}</div>
-          <div class="text-body-2 mb-3">
-            <strong>Step:</strong> {{ activeTask.step }} de {{ liberationProgress.maxSteps }}
-          </div>
-        </div>
-        
-        <!-- ✅ PROGRESS BAR DINÂMICA USANDO SEU COMPOSABLE -->
-        <div class="task-progress mb-4">
-          <div class="d-flex justify-space-between mb-2">
-            <span class="text-body-1"><strong>Progresso da Missão</strong></span>
-            <span class="text-body-2">{{ Math.round(taskProgress.progress) }}%</span>
-          </div>
+        <v-card-title class="bg-purple-darken-1 text-white">
+          <v-icon left color="white">{{ taskDisplayInfo?.statusIcon || 'mdi-timer-sand' }}</v-icon>
+          Missão em Andamento
           
-          <v-progress-linear
-            :model-value="taskProgress.progress"
-            :color="progressColor"
-            height="20"
-            rounded
-            class="mb-2"
-            :striped="taskStatus === 'running'"
-            :indeterminate="taskStatus === 'pending'"
-          >
-            <template v-slot:default>
-              <strong class="text-white">{{ Math.round(taskProgress.progress) }}%</strong>
-            </template>
-          </v-progress-linear>
-          
-          <!-- ✅ INFORMAÇÕES DE TEMPO USANDO SEU COMPOSABLE -->
-          <div class="time-info d-flex justify-space-between">
-            <div class="text-caption">
-              <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
-              {{ taskProgress.formattedTimeRemaining }}
-            </div>
-            <div class="text-caption">
-              <v-icon size="small" class="mr-1">mdi-timer</v-icon>
-              {{ taskProgress.formattedElapsedTime }} / {{ taskProgress.formattedTotalTime }}
-            </div>
-          </div>
-        </div>
-        
-        <!-- AÇÕES DA TASK -->
-        <div class="task-actions text-center">
-          <v-btn
-            v-if="taskStatus === 'completed'"
-            color="success"
-            size="large"
+          <v-spacer></v-spacer>
+          <v-chip 
+            :color="taskStatus === 'completed' ? 'success' : 'white'" 
+            :text-color="taskStatus === 'completed' ? 'white' : 'purple-darken-1'"
+            size="small"
             variant="elevated"
-            :loading="isProcessing"
-            @click="processCompletedTask"
           >
-            <v-icon left>mdi-check-circle</v-icon>
-            Processar Resultado
-          </v-btn>
-          
-          <v-btn
-            v-if="taskStatus !== 'completed'"
-            color="error"
-            variant="outlined"
-            @click="showCancelDialog = true"
-          >
-            <v-icon left>mdi-close</v-icon>
-            Cancelar Missão
-          </v-btn>
-        </div>
+            {{ taskStatus === 'completed' ? 'Concluída!' : 'Em Andamento' }}
+          </v-chip>
+        </v-card-title>
         
-      </div>
-    </v-card-text>
-  </v-card>
+        <v-card-text class="pa-4">
+          <div class="active-task-info">
+            
+            <!-- INFORMAÇÕES DA TASK -->
+            <div class="task-details mb-4">
+              <div class="text-h6 mb-2">{{ activeTask.description }}</div>
+              <div class="text-body-2 mb-3">
+                <strong>Step:</strong> {{ activeTask.step }} de {{ liberationProgress.maxSteps }}
+              </div>
+            </div>
+            
+            <!-- PROGRESS BAR DINÂMICA -->
+            <div class="task-progress mb-4">
+              <div class="d-flex justify-space-between mb-2">
+                <span class="text-body-1"><strong>Progresso da Missão</strong></span>
+                <span class="text-body-2">{{ Math.round(taskProgress.progress) }}%</span>
+              </div>
+              
+              <v-progress-linear
+                :model-value="taskProgress.progress"
+                :color="progressColor"
+                height="20"
+                rounded
+                class="mb-2"
+                :striped="taskStatus === 'running'"
+                :indeterminate="taskStatus === 'pending'"
+              >
+                <template v-slot:default>
+                  <strong :class="Math.round(taskProgress.progress) >= 52 ? 'text-white' : 'text-black'">{{ Math.round(taskProgress.progress) }}%</strong>
+                </template>
+              </v-progress-linear>
+              
+              <!-- INFORMAÇÕES DE TEMPO -->
+              <div class="time-info d-flex justify-space-between">
+                <div class="text-caption">
+                  <v-icon size="small" class="mr-1">mdi-clock-outline</v-icon>
+                  {{ taskProgress.formattedTimeRemaining }}
+                </div>
+                <div class="text-caption">
+                  <v-icon size="small" class="mr-1">mdi-timer</v-icon>
+                  {{ taskProgress.formattedElapsedTime }} / {{ taskProgress.formattedTotalTime }}
+                </div>
+              </div>
+            </div>
+            
+            <!-- AÇÕES DA TASK -->
+            <div class="task-actions text-center">
+              <v-btn
+                v-if="taskStatus === 'completed'"
+                color="success"
+                size="large"
+                variant="elevated"
+                :loading="isProcessing"
+                @click="processCompletedTask"
+              >
+                <v-icon left>mdi-check-circle</v-icon>
+                Processar Resultado
+              </v-btn>
+              
+              <v-btn
+                v-if="taskStatus !== 'completed'"
+                color="error"
+                variant="outlined"
+                @click="showCancelDialog = true"
+              >
+                <v-icon left>mdi-close</v-icon>
+                Cancelar Missão
+              </v-btn>
+            </div>
+            
+          </div>
+        </v-card-text>
+      </v-card>
       
       <!-- RECOMPENSAS ESTIMADAS -->
       <v-card v-if="!liberationProgress.isLiberated && liberationProgress.canStart" class="mb-4" variant="elevated">
@@ -383,7 +383,7 @@
           <v-alert type="warning" variant="tonal" class="mt-4">
             <div class="text-body-1">
               <v-icon left>mdi-fruit-pineapple</v-icon>
-              <strong>Chance especial:</strong> 1% de chance de dropar uma Devil Fruit!
+              <strong>Chance especial:</strong> Chance de dropar uma Akuma no Mi!
             </div>
           </v-alert>
         </v-card-text>
@@ -553,7 +553,7 @@
             </v-alert>
             
             <!-- OPÇÕES PARA DEVIL FRUIT -->
-            <div class="devil-fruit-actions">
+            <div class="devil-fruit-actions" v-if="!fruitDecisionMade">
               <div class="text-body-1 mb-3">O que você deseja fazer?</div>
               <v-btn-group variant="outlined" class="d-flex">
                 <v-btn 
@@ -561,19 +561,30 @@
                   color="primary" 
                   @click="consumeDevilFruit"
                   :disabled="isProcessingFruit"
+                  :loading="isProcessingFruit && selectedAction === 'consume'"
                 >
                   <v-icon left>mdi-account</v-icon>
                   Consumir
                 </v-btn>
                 <v-btn 
                   color="secondary" 
-                  @click="giveToCrewMember"
+                  @click="showCrewMemberSelection"
                   :disabled="isProcessingFruit"
                 >
                   <v-icon left>mdi-account-group</v-icon>
                   Dar à Tripulação
                 </v-btn>
               </v-btn-group>
+            </div>
+            
+            <!-- RESULTADO DA DECISÃO -->
+            <div v-if="fruitDecisionMade" class="fruit-decision-result">
+              <v-alert type="info" variant="tonal">
+                <div class="text-body-1">
+                  <v-icon left>mdi-check-circle</v-icon>
+                  {{ fruitDecisionMessage }}
+                </div>
+              </v-alert>
             </div>
           </div>
           
@@ -593,6 +604,109 @@
       </v-card>
     </v-dialog>
     
+    <!-- MODAL DE SELEÇÃO DE MEMBRO DA TRIPULAÇÃO -->
+    <v-dialog v-model="showCrewSelection" max-width="600" persistent>
+      <v-card>
+        <v-card-title class="bg-secondary text-white">
+          <v-icon left color="white">mdi-account-group</v-icon>
+          Selecionar Membro da Tripulação
+        </v-card-title>
+        
+        <v-card-text class="pa-6">
+          <div v-if="eligibleCrewMembers.length === 0" class="text-center">
+            <v-icon size="60" color="grey" class="mb-4">mdi-account-off</v-icon>
+            <div class="text-h6 mb-2">Nenhum membro elegível</div>
+            <div class="text-body-1">
+              Todos os membros da sua tripulação já possuem Devil Fruits ou não estão disponíveis.
+            </div>
+          </div>
+          
+          <div v-else>
+            <div class="text-body-1 mb-4">
+              Selecione qual membro da tripulação deve consumir a 
+              <strong>{{ lastResult?.devilFruitDropped?.name }}</strong>:
+            </div>
+            
+            <v-list>
+              <v-list-item
+                v-for="member in eligibleCrewMembers"
+                :key="member.id"
+                @click="selectCrewMember(member)"
+                :class="{ 'selected-member': selectedCrewMember?.id === member.id }"
+                class="crew-member-item"
+              >
+                <template #prepend>
+                  <v-avatar :color="getCharacterAvatarColor(member)" size="50">
+                    <span class="text-h6">{{ getCharacterEmoji(member) }}</span>
+                  </v-avatar>
+                </template>
+                
+                <v-list-item-title>{{ member.name }}</v-list-item-title>
+                <v-list-item-subtitle>
+                  {{ member.type }} • Level {{ member.level }}
+                </v-list-item-subtitle>
+                
+                <template #append>
+                  <div class="member-stats">
+                    <v-chip color="blue" size="small" variant="tonal" class="mb-1">
+                      Loyalty: {{ member.loyalty }}
+                    </v-chip>
+                    <div class="text-caption">
+                      Sem Devil Fruit
+                    </div>
+                  </div>
+                </template>
+              </v-list-item>
+            </v-list>
+            
+            <!-- MEMBRO SELECIONADO -->
+            <div v-if="selectedCrewMember" class="selected-member-info mt-4">
+              <v-alert type="info" variant="tonal">
+                <div class="text-body-1">
+                  <v-icon left>mdi-check</v-icon>
+                  <strong>{{ selectedCrewMember.name }}</strong> foi selecionado para consumir a Devil Fruit.
+                </div>
+              </v-alert>
+            </div>
+          </div>
+        </v-card-text>
+        
+        <v-card-actions class="pa-6">
+          <v-btn
+            color="grey"
+            variant="outlined"
+            @click="closeCrewSelection"
+            :disabled="isProcessingFruit"
+          >
+            Cancelar
+          </v-btn>
+          
+          <v-spacer></v-spacer>
+          
+          <v-btn
+            v-if="eligibleCrewMembers.length > 0"
+            color="secondary"
+            variant="elevated"
+            @click="giveToSelectedMember"
+            :disabled="!selectedCrewMember || isProcessingFruit"
+            :loading="isProcessingFruit && selectedAction === 'give'"
+          >
+            <v-icon left>mdi-fruit-pineapple</v-icon>
+            Dar Devil Fruit
+          </v-btn>
+          
+          <v-btn
+            v-else
+            color="primary"
+            variant="elevated"
+            @click="closeCrewSelection"
+          >
+            Entendi
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    
   </div>
 </template>
 
@@ -600,9 +714,9 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { TerritoryLiberationSystem, type LiberationTaskResult } from '@/utils/territoryLiberationSystem'
 import { TaskMonitoringSystem } from '@/utils/taskMonitoringSystem'
-import  { db } from '@/utils/database'
+import { db } from '@/utils/database'
 import type { Island, Task, Character, Crew } from '@/utils/database'
-import { useTimeRemaining } from '@/composables/useTimeRemaining' // ✅ USAR SEU COMPOSABLE
+import { useTimeRemaining } from '@/composables/useTimeRemaining'
 import { useCharacterStore } from '@/stores/characterStore'
 
 // ✅ PROPS
@@ -621,7 +735,7 @@ interface LiberationProgressState {
   completedSteps: number
   isLiberated: boolean
   canStart: boolean
-  occupyingCrew: Crew | null // ✅ CORRIGIDO: null ao invés de undefined
+  occupyingCrew: Crew | null
 }
 
 // ✅ ESTADOS
@@ -633,8 +747,15 @@ const showCancelDialog = ref(false)
 const showResultDialog = ref(false)
 const fruitDecisionMade = ref(false)
 
+// ✅ NOVOS ESTADOS PARA SELEÇÃO DE CREW
+const showCrewSelection = ref(false)
+const eligibleCrewMembers = ref<Character[]>([])
+const selectedCrewMember = ref<Character | null>(null)
+const selectedAction = ref<'consume' | 'give' | null>(null)
+const fruitDecisionMessage = ref('')
+
 const currentIsland = ref<Island | null>(null)
-const liberationProgress = ref(<LiberationProgressState>{
+const liberationProgress = ref<LiberationProgressState>({
   currentStep: 0,
   maxSteps: 0,
   completedSteps: 0,
@@ -654,13 +775,11 @@ let monitoringInterval: NodeJS.Timeout | null = null
 // ✅ COMPUTED
 const hasActiveTask = computed(() => activeTask.value !== null)
 
-
 const estimatedRewards = computed(() => {
   if (!liberationProgress.value.canStart) {
     return { experience: 0, bounty: 0, treasury: 0 }
   }
   
-  // Calcular recompensas estimadas baseadas no step atual
   const step = liberationProgress.value.currentStep
   const maxSteps = liberationProgress.value.maxSteps
   const isLastStep = step === maxSteps
@@ -679,9 +798,7 @@ const estimatedRewards = computed(() => {
   }
 })
 
-
-
-// ✅ USAR SEU COMPOSABLE EXPANDIDO
+// ✅ USAR COMPOSABLE DE TEMPO
 const {
   getTaskProgress,
   createTaskProgressComputed,
@@ -690,7 +807,7 @@ const {
   formatDuration,
   getTaskDisplayInfo,
   watchTaskCompletion
-} = useTimeRemaining(1000) // Atualizar a cada segundo
+} = useTimeRemaining(1000)
 
 // ✅ COMPUTED REATIVO PARA PROGRESSO DA TASK
 const taskProgress = createTaskProgressComputed(activeTask)
@@ -717,11 +834,9 @@ watchTaskCompletion(
   activeTask,
   (completedTask) => {
     console.log('⏰ Task completada detectada:', completedTask.description)
-    // Opcional: processar automaticamente ou mostrar notificação
   },
   (progress) => {
-    // Opcional: callback de progresso
-    if (progress % 25 === 0) { // Log a cada 25%
+    if (progress % 25 === 0) {
       console.log(`📊 Progresso: ${Math.round(progress)}%`)
     }
   }
@@ -733,7 +848,6 @@ const loadLiberationData = async () => {
     isLoading.value = true
     currentIsland.value = props.island
     
-    // Carregar progresso de liberação
     const progress = await TerritoryLiberationSystem.getLiberationProgress(
       props.playerCharacter.id!,
       props.island.id!
@@ -745,16 +859,12 @@ const loadLiberationData = async () => {
       completedSteps: progress.completedSteps,
       isLiberated: progress.isLiberated,
       canStart: progress.canStart,
-      occupyingCrew: progress.occupyingCrew || null // ✅ Garantir que seja null se undefined
+      occupyingCrew: progress.occupyingCrew || null
     }
     
-    // Verificar se player tem Devil Fruit
     playerHasDevilFruit.value = props.playerCharacter.devilFruitId !== 0
     
-    // Carregar task ativa se houver
     await loadActiveTask()
-    
-    // Carregar histórico de steps
     await loadCompletedSteps()
     
     console.log('📊 Dados de liberação carregados:', progress)
@@ -782,7 +892,6 @@ const loadActiveTask = async () => {
 
 const loadCompletedSteps = async () => {
   try {
-    // Buscar todas as tasks de liberação para esta ilha
     const tasks = await db.tasks
       .where('characterId')
       .equals(props.playerCharacter.id!)
@@ -815,7 +924,6 @@ const startLiberationStep = async () => {
       console.log('✅ Step iniciado com sucesso')
     } else {
       console.error('❌ Erro ao iniciar step:', result.message)
-      // Mostrar erro para o usuário
     }
     
   } catch (error) {
@@ -836,10 +944,8 @@ const processCompletedTask = async () => {
     lastResult.value = result
     showResultDialog.value = true
     
-    // Limpar task ativa
     activeTask.value = null
     
-    // Recarregar dados
     await loadLiberationData()
     await characterStore.loadPlayerCharacter()
     
@@ -854,7 +960,6 @@ const cancelTask = async () => {
   try {
     if (!activeTask.value) return
     
-    // Remover task do banco
     await db.tasks.delete(activeTask.value.id!)
     
     activeTask.value = null
@@ -871,6 +976,7 @@ const consumeDevilFruit = async () => {
   try {
     if (!lastResult.value?.devilFruitDropped) return
     
+    selectedAction.value = 'consume'
     isProcessingFruit.value = true
     
     const result = await TerritoryLiberationSystem.consumeDevilFruit(
@@ -881,32 +987,123 @@ const consumeDevilFruit = async () => {
     if (result.success) {
       fruitDecisionMade.value = true
       playerHasDevilFruit.value = true
+      fruitDecisionMessage.value = `Você consumiu a ${lastResult.value.devilFruitDropped.name} e ganhou novos poderes!`
+      
+      await characterStore.loadPlayerCharacter()
+      
       console.log('🍎 Devil Fruit consumida com sucesso')
+    } else {
+      console.error('❌ Erro ao consumir Devil Fruit:', result.message)
     }
     
   } catch (error) {
     console.error('❌ Erro ao consumir Devil Fruit:', error)
   } finally {
     isProcessingFruit.value = false
+    selectedAction.value = null
   }
 }
 
-const giveToCrewMember = async () => {
+const showCrewMemberSelection = async () => {
   try {
-    // Implementar lógica para dar Devil Fruit à tripulação
-    // Por enquanto, apenas marcar como decidido
-    fruitDecisionMade.value = true
-    console.log('👥 Devil Fruit dada à tripulação')
+    await loadEligibleCrewMembers()
+    showCrewSelection.value = true
+  } catch (error) {
+    console.error('❌ Erro ao carregar membros da tripulação:', error)
+  }
+}
+
+const loadEligibleCrewMembers = async () => {
+  try {
+    const crewMembers = await db.characters
+      .where('crewId')
+      .equals(props.playerCharacter.crewId!)
+      .and(char => 
+        char.id !== props.playerCharacter.id && 
+        char.devilFruitId === 0
+      )
+      .toArray()
+    
+    eligibleCrewMembers.value = crewMembers.sort((a, b) => a.loyalty - b.loyalty)
+    
+    console.log('👥 Membros elegíveis carregados:', eligibleCrewMembers.value.length)
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar membros elegíveis:', error)
+    eligibleCrewMembers.value = []
+  }
+}
+
+const selectCrewMember = (member: Character) => {
+  selectedCrewMember.value = member
+  console.log('👤 Membro selecionado:', member.name)
+}
+
+const giveToSelectedMember = async () => {
+  try {
+    if (!selectedCrewMember.value || !lastResult.value?.devilFruitDropped) return
+    
+    selectedAction.value = 'give'
+    isProcessingFruit.value = true
+    
+    const result = await TerritoryLiberationSystem.giveDevilFruitToCrewMember(
+      selectedCrewMember.value.id!,
+      lastResult.value.devilFruitDropped.id!
+    )
+    
+    if (result.success) {
+      fruitDecisionMade.value = true
+      fruitDecisionMessage.value = `${selectedCrewMember.value.name} consumiu a ${lastResult.value.devilFruitDropped.name} e ganhou novos poderes!`
+      
+      await characterStore.loadPlayerCharacter()
+      
+      console.log(`🍎 Devil Fruit dada para ${selectedCrewMember.value.name}`)
+    } else {
+      console.error('❌ Erro ao dar Devil Fruit:', result.message)
+    }
+    
+    closeCrewSelection()
     
   } catch (error) {
     console.error('❌ Erro ao dar Devil Fruit:', error)
+  } finally {
+    isProcessingFruit.value = false
+    selectedAction.value = null
   }
+}
+
+const closeCrewSelection = () => {
+  showCrewSelection.value = false
+  selectedCrewMember.value = null
+  eligibleCrewMembers.value = []
 }
 
 const closeResultDialog = () => {
   showResultDialog.value = false
   lastResult.value = null
   fruitDecisionMade.value = false
+  fruitDecisionMessage.value = ''
+  selectedCrewMember.value = null
+  eligibleCrewMembers.value = []
+}
+
+// ✅ MÉTODOS AUXILIARES PARA CREW MEMBERS
+const getCharacterAvatarColor = (character: Character): string => {
+  switch (character.type) {
+    case 'Pirate': return 'red-darken-2'
+    case 'Marine': return 'blue-darken-2'
+    case 'Civillian': return 'green-darken-2'
+    default: return 'grey-darken-2'
+  }
+}
+
+const getCharacterEmoji = (character: Character): string => {
+  switch (character.type) {
+    case 'Pirate': return '🏴‍☠️'
+    case 'Marine': return '⚓'
+    case 'Civillian': return '👤'
+    default: return '❓'
+  }
 }
 
 // ✅ MÉTODOS AUXILIARES
@@ -939,33 +1136,7 @@ const formatDate = (date: Date): string => {
   return new Date(date).toLocaleString('pt-BR')
 }
 
-// ✅ LIFECYCLE
-onMounted(async () => {
-  await loadLiberationData()
-  
-  // Iniciar monitoramento de tasks
-  monitoringInterval = setInterval(async () => {
-    if (activeTask.value) {
-      const progress = taskProgress.value
-      if (progress.isCompleted) {
-        // Task completada, recarregar
-        await loadActiveTask()
-      }
-    }
-  }, 1000) // Verificar a cada segundo
-})
-
-onUnmounted(() => {
-  if (monitoringInterval) {
-    clearInterval(monitoringInterval)
-  }
-})
-
-// ✅ WATCH PARA MUDANÇAS NA ILHA
-watch(() => props.island.id, async () => {
-  await loadLiberationData()
-})
-
+// ✅ MÉTODOS PARA CREW OCUPANTE
 const getCrewCardColor = (type: string): string => {
   switch (type) {
     case 'Pirate': return 'red-lighten-5'
@@ -1089,7 +1260,7 @@ const getThreatLevel = (crew: Crew): string => {
 
 const getThreatPercentage = (crew: Crew): number => {
   const reputation = crew.reputation || 0
-  const maxReputation = 15000 // Valor máximo para cálculo
+  const maxReputation = 15000
   
   return Math.min(100, (reputation / maxReputation) * 100)
 }
@@ -1138,7 +1309,6 @@ const getCrewDescription = (crew: Crew): string => {
 
 const getCrewWarning = (crew: Crew): string => {
   const reputation = crew.reputation || 0
-  const type = crew.type
   
   if (reputation >= 10000) {
     return 'CUIDADO: Este é um crew extremamente perigoso. Prepare-se adequadamente!'
@@ -1173,6 +1343,31 @@ const formatTreasury = (treasury: number): string => {
   }
   return `${treasury} B$`
 }
+
+// ✅ LIFECYCLE
+onMounted(async () => {
+  await loadLiberationData()
+  
+  monitoringInterval = setInterval(async () => {
+    if (activeTask.value) {
+      const progress = taskProgress.value
+      if (progress.isCompleted) {
+        await loadActiveTask()
+      }
+    }
+  }, 1000)
+})
+
+onUnmounted(() => {
+  if (monitoringInterval) {
+    clearInterval(monitoringInterval)
+  }
+})
+
+// ✅ WATCH PARA MUDANÇAS NA ILHA
+watch(() => props.island.id, async () => {
+  await loadLiberationData()
+})
 </script>
 
 <style scoped>
@@ -1243,6 +1438,56 @@ const formatTreasury = (treasury: number): string => {
   flex: 1;
 }
 
+.crew-member-item {
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.crew-member-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.crew-member-item.selected-member {
+  background-color: rgba(98, 0, 238, 0.1);
+  border: 2px solid rgba(98, 0, 238, 0.3);
+}
+
+.member-stats {
+  text-align: right;
+}
+
+.selected-member-info {
+  background: rgba(33, 150, 243, 0.05);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.fruit-decision-result {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.crew-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.threat-level {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.time-info {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
 .v-card {
   transition: all 0.3s ease;
 }
@@ -1250,6 +1495,11 @@ const formatTreasury = (treasury: number): string => {
 .v-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 768px) {
@@ -1267,36 +1517,6 @@ const formatTreasury = (treasury: number): string => {
   }
 
   .crew-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.threat-level {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.crew-card-pirate {
-  border-left: 4px solid #c62828;
-}
-
-.crew-card-marine {
-  border-left: 4px solid #1565c0;
-}
-
-.crew-card-government {
-  border-left: 4px solid #ef6c00;
-}
-
-.crew-card-bounty-hunter {
-  border-left: 4px solid #2e7d32;
-}
-
-@media (max-width: 768px) {
-  .crew-details {
     flex-direction: column;
     align-items: flex-start;
   }
@@ -1304,6 +1524,5 @@ const formatTreasury = (treasury: number): string => {
   .crew-details .v-chip {
     margin-bottom: 4px;
   }
-}
 }
 </style>

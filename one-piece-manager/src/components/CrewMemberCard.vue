@@ -106,14 +106,16 @@
 
 <script setup lang="ts">
 import { GameLogic } from '@/utils/gameLogic'
-import type { Character } from '@/utils/database'
+import type { Character, DevilFruit } from '@/utils/database'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 
 interface Props {
   member: Character
   isCaptain: boolean
-  style: string
+  style: string,
+  devilFruit: DevilFruit
 }
+
 
 const props = defineProps<Props>()
 defineEmits<{
@@ -122,7 +124,7 @@ defineEmits<{
 
 // �� METHODS
 const calculatePower = (character: Character): number => {
-  return GameLogic.calculatePower(character)
+  return GameLogic.calculatePower(character, props.devilFruit)
 }
 
 const formatBounty = (bounty: number): string => {

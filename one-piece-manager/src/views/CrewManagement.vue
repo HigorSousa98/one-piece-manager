@@ -263,6 +263,7 @@
                 :member="playerCharacter" 
                 :is-captain="true"
                 :style="styleCombat(playerCharacter.styleCombatId)"
+                :devil-fruit="devilFruit(playerCharacter.devilFruitId) as DevilFruit"
                 @member-click="showMemberDetails"
               />
             </v-card-text>
@@ -338,6 +339,7 @@
                     :member="member" 
                     :is-captain="false"
                     :style="styleCombat(member.styleCombatId)"
+                    :devil-fruit="devilFruit(member.devilFruitId) as DevilFruit"
                     @member-click="showMemberDetails"
                   />
                 </v-col>

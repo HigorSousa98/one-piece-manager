@@ -318,7 +318,7 @@ const handleRemoveConfirmation = async () => {
 
 // 🎮 METHODS
 const calculatePower = (character: Character): number => {
-  return GameLogic.calculatePower(character)
+  return GameLogic.calculatePower(character, props.devilFruit)
 }
 
 const formatBounty = (bounty: number): string => {

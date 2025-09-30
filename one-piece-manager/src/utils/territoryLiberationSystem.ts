@@ -3,6 +3,8 @@ import { db, type Territory, type Task, type Character, type Crew, type Island, 
 import { AdventureSystem } from './adventureSystem'
 import { GameLogic } from './gameLogic'
 import { useBattleStore } from '@/stores/battleStore'
+import {GenerationConfig} from '@/utils/generationConfig'
+import { useCharacterStore } from '@/stores/characterStore'
 
 export interface LiberationTaskResult {
   success: boolean
@@ -209,7 +211,7 @@ export class TerritoryLiberationSystem {
       console.log(`⚔️ Batalha: ${character.name} vs ${opponent.name} (Step ${task.step})`)
 
       // ✅ EXECUTAR BATALHA USANDO ADVENTURESYSTEM
-      const battleResult = await this.executeLiberationBattle(character, opponent)
+      const battleResult = await this.executeLiberationBattle(character, opponent, isLastStep)
 
       // Calcular recompensas baseadas no step
       const rewardDetails = await this.calculateLiberationRewards(task.step!, island.difficulty, isLastStep, crew.captainId, character)
@@ -232,8 +234,8 @@ export class TerritoryLiberationSystem {
         // Aplicar recompensas
         await this.applyLiberationRewards(character.id!, rewardDetails)
 
-        // Chance de dropar Devil Fruit (1%)
-        if (Math.random() < 0.01) {
+        // Chance de dropar Devil Fruit 
+        if (Math.random() < GenerationConfig.createEpic().devilFruitDropRate) {
           devilFruitDropped = await this.handleDevilFruitDrop(character.id!)
         }
 
@@ -282,16 +284,21 @@ export class TerritoryLiberationSystem {
   }
 
   // ✅ EXECUTAR BATALHA DE LIBERAÇÃO (USANDO ADVENTURESYSTEM)
-  private static async executeLiberationBattle(player: Character, opponent: Character): Promise<any> {
+  private static async executeLiberationBattle(player: Character, opponent: Character, isLastStep: boolean): Promise<any> {
     try {
       const battleStore = useBattleStore()
+      const allDevilFruits = await db.devilFruits.toArray()
+      const playerCrewMembers = await db.characters.where('crewId').equals(player.crewId).and(char => char.position != 'Captain').toArray()
+      const opponenteCrewMembers = await db.characters.where('crewId').equals(opponent.crewId).and(char => char.position != 'Captain').toArray()
 
       // Simular batalha usando lógica similar ao AdventureSystem
       const playerPower = GameLogic.calculatePower(player)
       const opponentPower = GameLogic.calculatePower(opponent)
+      const playerCrewPower = GameLogic.calculateCrewPower(playerCrewMembers, allDevilFruits)
+      const opponentCrewPower = GameLogic.calculateCrewPower(opponenteCrewMembers, allDevilFruits)
       
-      const totalPower = playerPower + opponentPower
-      const playerWinChance = playerPower / totalPower
+      const totalPower = isLastStep ? playerPower + opponentPower : playerPower + opponentPower + playerCrewPower + opponentCrewPower
+      const playerWinChance = (isLastStep ? playerPower : playerPower + playerCrewPower) / totalPower
       
       // Adicionar elemento de sorte (±10%)
       const luck = (Math.random() * 0.2) - 0.1
@@ -306,9 +313,21 @@ export class TerritoryLiberationSystem {
         const expGain = GameLogic.calculateExperienceGain(player, opponent)
         const bountyGain = GameLogic.calculateBountyGain(player, opponent)
 
-        // Processar atualizações
-        const captainUpdates = await battleStore.processCaptainUpdates(player, expGain, bountyGain, true)
-        await db.characters.update(player.id!, captainUpdates)
+        // ✅ Processar capitão e membros em paralelo
+        const [captainUpdates, memberUpdates] = await Promise.all([
+          battleStore.processCaptainUpdates(player, expGain, bountyGain, true),
+          battleStore.processCrewMemberUpdates(player, expGain, bountyGain, true, (0.3 + Math.random() * 0.2))
+        ])
+
+      // ✅ Aplicar todas as atualizações em paralelo
+        const allUpdates = [
+          db.characters.update(player.id!, captainUpdates),
+          ...memberUpdates.map(update => 
+            db.characters.update(update.id, update.updates)
+          )
+        ]
+
+        await Promise.all(allUpdates)
 
         // Registrar batalha
         await db.battles.add({
@@ -446,6 +465,7 @@ export class TerritoryLiberationSystem {
     message: string
   }> {
     try {
+      const characterStore = useCharacterStore()
       const character = await db.characters.get(characterId)
       const devilFruit = await db.devilFruits.get(devilFruitId)
 
@@ -466,7 +486,7 @@ export class TerritoryLiberationSystem {
         devilFruitId: devilFruitId,
         stats: {
           ...character.stats,
-          devilFruit: Math.floor(character.level * 0.8) // Stats baseados no level
+          devilFruit: 0 // Stats baseados no level
         }
       })
 
@@ -476,6 +496,10 @@ export class TerritoryLiberationSystem {
 
       console.log(`🍎 ${character.name} consumiu ${devilFruit.name}`)
 
+    await characterStore.loadPlayerCharacter();
+    await characterStore.loadPlayerCrew();
+
+
       return {
         success: true,
         message: `${character.name} consumiu a ${devilFruit.name}!`
@@ -484,6 +508,76 @@ export class TerritoryLiberationSystem {
     } catch (error) {
       console.error('❌ Erro ao consumir Devil Fruit:', error)
       return { success: false, message: `Erro: ${error}` }
+    }
+  }
+
+   // ✅ NOVO MÉTODO PARA DAR DEVIL FRUIT À TRIPULAÇÃO
+  static async giveDevilFruitToCrewMember(
+    crewMemberId: number,
+    devilFruitId: number
+  ): Promise<{
+    success: boolean
+    message: string
+  }> {
+    try {
+      console.log(`🍎 Dando Devil Fruit ${devilFruitId} para membro ${crewMemberId}`)
+      
+      // Verificar se o membro existe e não tem Devil Fruit
+      const crewMember = await db.characters.get(crewMemberId)
+      if (!crewMember) {
+        return {
+          success: false,
+          message: 'Membro da tripulação não encontrado'
+        }
+      }
+      
+      if (crewMember.devilFruitId && crewMember.devilFruitId !== 0) {
+        return {
+          success: false,
+          message: 'Este membro já possui uma Devil Fruit'
+        }
+      }
+      
+      // Verificar se a Devil Fruit existe
+      const devilFruit = await db.devilFruits.get(devilFruitId)
+      if (!devilFruit) {
+        return {
+          success: false,
+          message: 'Devil Fruit não encontrada'
+        }
+      }
+      
+      // Atualizar o membro com a Devil Fruit
+      await db.characters.update(crewMemberId, {
+        devilFruitId: devilFruitId
+      })
+
+      await db.devilFruits.update(devilFruitId, {
+        ownerId: crewMemberId
+      })
+      
+      // Aumentar loyalty do membro (receber Devil Fruit é um grande presente)
+      const loyaltyIncrease = Math.floor(Math.random() * 20) + 10 // 10-30 pontos
+      const newLoyalty = Math.min(100, crewMember.loyalty + loyaltyIncrease)
+      
+      await db.characters.update(crewMemberId, {
+        loyalty: newLoyalty
+      })
+      
+      console.log(`✅ ${crewMember.name} recebeu ${devilFruit.name}`)
+      console.log(`📈 Loyalty: ${crewMember.loyalty} → ${newLoyalty} (+${loyaltyIncrease})`)
+      
+      return {
+        success: true,
+        message: `${crewMember.name} consumiu a ${devilFruit.name} e sua loyalty aumentou para ${newLoyalty}!`
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao dar Devil Fruit para membro:', error)
+      return {
+        success: false,
+        message: 'Erro interno ao processar Devil Fruit'
+      }
     }
   }
 

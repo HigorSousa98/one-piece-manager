@@ -247,7 +247,7 @@ export class GameDataGenerator {
       awakeningOn: Math.floor(df.rarity * 75), 
       rarity: df.rarity,
       description: df.description,
-      type: 'Zoan'
+      type: df.type
     }))
 
     await db.devilFruits.bulkAdd(devilFruitsToAdd)

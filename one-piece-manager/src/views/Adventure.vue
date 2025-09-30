@@ -705,6 +705,7 @@ const redirect = () => {
   else if(activeTaskType.value == 'training') router.push('/training')
   else if(activeTaskType.value == 'ship_upgrade') router.push('/crew')
   else if(activeTaskType.value == 'navigation') router.push('/navigation')
+else if(activeTaskType.value == 'island_liberation') router.push('/territory-liberation')
 }
 
 const iconName = () => {
@@ -712,6 +713,7 @@ const iconName = () => {
   else if(activeTaskType.value == 'training') return 'mdi-dumbbell'
   else if(activeTaskType.value == 'ship_upgrade') return 'mdi-account-group'
   else if(activeTaskType.value == 'navigation') return 'mdi-compass'
+  else if(activeTaskType.value == 'island_liberation') return 'mdi-sword-cross'
 }
 
 // �� WATCHERS PARA DETECTAR QUANDO OS DADOS SÃO CARREGADOS

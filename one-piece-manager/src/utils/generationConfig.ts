@@ -24,6 +24,8 @@ export interface GenerationSettings {
   lastCombats: number
   allowKingHakiFor: number
   dockedFactor: number
+  devilFruitDropRate: number
+  civillianRecruitmentChance: number
 }
 
 export class GenerationConfig {
@@ -35,7 +37,7 @@ export class GenerationConfig {
     totalGovernment: 300,
     totalBountyHunter: 500,
     totalCivillians: 2000,
-    devilFruitDistributionRate: 0.0005, // 0.05%
+    devilFruitDistributionRate: 0.002, // 0.2%
     yonkouCount: 4,
     schichibukai: 7,
     admiralCount: 3,
@@ -52,7 +54,9 @@ export class GenerationConfig {
     shipFactor: 3,
     lastCombats: 7,
     allowKingHakiFor: 0.7,
-    dockedFactor: 0.7
+    dockedFactor: 0.7,
+    devilFruitDropRate: 0.05,
+    civillianRecruitmentChance: 0.3
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -73,7 +77,9 @@ export class GenerationConfig {
       shipFactor: 3,
       lastCombats: 3,
       allowKingHakiFor: 0.5,
-      dockedFactor: 0.5
+      dockedFactor: 0.5,
+      devilFruitDropRate: 0.05,
+      civillianRecruitmentChance: 0.3
     } as GenerationSettings,
 
     // Configuração média
@@ -92,7 +98,9 @@ export class GenerationConfig {
       shipFactor: 3,
       lastCombats: 5,
       allowKingHakiFor: 0.6,
-      dockedFactor: 0.6
+      dockedFactor: 0.6,
+      devilFruitDropRate: 0.05,
+      civillianRecruitmentChance: 0.3
     } as GenerationSettings,
 
     // Configuração grande (padrão)
@@ -114,7 +122,9 @@ export class GenerationConfig {
       shipFactor: 3,
       lastCombats: 10,
       allowKingHakiFor: 0.9,
-      dockedFactor: 0.8
+      dockedFactor: 0.8,
+      devilFruitDropRate: 0.50,
+      civillianRecruitmentChance: 1
     } as GenerationSettings
   }
 
@@ -157,6 +167,8 @@ export class GenerationConfig {
   get lastCombats(): number { return this.config.lastCombats }
   get allowKingHakiFor(): number { return this.config.allowKingHakiFor }
   get dockedFactor(): number { return this.config.dockedFactor }
+  get devilFruitDropRate(): number { return this.config.devilFruitDropRate }
+  get civillianRecruitmentChance(): number { return this.config.civillianRecruitmentChance }
 
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

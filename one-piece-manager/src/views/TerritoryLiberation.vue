@@ -108,7 +108,7 @@
                     <v-card-text class="text-center pa-3">
                       <v-icon size="40" color="success-darken-2">mdi-flag</v-icon>
                       <div class="text-h4 mt-2 text-success-darken-3">{{ liberatedIslands }}</div>
-                      <div class="text-body-2">Ilhas Liberadas</div>
+                      <div class="text-body-2 text-success-darken-3">Ilhas Liberadas</div>
                     </v-card-text>
                   </v-card>
                 </v-col>
@@ -118,7 +118,7 @@
                     <v-card-text class="text-center pa-3">
                       <v-icon size="40" color="warning-darken-2">mdi-pirate</v-icon>
                       <div class="text-h4 mt-2 text-warning-darken-3">{{ occupiedIslands }}</div>
-                      <div class="text-body-2">Ilhas Ocupadas</div>
+                      <div class="text-body-2 text-warning-darken-3">Ilhas Ocupadas</div>
                     </v-card-text>
                   </v-card>
                 </v-col>
@@ -128,7 +128,7 @@
                     <v-card-text class="text-center pa-3">
                       <v-icon size="40" color="purple-darken-2">mdi-progress-check</v-icon>
                       <div class="text-h4 mt-2 text-purple-darken-3">{{ Math.round(liberationPercentage) }}%</div>
-                      <div class="text-body-2">Progresso Total</div>
+                      <div class="text-body-2 text-purple-darken-3">Progresso Total</div>
                     </v-card-text>
                   </v-card>
                 </v-col>
