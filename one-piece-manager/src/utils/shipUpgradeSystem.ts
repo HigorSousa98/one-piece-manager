@@ -2,6 +2,7 @@
 
 import { db } from './database'
 import type { Ship, Character, Task } from './database'
+import { GenerationConfig } from './generationConfig'
 
 export class ShipUpgradeSystem {
   
@@ -89,8 +90,8 @@ export class ShipUpgradeSystem {
         return null
       }
       
-      // Calcular tempo de upgrade (30 minutos)
-      const upgradeTimeMinutes = 1
+      // Calcular tempo de upgrade
+      const upgradeTimeMinutes = GenerationConfig.createEpic().upgradeShipTime
       
       // Criar task de upgrade
       const now = new Date()

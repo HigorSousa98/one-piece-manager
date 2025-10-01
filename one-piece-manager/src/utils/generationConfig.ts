@@ -29,6 +29,8 @@ export interface GenerationSettings {
   regularCrewHelp: number
   regularCrewSharedGain: number
   lossGain: number
+  upgradeShipTime: number
+  stepTimeLiberation: number
 }
 
 export class GenerationConfig {
@@ -62,7 +64,9 @@ export class GenerationConfig {
     civillianRecruitmentChance: 0.3,
     regularCrewHelp: 0.2,
     regularCrewSharedGain: 0.4,
-    lossGain: 0.1
+    lossGain: 0.1,
+    upgradeShipTime: 20,
+    stepTimeLiberation: 3
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -129,8 +133,8 @@ export class GenerationConfig {
       lastCombats: 10,
       allowKingHakiFor: 0.9,
       dockedFactor: 0.8,
-      devilFruitDropRate: 0.50,
-      civillianRecruitmentChance: 1,
+      devilFruitDropRate: 0.05,
+      civillianRecruitmentChance: 0.3,
     } as GenerationSettings
   }
 
@@ -178,6 +182,8 @@ export class GenerationConfig {
   get regularCrewHelp(): number { return this.config.regularCrewHelp }
   get regularCrewSharedGain(): number { return this.config.regularCrewSharedGain }
   get lossGain(): number { return this.config.lossGain }
+  get upgradeShipTime(): number { return this.config.upgradeShipTime }
+  get stepTimeLiberation(): number { return this.config.stepTimeLiberation }
 
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

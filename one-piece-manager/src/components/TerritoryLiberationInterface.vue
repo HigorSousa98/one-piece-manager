@@ -206,7 +206,7 @@
                 {{ getStepDescription(liberationProgress.currentStep, liberationProgress.maxSteps) }}
               </div>
               <div class="text-body-2">
-                <strong>Duração:</strong> 5 minutos por tentativa
+                <strong>Duração:</strong> {{ durationTime }} minutos por tentativa
               </div>
             </v-alert>
             
@@ -725,6 +725,7 @@ import { db } from '@/utils/database'
 import type { Island, Task, Character, Crew } from '@/utils/database'
 import { useTimeRemaining } from '@/composables/useTimeRemaining'
 import { useCharacterStore } from '@/stores/characterStore'
+import { GenerationConfig } from '@/utils/generationConfig'
 
 // ✅ PROPS
 interface Props {
@@ -781,6 +782,8 @@ let monitoringInterval: NodeJS.Timeout | null = null
 
 // ✅ COMPUTED
 const hasActiveTask = computed(() => activeTask.value !== null)
+
+const durationTime = computed(() => GenerationConfig.createEpic().stepTimeLiberation)
 
 const estimatedRewards = computed(() => {
   if (!liberationProgress.value.canStart) {

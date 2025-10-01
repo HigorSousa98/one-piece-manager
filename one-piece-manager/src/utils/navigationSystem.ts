@@ -70,8 +70,8 @@ export class NavigationSystem {
   // ✅ CALCULAR TEMPO DE NAVEGAÇÃO
   static calculateNavigationTime(shipLevel: number): number {
     // Fórmula: 30 - (level-1)*5, mínimo 5 minutos
-    //const timeInMinutes = Math.max(5, 25 - (shipLevel - 1) * 5)
-    const timeInMinutes = 1
+    const timeInMinutes = Math.max(5, 25 - (shipLevel - 1) * 5)
+    //const timeInMinutes = 1
     return timeInMinutes
   }
   

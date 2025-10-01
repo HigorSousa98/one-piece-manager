@@ -120,7 +120,7 @@ export class TerritoryLiberationSystem {
 
       // Criar nova task (seguindo padrão do shipUpgradeSystem)
       const now = new Date()
-      const duration= 0.5
+      const duration= GenerationConfig.createEpic().stepTimeLiberation
       const endTime = new Date(now.getTime() + duration * 60 * 1000) // 5 minutos
 
       const newTask: Omit<Task, 'id'> = {
@@ -134,7 +134,7 @@ export class TerritoryLiberationSystem {
         kindnessReward: 0,
         experienceReward: this.calculateExperienceReward(currentStep, island.difficulty),
         bountyReward: await this.calculateBountyReward(occupyingCrew.captainId, character, currentStep, island.difficulty),
-        duration: duration, // 5 minutos
+        duration: duration, 
         helpType: 'liberation',
         difficulty: this.getDifficultyFromStep(currentStep, island.difficulty),
         location: island.name,
