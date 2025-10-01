@@ -31,6 +31,14 @@
                   </v-icon>
                   <span>Carregando Personagem</span>
                 </div>
+                
+                <!-- ✅ NOVA ETAPA: AVATAR -->
+                <div class="step-item" :class="{ 'completed': avatarLoaded }">
+                  <v-icon :color="avatarLoaded ? 'success' : 'grey'">
+                    {{ avatarLoaded ? 'mdi-check' : 'mdi-loading mdi-spin' }}
+                  </v-icon>
+                  <span>Gerando Avatar</span>
+                </div>
               </div>
             </v-card-text>
           </v-card>
@@ -47,7 +55,7 @@
           <v-card class="mb-4">
             <v-card-title class="text-center">
               <v-icon left size="large">mdi-view-dashboard</v-icon>
-              🎮 DASHBOARD
+              DASHBOARD
             </v-card-title>
             <v-card-subtitle class="text-center">
               Central de comando do seu pirata
@@ -174,7 +182,7 @@
       </v-row>
       
       <v-row>
-        <!-- INFORMAÇÕES DO JOGADOR -->
+        <!-- ✅ INFORMAÇÕES DO JOGADOR COM AVATAR -->
         <v-col cols="12" lg="6">
           <v-card variant="elevated" class="mb-4">
             <v-card-title class="bg-blue-lighten-5 text-blue-darken-3">
@@ -184,15 +192,36 @@
             
             <!-- Personagem existe -->
             <v-card-text v-if="playerCharacter" class="pa-4">
-              <!-- HEADER DO PERSONAGEM -->
+              
+              <!-- ✅ HEADER DO PERSONAGEM COM AVATAR -->
               <div class="character-header mb-4">
                 <div class="d-flex align-center mb-3">
-                  <v-avatar size="60" :color="getTypeColor(playerCharacter.type)" class="mr-3">
-                    <span class="text-h5">{{ getTypeIcon(playerCharacter.type) }}</span>
-                  </v-avatar>
-                  <div>
+                  
+                  <!-- ✅ AVATAR DO PERSONAGEM -->
+                  <div class="avatar-section mr-4">
+                    <CharacterAvatar 
+                      :character="playerCharacter"
+                      size="lg"
+                      variant="circle"
+                      :show-actions="true"
+                      :show-regenerate-button="true"
+                      :show-download-button="true"
+                      :show-status-indicators="true"
+                      :show-level="true"
+                      :show-power-rank="true"
+                      :cache-enabled="true"
+                      :auto-regenerate="true"
+                      @avatar-generated="onAvatarGenerated"
+                      @avatar-regenerated="onAvatarRegenerated"
+                      @avatar-clicked="onAvatarClicked"
+                      @avatar-error="onAvatarError"
+                    />
+                  </div>
+                  
+                  <!-- INFORMAÇÕES BÁSICAS -->
+                  <div class="character-info flex-grow-1">
                     <div class="text-h5 mb-1">{{ playerCharacter.name }}</div>
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
                       <v-chip :color="getTypeColor(playerCharacter.type)" size="small" variant="elevated">
                         <strong>{{ playerCharacter.type }}</strong>
                       </v-chip>
@@ -208,6 +237,8 @@
                         <strong>{{ playerStyleCombat?.name || 'Carregando...' }}</strong>
                       </v-chip>
                     </div>
+                    
+                    <!-- ✅ POWER RANK DESTACADO -->
                   </div>
                 </div>
               </div>
@@ -531,6 +562,87 @@
         </v-col>
       </v-row>
 
+      <!-- ✅ NOVA SEÇÃO: ESTATÍSTICAS DE AVATAR -->
+      <v-row v-if="showAvatarStats">
+        <v-col cols="12">
+          <v-card variant="outlined" color="indigo-lighten-5" class="mb-4">
+            <v-card-title class="bg-indigo text-white">
+              <v-icon left color="white">mdi-account-star</v-icon>
+              🎨 Sistema de Avatares
+            </v-card-title>
+            
+            <v-card-text class="pa-4">
+              <v-row>
+                <v-col cols="12" md="3">
+                  <v-card variant="outlined" class="text-center pa-3">
+                    <v-icon size="30" color="primary">mdi-cached</v-icon>
+                    <div class="text-h6 mt-1">{{ cacheStats.totalEntries }}</div>
+                    <div class="text-caption">Avatares em Cache</div>
+                  </v-card>
+                </v-col>
+                
+                <v-col cols="12" md="3">
+                  <v-card variant="outlined" class="text-center pa-3">
+                    <v-icon size="30" color="success">mdi-harddisk</v-icon>
+                    <div class="text-h6 mt-1">{{ formattedCacheSize }}</div>
+                    <div class="text-caption">Tamanho do Cache</div>
+                  </v-card>
+                </v-col>
+                
+                <v-col cols="12" md="3">
+                  <v-card variant="outlined" class="text-center pa-3">
+                    <v-icon size="30" color="info">mdi-speedometer</v-icon>
+                    <div class="text-h6 mt-1">{{ cacheStats.hitRate.toFixed(1) }}%</div>
+                    <div class="text-caption">Taxa de Acerto</div>
+                  </v-card>
+                </v-col>
+                
+                <v-col cols="12" md="3">
+                  <v-card variant="outlined" class="text-center pa-3">
+                    <v-icon size="30" color="warning">mdi-timer</v-icon>
+                    <div class="text-h6 mt-1">{{ cacheStats.averageAccessTime.toFixed(1) }}ms</div>
+                    <div class="text-caption">Tempo Médio</div>
+                  </v-card>
+                </v-col>
+              </v-row>
+              
+              <div class="mt-4 d-flex gap-2 flex-wrap">
+                <v-btn 
+                  @click="updateCacheStats" 
+                  color="primary" 
+                  size="small"
+                  variant="outlined"
+                >
+                  <v-icon left>mdi-refresh</v-icon>
+                  Atualizar Stats
+                </v-btn>
+                
+                <v-btn 
+                  @click="clearAvatarCache" 
+                  color="warning" 
+                  size="small"
+                  variant="outlined"
+                >
+                  <v-icon left>mdi-delete-sweep</v-icon>
+                  Limpar Cache
+                </v-btn>
+                
+                <v-btn 
+                  @click="regeneratePlayerAvatar" 
+                  color="secondary" 
+                  size="small"
+                  variant="outlined"
+                  :loading="isRegeneratingAvatar"
+                >
+                  <v-icon left>mdi-account-convert</v-icon>
+                  Regenerar Avatar
+                </v-btn>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
       <!-- SEÇÃO DE DEBUG -->
       <v-row>
         <v-col cols="12">
@@ -543,7 +655,7 @@
               
               <!-- DEBUG BÁSICO -->
               <v-row class="mb-4">
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3">
                   <v-card variant="outlined">
                     <v-card-text class="text-center pa-3">
                       <v-icon size="30" :color="gameStore.isInitialized ? 'success' : 'error'">
@@ -554,7 +666,7 @@
                     </v-card-text>
                   </v-card>
                 </v-col>
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3">
                   <v-card variant="outlined">
                     <v-card-text class="text-center pa-3">
                       <v-icon size="30" :color="characterStore.isLoading ? 'warning' : 'success'">
@@ -565,7 +677,7 @@
                     </v-card-text>
                   </v-card>
                 </v-col>
-                <v-col cols="12" md="4">
+                <v-col cols="12" md="3">
                   <v-card variant="outlined">
                     <v-card-text class="text-center pa-3">
                       <v-icon size="30" :color="hasActiveTasks ? 'warning' : 'success'">
@@ -573,6 +685,18 @@
                       </v-icon>
                       <div class="text-h6 mt-1">{{ activeTasksCount }}</div>
                       <div class="text-caption">Tarefas Ativas</div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+                <!-- ✅ NOVA COLUNA: STATUS DO AVATAR -->
+                <v-col cols="12" md="3">
+                  <v-card variant="outlined">
+                    <v-card-text class="text-center pa-3">
+                      <v-icon size="30" :color="avatarLoaded ? 'success' : 'warning'">
+                        {{ avatarLoaded ? 'mdi-check-circle' : 'mdi-account-convert' }}
+                      </v-icon>
+                      <div class="text-h6 mt-1">{{ avatarLoaded ? 'Carregado' : 'Gerando' }}</div>
+                      <div class="text-caption">Avatar Status</div>
                     </v-card-text>
                   </v-card>
                 </v-col>
@@ -601,6 +725,7 @@
                       <div><strong>Multiplicador Level:</strong> {{ getLevelMultiplier(playerCharacter.level) }}x</div>
                       <div><strong>Bonus Haki:</strong> {{ calculateHakiBonus(playerCharacter) }}</div>
                       <div><strong>Poder Total:</strong> {{ calculatePower(playerCharacter) }}</div>
+                      <div><strong>Power Rank:</strong> {{ currentPowerRank }}</div>
                       <div class="mt-2">
                         <strong>Fórmula:</strong> (Attack + Defense + Speed + ArmHaki + ObsHaki + KingHaki) × Level × 1.5 + HakiBonus
                       </div>
@@ -644,11 +769,22 @@
                 <v-btn 
                   @click="exportData" 
                   color="success" 
-                  class="mb-2"
+                  class="mr-2 mb-2"
                   variant="elevated"
                 >
                   <v-icon left>mdi-download</v-icon>
                   Exportar Dados
+                </v-btn>
+                
+                <!-- ✅ NOVA AÇÃO: TOGGLE AVATAR STATS -->
+                <v-btn 
+                  @click="showAvatarStats = !showAvatarStats" 
+                  color="indigo" 
+                  class="mb-2"
+                  variant="elevated"
+                >
+                  <v-icon left>mdi-account-star</v-icon>
+                  {{ showAvatarStats ? 'Ocultar' : 'Mostrar' }} Avatar Stats
                 </v-btn>
               </div>
               
@@ -659,7 +795,7 @@
       
     </div>
 
-    <!-- ✅ MODAIS DO CONTROLE DO MUNDO -->
+    <!-- MODAIS DO CONTROLE DO MUNDO (mantidos iguais) -->
     
     <!-- MODAL DE RESET -->
     <v-dialog v-model="showResetDialog" max-width="600" persistent>
@@ -772,14 +908,29 @@ import { IslandExplorationSystem } from '@/utils/islandExplorationSystem'
 import { GameLogic } from '@/utils/gameLogic'
 import { useRouter } from 'vue-router'
 import type { Character, DevilFruit, StyleCombat } from '@/utils/database'
+
 // ✅ IMPORTS PARA CONTROLE DO MUNDO
 import { WorldResetSystem, type WorldResetResult } from '@/utils/worldResetSystem'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
+
+// ✅ IMPORTS PARA SISTEMA DE AVATARES
+import CharacterAvatar from '@/components/CharacterAvatar.vue'
+import { useAvatarManager } from '@/composables/useAvatarManager'
+import { PowerCalculationSystem } from '@/utils/powerCalculationSystem'
 
 const router = useRouter()
 
 const gameStore = useGameStore()
 const characterStore = useCharacterStore()
+
+// ✅ COMPOSABLE DE AVATARES
+const {
+  cacheStats,
+  formattedCacheSize,
+  updateCacheStats,
+  clearCache: clearAvatarCache,
+  regenerateAvatar
+} = useAvatarManager()
 
 // 🌍 ESTADOS DO CONTROLE DO MUNDO
 const worldPanelOpen = ref(null)
@@ -795,6 +946,11 @@ const worldStatus = ref({
   canStartGame: false
 })
 
+// ✅ ESTADOS DO SISTEMA DE AVATARES
+const avatarLoaded = ref(false)
+const showAvatarStats = ref(false)
+const isRegeneratingAvatar = ref(false)
+
 // 📊 LOADING STATES
 const gameInitialized = ref(false)
 const characterLoaded = ref(false)
@@ -804,14 +960,22 @@ const devilFruitLoaded = ref(false)
 const styleCombatLoaded = ref(false)
 const activeTasksCount = ref(0)
 
-// 📊 COMPUTED
+// �� COMPUTED
 const playerCharacter = computed(() => characterStore.playerCharacter)
 
 const playerDevilFruit = ref<DevilFruit | null>(null)
 const playerStyleCombat = ref<StyleCombat | null>(null)
 
+// ✅ COMPUTED PARA POWER RANK
+const currentPowerRank = computed(() => {
+  if (!playerCharacter.value) return 'N/A'
+  const power = calculatePower(playerCharacter.value)
+  return PowerCalculationSystem.getPowerRank(power)
+})
+
 const allDataLoaded = computed(() => {
-  return gameInitialized.value && characterLoaded.value && devilFruitLoaded.value && styleCombatLoaded.value
+  return gameInitialized.value && characterLoaded.value && devilFruitLoaded.value && 
+         styleCombatLoaded.value && avatarLoaded.value
 })
 
 const experiencePercentage = computed(() => {
@@ -824,6 +988,21 @@ const expForNextLevel = computed(() => {
   if (!playerCharacter.value) return 0
   return GameLogic.nextLevelUp(playerCharacter.value)
 })
+
+// ✅ MÉTODOS PARA POWER RANK
+const getPowerRankColor = (rank: string): string => {
+  const colorMap: Record<string, string> = {
+    'Yonko': 'deep-purple',
+    'Admiral': 'red',
+    'Warlord': 'orange',
+    'Supernova': 'blue',
+    'Veteran': 'green',
+    'Experienced': 'teal',
+    'Rookie': 'grey',
+    'Beginner': 'blue-grey'
+  }
+  return colorMap[rank] || 'grey'
+}
 
 // 🌍 MÉTODOS DO CONTROLE DO MUNDO
 const loadWorldStatus = async () => {
@@ -878,6 +1057,47 @@ const closeResultDialog = () => {
   }
   
   lastResult.value = null
+}
+
+// ✅ MÉTODOS DO SISTEMA DE AVATARES
+const onAvatarGenerated = (svgData: string) => {
+  console.log('✅ Avatar gerado com sucesso')
+  avatarLoaded.value = true
+  updateCacheStats()
+}
+
+const onAvatarRegenerated = (svgData: string) => {
+  console.log('✅ Avatar regenerado com sucesso')
+  updateCacheStats()
+}
+
+const onAvatarClicked = (character: Character) => {
+  console.log('🖱️ Avatar clicado:', character.name)
+  // Aqui você pode implementar alguma ação, como abrir perfil detalhado
+}
+
+const onAvatarError = (error: Error) => {
+  console.error('❌ Erro no avatar:', error)
+  avatarLoaded.value = true // Marcar como carregado mesmo com erro para não travar o loading
+}
+
+const regeneratePlayerAvatar = async () => {
+  if (!playerCharacter.value) return
+  
+  try {
+    isRegeneratingAvatar.value = true
+    console.log('🔄 Regenerando avatar do player...')
+    
+    const newAvatar = await regenerateAvatar(playerCharacter.value)
+    if (newAvatar) {
+      console.log('✅ Avatar do player regenerado')
+      await updateCacheStats()
+    }
+  } catch (error) {
+    console.error('❌ Erro ao regenerar avatar do player:', error)
+  } finally {
+    isRegeneratingAvatar.value = false
+  }
 }
 
 // 🎮 METHODS
@@ -995,8 +1215,21 @@ const redirect = () => {
 const forceReload = async () => {
   console.log('🔄 Forçando reload do personagem...')
   characterLoaded.value = false
+  avatarLoaded.value = false
+  
   await characterStore.loadPlayerCharacter()
   characterLoaded.value = true
+  
+  // Recarregar avatar
+  if (playerCharacter.value) {
+    try {
+      await regeneratePlayerAvatar()
+    } catch (error) {
+      console.error('❌ Erro ao recarregar avatar:', error)
+      avatarLoaded.value = true
+    }
+  }
+  
   await checkActiveTasks()
 }
 
@@ -1011,6 +1244,8 @@ const exportData = () => {
   const data = {
     playerCharacter: playerCharacter.value,
     gameInitialized: gameStore.isInitialized,
+    cacheStats: cacheStats.value,
+    powerRank: currentPowerRank.value,
     timestamp: new Date().toISOString()
   }
   
@@ -1041,16 +1276,37 @@ onMounted(async () => {
   await checkActiveTasks()
 
   if (playerCharacter.value) {
+    // Carregar Devil Fruit
     const devilFruit = await characterStore.loadDevilFruit(playerCharacter.value.devilFruitId)
     playerDevilFruit.value = devilFruit
     devilFruitLoaded.value = true
 
+    // Carregar Style Combat
     const styleCombat = await characterStore.loadStyleCombat(playerCharacter.value.styleCombatId)
     playerStyleCombat.value = styleCombat
     styleCombatLoaded.value = true
+    
+    // ✅ INICIALIZAR SISTEMA DE AVATARES
+    try {
+      console.log('🎨 Inicializando sistema de avatares...')
+      await updateCacheStats()
+      
+      // Avatar será carregado pelo componente CharacterAvatar
+      // Marcar como carregado após um pequeno delay para dar tempo do componente carregar
+      setTimeout(() => {
+        if (!avatarLoaded.value) {
+          avatarLoaded.value = true
+        }
+      }, 2000)
+      
+    } catch (error) {
+      console.error('❌ Erro ao inicializar avatares:', error)
+      avatarLoaded.value = true
+    }
   } else {
     devilFruitLoaded.value = true
     styleCombatLoaded.value = true
+    avatarLoaded.value = true
   }
 })
 </script>
@@ -1087,7 +1343,47 @@ onMounted(async () => {
   gap: 8px;
 }
 
+/* ✅ ESTILOS PARA AVATAR */
+.avatar-section {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.character-info {
+  min-width: 0; /* Permite que o flex item encolha */
+}
+
+.power-rank-chip {
+  font-size: 1.1rem !important;
+  height: 36px !important;
+  font-weight: 700 !important;
+}
+
+.character-header {
+  border-bottom: 2px solid rgba(0,0,0,0.1);
+  padding-bottom: 16px;
+}
+
+.character-header .d-flex {
+  align-items: flex-start;
+}
+
 @media (max-width: 768px) {
+  .character-header .d-flex {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+  
+  .avatar-section {
+    margin-right: 0 !important;
+    margin-bottom: 16px;
+  }
+  
+  .character-info {
+    width: 100%;
+  }
+  
   .d-flex.align-center.justify-space-between {
     flex-direction: column;
     gap: 16px;
@@ -1122,11 +1418,6 @@ onMounted(async () => {
 
 .step-item.completed {
   background-color: rgba(76, 175, 80, 0.1);
-}
-
-.character-header {
-  border-bottom: 2px solid rgba(0,0,0,0.1);
-  padding-bottom: 16px;
 }
 
 .experience-section {
@@ -1194,6 +1485,16 @@ onMounted(async () => {
   font-weight: 700 !important;
 }
 
+/* ✅ ANIMAÇÕES PARA AVATAR */
+@keyframes avatarPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.avatar-section:hover {
+  animation: avatarPulse 2s ease-in-out infinite;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -1209,12 +1510,11 @@ onMounted(async () => {
     padding: 8px;
   }
   
-  .character-header .d-flex {
-    flex-direction: column;
-    text-align: center;
+  .debug-actions {
+    justify-content: center;
   }
   
-  .debug-actions {
+  .d-flex.gap-2.flex-wrap {
     justify-content: center;
   }
 }
@@ -1227,4 +1527,26 @@ onMounted(async () => {
 .text-purple-darken-3 { color: #6a1b9a !important; }
 .text-deep-purple-darken-3 { color: #4527a0 !important; }
 .text-yellow-darken-4 { color: #f57f17 !important; }
+
+/* ✅ ESTILOS ESPECÍFICOS PARA POWER RANK */
+.power-rank-chip {
+  background: linear-gradient(45deg, var(--v-theme-surface), var(--v-theme-primary)) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+  border: 2px solid rgba(255,255,255,0.3) !important;
+}
+
+/* ✅ HOVER EFFECTS PARA CARDS DE STATS */
+.v-card[color*="darken"]:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+}
+
+/* ✅ GRADIENTES PARA SEÇÕES ESPECIAIS */
+.world-control-panel {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
+}
+
+.experience-section {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(63, 81, 181, 0.05) 100%);
+}
 </style>

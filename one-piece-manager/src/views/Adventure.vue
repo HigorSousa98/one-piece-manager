@@ -32,6 +32,13 @@
                   </v-icon>
                   <span>Verificando Tarefas Ativas</span>
                 </div>
+
+                <div class="step-item" :class="{ 'completed': avatarSystemLoaded }">
+                  <v-icon :color="avatarSystemLoaded ? 'success' : 'grey'">
+                    {{ avatarSystemLoaded ? 'mdi-check' : 'mdi-loading mdi-spin' }}
+                  </v-icon>
+                  <span>Inicializando Sistema de Avatares</span>
+                </div>
               </div>
             </v-card-text>
           </v-card>
@@ -45,10 +52,10 @@
       <!-- Header da Aventura -->
       <v-row>
         <v-col cols="12">
-          <v-card class="mb-4">
+          <v-card class="mb-4 adventure-header">
             <v-card-title class="text-center">
               <v-icon left size="large">mdi-map</v-icon>
-              🗺️ AVENTURAS
+              AVENTURAS
             </v-card-title>
             <v-card-subtitle class="text-center">
               Explore o mundo e encontre desafios únicos baseado no seu tipo de personagem
@@ -98,11 +105,33 @@
         </v-col>
       </v-row>
 
-      <!-- Botão de Iniciar Aventura -->
+      <!-- ✅ SEÇÃO DO PERSONAGEM COM AVATAR -->
       <v-row v-if="!currentEncounter">
         <v-col cols="12">
-          <v-card>
+          <v-card class="player-info-card">
             <v-card-text class="text-center py-8">
+              
+              <!-- ✅ AVATAR DO PLAYER -->
+              <div class="player-avatar-section mb-4">
+                <CharacterAvatar 
+                  v-if="playerCharacter"
+                  :character="playerCharacter"
+                  size="xl"
+                  variant="circle"
+                  :show-actions="true"
+                  :show-regenerate-button="true"
+                  :show-download-button="true"
+                  :show-status-indicators="true"
+                  :show-level="true"
+                  :show-power-rank="true"
+                  :cache-enabled="true"
+                  :clickable="false"
+                  class="player-adventure-avatar"
+                  @avatar-regenerated="onPlayerAvatarRegenerated"
+                  @avatar-error="onPlayerAvatarError"
+                />
+              </div>
+
               <v-icon size="80" color="primary" class="mb-4">mdi-compass</v-icon>
               <div class="text-h5 mb-4">Pronto para uma nova aventura?</div>
               <div class="text-body-1 mb-6">
@@ -110,7 +139,7 @@
               </div>
               
               <!-- INFO DO PERSONAGEM COM MELHOR DESIGN -->
-              <v-card variant="outlined" class="mb-4 mx-auto" style="max-width: 400px;">
+              <v-card variant="outlined" class="mb-4 mx-auto player-stats-card" style="max-width: 500px;">
                 <v-card-text>
                   <div class="text-h6 mb-2">👤 {{ playerCharacter?.name }}</div>
                   <div class="text-body-2 mb-2">
@@ -150,6 +179,7 @@
                 @click="startAdventure"
                 :loading="loadingAdventure"
                 variant="elevated"
+                class="adventure-start-btn"
               >
                 <v-icon left>mdi-sail-boat</v-icon>
                 {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA' }}
@@ -166,10 +196,10 @@
         </v-col>
       </v-row>
 
-      <!-- Encontro Atual COM DESIGN MELHORADO -->
+      <!-- ✅ ENCONTRO ATUAL COM AVATARES -->
       <v-row v-if="currentEncounter && !battleStarted">
         <v-col cols="12">
-          <v-card>
+          <v-card class="encounter-card">
             <v-card-title>
               <v-icon left>mdi-map-marker</v-icon>
               Encontro em {{ currentEncounter.location }}
@@ -185,10 +215,96 @@
                 {{ currentEncounter.description }}
               </v-alert>
 
+              <!-- ✅ COMPARAÇÃO DE AVATARES -->
+              <v-row class="mb-4">
+                <v-col cols="12">
+                  <v-card variant="outlined" class="avatar-comparison-card">
+                    <v-card-title class="text-center">
+                      <v-icon left>mdi-sword-cross</v-icon>
+                      Confronto
+                    </v-card-title>
+                    <v-card-text>
+                      <v-row align="center">
+                        <!-- PLAYER -->
+                        <v-col cols="5" class="text-center">
+                          <div class="combatant-section">
+                            <CharacterAvatar 
+                              v-if="playerCharacter"
+                              :character="playerCharacter"
+                              size="lg"
+                              variant="circle"
+                              :show-actions="false"
+                              :show-status-indicators="true"
+                              :show-level="true"
+                              :show-power-rank="true"
+                              :cache-enabled="true"
+                              :clickable="false"
+                              class="combatant-avatar player-combatant"
+                            />
+                            <div class="text-h6 mt-2 text-primary">{{ playerCharacter?.name }}</div>
+                            <v-chip :color="getTypeColor(playerCharacter?.type || '')" size="small" variant="elevated" class="mt-1">
+                              {{ playerCharacter?.type }}
+                            </v-chip>
+                            <div class="text-body-2 mt-2">
+                              <strong>Poder: {{ calculatePower(playerCharacter!) }}</strong>
+                            </div>
+                          </div>
+                        </v-col>
+
+                        <!-- VS -->
+                        <v-col cols="2" class="text-center">
+                          <div class="vs-section">
+                            <v-icon size="60" color="error">mdi-sword-cross</v-icon>
+                            <div class="text-h4 text-error font-weight-bold">VS</div>
+                            
+                            <!-- CHANCE DE VITÓRIA -->
+                            <v-progress-circular
+                              :model-value="winChance"
+                              :color="winChance > 60 ? 'success' : winChance > 40 ? 'warning' : 'error'"
+                              size="60"
+                              width="8"
+                              class="mt-2"
+                            >
+                              <span class="text-caption font-weight-bold">{{ winChance }}%</span>
+                            </v-progress-circular>
+                            <div class="text-caption mt-1">Vitória</div>
+                          </div>
+                        </v-col>
+
+                        <!-- OPONENTE -->
+                        <v-col cols="5" class="text-center">
+                          <div class="combatant-section">
+                            <CharacterAvatar 
+                              :character="currentEncounter.opponent"
+                              size="lg"
+                              variant="circle"
+                              :show-actions="false"
+                              :show-status-indicators="true"
+                              :show-level="true"
+                              :show-power-rank="true"
+                              :cache-enabled="true"
+                              :clickable="false"
+                              class="combatant-avatar opponent-combatant"
+                            />
+                            <div class="text-h6 mt-2 text-error">{{ currentEncounter.opponent.name }}</div>
+                            <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1">
+                              {{ currentEncounter.opponent.type }}
+                            </v-chip>
+                            <div class="text-body-2 mt-2">
+                              <strong>Poder: {{ calculatePower(currentEncounter.opponent) }}</strong>
+                            </div>
+                          </div>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+
               <!-- Info do Oponente COM MELHOR CONTRASTE -->
               <v-row>
                 <v-col cols="12" md="6">
-                  <v-card variant="outlined">
+                  <v-card variant="outlined" class="opponent-details-card">
                     <v-card-title>
                       <v-avatar :color="getTypeColor(currentEncounter.opponent.type)" class="mr-2">
                         <span>{{ getTypeIcon(currentEncounter.opponent.type) }}</span>
@@ -202,13 +318,13 @@
                       <v-chip color="blue-darken-2" class="mb-2 ml-2" variant="elevated">
                         <strong>Level {{ currentEncounter.opponent.level }}</strong>
                       </v-chip>
-                      <v-chip color="acent-darken-2" class="mb-2 ml-2" variant="elevated">
+                      <v-chip color="accent-darken-2" class="mb-2 ml-2" variant="elevated">
                         <strong>{{ opponentStyle(currentEncounter.opponent.styleCombatId) }}</strong>
                       </v-chip>
-                      <v-chip v-if="currentEncounter.opponent.devilFruitId != 0"color="amber-darken-2" class="mb-2 ml-2" variant="elevated">
+                      <v-chip v-if="currentEncounter.opponent.devilFruitId != 0" color="amber-darken-2" class="mb-2 ml-2" variant="elevated">
                         <strong>Akuma no Mi User</strong>
                       </v-chip>
-                      <v-divider class="my-0"></v-divider>
+                      <v-divider class="my-2"></v-divider>
                       <CharacterBountyDisplay 
                         :character="currentEncounter.opponent" 
                         size="small" 
@@ -216,7 +332,6 @@
                       />
                       <v-divider class="my-4"></v-divider>
                       
-
                       <!-- Stats Resumidos -->
                       <div class="text-center">
                         <div class="text-h6 mb-2">Poder Estimado: {{ calculatePower(currentEncounter.opponent) }}</div>
@@ -237,7 +352,7 @@
 
                 <!-- Recompensa Especial -->
                 <v-col cols="12" md="6" v-if="currentEncounter.specialReward">
-                  <v-card variant="outlined" color="green-lighten-4">
+                  <v-card variant="outlined" color="green-lighten-4" class="special-reward-card">
                     <v-card-title class="text-green-darken-3">
                       <v-icon left color="green-darken-3">mdi-treasure-chest</v-icon>
                       Recompensa Especial
@@ -263,7 +378,7 @@
                   <v-btn
                     color="error"
                     size="large"
-                    class="mr-4"
+                    class="mr-4 battle-btn"
                     @click="startBattle"
                     :disabled="battleStore.isSimulating"
                     variant="elevated"
@@ -278,6 +393,7 @@
                     @click="retreatFromEncounter"
                     :disabled="battleStore.isSimulating"
                     variant="elevated"
+                    class="retreat-btn"
                   >
                     <v-icon left>mdi-run</v-icon>
                     Fugir
@@ -289,12 +405,12 @@
         </v-col>
       </v-row>
 
-      <!-- RESULTADO DA BATALHA COM RECRUTAMENTO -->
+      <!-- ✅ RESULTADO DA BATALHA COM AVATARES E RECRUTAMENTO -->
       <v-row class="mt-4" v-if="lastBattleResult">
         <v-col cols="12">
           
-          <!-- RESULTADO PRINCIPAL -->
-          <v-card :color="lastBattleResult.winner.id === playerCharacter?.id ? 'success' : 'error'" class="mb-4" variant="elevated">
+          <!-- ✅ RESULTADO PRINCIPAL COM AVATARES -->
+          <v-card :color="lastBattleResult.winner.id === playerCharacter?.id ? 'success' : 'error'" class="mb-4 battle-result-card" variant="elevated">
             <v-card-title class="text-white">
               <v-icon left class="text-white">
                 {{ lastBattleResult.winner.id === playerCharacter?.id ? 'mdi-trophy' : 'mdi-skull' }}
@@ -303,29 +419,58 @@
             </v-card-title>
             
             <v-card-text class="text-white">
-              <!-- Informações da Batalha -->
-              <v-row>
-                <v-col cols="12" md="6">
-                  <div class="text-center">
-                    <div class="text-h6 mb-2">🏆 Vencedor</div>
-                    <v-chip color="white" text-color="success" class="mb-2" variant="elevated">
-                      <strong>{{ lastBattleResult.winner.name }}</strong>
-                    </v-chip>
-                    <div class="text-body-2">
-                      {{ lastBattleResult.winner.type }} - Level {{ lastBattleResult.winner.level }}
-                    </div>
-                  </div>
-                </v-col>
-                
-                <v-col cols="12" md="6">
-                  <div class="text-center">
-                    <div class="text-h6 mb-2">💔 Perdedor</div>
-                    <v-chip color="white" text-color="error" class="mb-2" variant="elevated">
-                      <strong>{{ lastBattleResult.loser.name }}</strong>
-                    </v-chip>
-                    <div class="text-body-2">
-                      {{ lastBattleResult.loser.type }} - Level {{ lastBattleResult.loser.level }}
-                    </div>
+              <!-- ✅ AVATARES DOS COMBATENTES -->
+              <v-row class="mb-4">
+                <v-col cols="12">
+                  <div class="battle-result-avatars">
+                    <v-row align="center">
+                      <!-- VENCEDOR -->
+                      <v-col cols="5" class="text-center">
+                        <div class="result-combatant winner">
+                          <CharacterAvatar 
+                            :character="lastBattleResult.winner"
+                            size="lg"
+                            variant="circle"
+                            :show-actions="false"
+                            :show-status-indicators="false"
+                            :cache-enabled="true"
+                            :clickable="false"
+                            class="result-avatar winner-avatar"
+                          />
+                          <div class="text-h6 mt-2">🏆 {{ lastBattleResult.winner.name }}</div>
+                          <v-chip color="white" :text-color="lastBattleResult.winner.id === playerCharacter?.id ? 'success' : 'error'" variant="elevated">
+                            <strong>VENCEDOR</strong>
+                          </v-chip>
+                        </div>
+                      </v-col>
+
+                      <!-- RESULTADO -->
+                      <v-col cols="2" class="text-center">
+                        <v-icon size="60" color="white">
+                          {{ lastBattleResult.winner.id === playerCharacter?.id ? 'mdi-trophy' : 'mdi-skull' }}
+                        </v-icon>
+                      </v-col>
+
+                      <!-- PERDEDOR -->
+                      <v-col cols="5" class="text-center">
+                        <div class="result-combatant loser">
+                          <CharacterAvatar 
+                            :character="lastBattleResult.loser"
+                            size="lg"
+                            variant="circle"
+                            :show-actions="false"
+                            :show-status-indicators="false"
+                            :cache-enabled="true"
+                            :clickable="false"
+                            class="result-avatar loser-avatar"
+                          />
+                          <div class="text-h6 mt-2">💔 {{ lastBattleResult.loser.name }}</div>
+                          <v-chip color="white" text-color="error" variant="elevated">
+                            <strong>PERDEDOR</strong>
+                          </v-chip>
+                        </div>
+                      </v-col>
+                    </v-row>
                   </div>
                 </v-col>
               </v-row>
@@ -364,14 +509,38 @@
             </v-card-text>
           </v-card>
 
-          <!-- SEÇÃO DE RECRUTAMENTO COM DESIGN MELHORADO -->
-          <v-card v-if="recruitmentData && lastBattleResult.winner.id === playerCharacter?.id" class="mb-4" color="orange-lighten-4">
+          <!-- ✅ SEÇÃO DE RECRUTAMENTO COM AVATAR DO CANDIDATO -->
+          <v-card v-if="recruitmentData && lastBattleResult.winner.id === playerCharacter?.id" class="mb-4 recruitment-card" color="orange-lighten-4">
             <v-card-title class="text-orange-darken-3">
               <v-icon left color="orange-darken-3">mdi-account-plus</v-icon>
               🤝 Oportunidade de Recrutamento
             </v-card-title>
             
             <v-card-text>
+              <!-- ✅ AVATAR DO CANDIDATO -->
+              <v-row class="mb-4">
+                <v-col cols="12" class="text-center">
+                  <div class="recruitment-candidate">
+                    <CharacterAvatar 
+                      :character="lastBattleResult.loser"
+                      size="lg"
+                      variant="circle"
+                      :show-actions="false"
+                      :show-status-indicators="true"
+                      :show-level="true"
+                      :show-power-rank="false"
+                      :cache-enabled="true"
+                      :clickable="false"
+                      class="candidate-avatar"
+                    />
+                    <div class="text-h6 mt-2">{{ lastBattleResult.loser.name }}</div>
+                    <v-chip :color="getTypeColor(lastBattleResult.loser.type)" variant="elevated" class="mt-1">
+                      {{ lastBattleResult.loser.type }} - Level {{ lastBattleResult.loser.level }}
+                    </v-chip>
+                  </div>
+                </v-col>
+              </v-row>
+
               <!-- Informações do Recrutamento -->
               <v-alert type="info" class="mb-4" variant="elevated">
                 <strong>💡 Você pode tentar recrutar {{ lastBattleResult.loser.name }}!</strong><br>
@@ -482,7 +651,7 @@
               <v-icon left class="text-white">
                 {{ recruitmentResult.success ? 'mdi-check-circle' : 'mdi-close-circle' }}
               </v-icon>
-              {{ recruitmentResult.success ? '🎉 Recrutamento Bem-sucedido!' : '😔 Recrutamento Falhou' }}
+              {{ recruitmentResult.success ? '🎉 Recrutamento Bem-sucedido!' : '�� Recrutamento Falhou' }}
             </v-card-title>
             
             <v-card-text class="text-white">
@@ -541,7 +710,7 @@
         </v-col>
       </v-row>
 
-      <!-- MODAL DE CONFIRMAÇÃO DE RECRUTAMENTO -->
+      <!-- ✅ MODAL DE CONFIRMAÇÃO DE RECRUTAMENTO COM AVATAR -->
       <v-dialog v-model="showRecruitmentModal" max-width="600">
         <v-card>
           <v-card-title class="bg-primary text-white">
@@ -551,9 +720,19 @@
           
           <v-card-text class="pt-4">
             <div class="text-center mb-4">
-              <v-avatar size="80" :color="getTypeColor(lastBattleResult?.loser.type || '')">
-                <span class="text-h4">{{ getTypeIcon(lastBattleResult?.loser.type || '') }}</span>
-              </v-avatar>
+              <!-- ✅ AVATAR NO MODAL -->
+              <CharacterAvatar 
+                v-if="lastBattleResult"
+                :character="lastBattleResult.loser"
+                size="lg"
+                variant="circle"
+                :show-actions="false"
+                :show-status-indicators="true"
+                :show-level="true"
+                :cache-enabled="true"
+                :clickable="false"
+                class="modal-candidate-avatar"
+              />
               <div class="text-h6 mt-2">{{ lastBattleResult?.loser.name }}</div>
               <div class="text-body-2">{{ lastBattleResult?.loser.type }} - Level {{ lastBattleResult?.loser.level }}</div>
             </div>
@@ -649,8 +828,10 @@ import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentS
 import { IslandExplorationSystem } from '@/utils/islandExplorationSystem'
 import { GameLogic } from '@/utils/gameLogic'
 import { db } from '@/utils/database'
-import type { Character, Crew, Task, StyleCombat } from '@/utils/database'
+import type { Character, Crew, Task, StyleCombat, DevilFruit } from '@/utils/database'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
+// ✅ IMPORT DO COMPONENTE DE AVATAR
+import CharacterAvatar from '@/components/CharacterAvatar.vue'
 
 const characterStore = useCharacterStore()
 const battleStore = useBattleStore()
@@ -659,6 +840,8 @@ const router = useRouter()
 // 🔄 LOADING STATES
 const playerCharacterLoaded = ref(false)
 const activeTasksLoaded = ref(false)
+const devilFruitLoaded = ref(false)
+const avatarSystemLoaded = ref(false)
 
 // Usar o composable
 const { formatTimeRemaining } = useTimeRemaining()
@@ -669,6 +852,7 @@ const loadingAdventure = ref(false)
 const battleStarted = ref(false)
 const lastBattleResult = ref<any>(null)
 const availableStyleCombat = ref<StyleCombat[]>([])
+const availableDevilFruit = ref<DevilFruit[]>([])
 
 // Tarefas ativas
 const hasActiveTasks = ref(false)
@@ -694,18 +878,29 @@ const recruitmentResult = ref<any>(null)
 // 📊 COMPUTED
 const playerCharacter = computed(() => characterStore.playerCharacter)
 
-
 // ✅ COMPUTED PARA VERIFICAR SE TODOS OS DADOS ESTÃO CARREGADOS
 const allDataLoaded = computed(() => {
-  return playerCharacterLoaded.value && activeTasksLoaded.value
+  return playerCharacterLoaded.value && 
+         activeTasksLoaded.value && 
+         devilFruitLoaded.value && 
+         avatarSystemLoaded.value
 })
+
+// ✅ EVENTOS DE AVATAR
+const onPlayerAvatarRegenerated = (svgData: string) => {
+  console.log('✅ Avatar do player regenerado na aventura')
+}
+
+const onPlayerAvatarError = (error: Error) => {
+  console.error('❌ Erro no avatar do player na aventura:', error)
+}
 
 const redirect = () => {
   if(activeTaskType.value == 'exploration') router.push('/islands')
   else if(activeTaskType.value == 'training') router.push('/training')
   else if(activeTaskType.value == 'ship_upgrade') router.push('/crew')
   else if(activeTaskType.value == 'navigation') router.push('/navigation')
-else if(activeTaskType.value == 'island_liberation') router.push('/territory-liberation')
+  else if(activeTaskType.value == 'island_liberation') router.push('/territory-liberation')
 }
 
 const iconName = () => {
@@ -716,7 +911,33 @@ const iconName = () => {
   else if(activeTaskType.value == 'island_liberation') return 'mdi-sword-cross'
 }
 
-// �� WATCHERS PARA DETECTAR QUANDO OS DADOS SÃO CARREGADOS
+const devilFruit = (devilFruit: number): DevilFruit => {
+    return availableDevilFruit.value.find(fruit => fruit.id === devilFruit)
+}
+
+const getDevilFruits = async () => {
+    try {
+    console.log('🔄 Carregando akumas no mi...')
+    
+    const df = await db.devilFruits.toArray()
+    if(df){
+      availableDevilFruit.value = df
+      console.log(`✅ Akumas no mi carregados`)
+      console.log('Akumas no mi ', availableDevilFruit.value)
+    }
+    else {
+      console.log('⚠️ Nenhum navio encontrado para esta tripulação')
+    }
+    
+    devilFruitLoaded.value = true
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar Akuma no mi:', error)
+    devilFruitLoaded.value = true
+  }
+}
+
+// ✅ WATCHERS PARA DETECTAR QUANDO OS DADOS SÃO CARREGADOS
 watch(() => playerCharacter.value, (newValue) => {
   if (newValue) {
     console.log('✅ PlayerCharacter carregado:', newValue.name)
@@ -730,7 +951,7 @@ const loadDataSequentially = async () => {
     console.log('🔄 Iniciando carregamento sequencial...')
     
     // 1. Aguardar playerCharacter estar disponível
-    while (!playerCharacter.value) {
+        while (!playerCharacter.value) {
       console.log('⏳ Aguardando playerCharacter...')
       await new Promise(resolve => setTimeout(resolve, 100))
     }
@@ -742,11 +963,36 @@ const loadDataSequentially = async () => {
     await checkActiveTasks()
     const styleCombats = await db.styleCombats.toArray()
     availableStyleCombat.value = styleCombats
+
+    console.log('🔄 Carregando akumas no mi...')
+    await getDevilFruits()
+
+    // 3. ✅ INICIALIZAR SISTEMA DE AVATARES
+    console.log('🎨 Inicializando sistema de avatares...')
+    await initializeAvatarSystem()
     
     console.log('✅ Todos os dados carregados!')
     
   } catch (error) {
     console.error('❌ Erro no carregamento sequencial:', error)
+  }
+}
+
+// ✅ INICIALIZAR SISTEMA DE AVATARES
+const initializeAvatarSystem = async () => {
+  try {
+    // Simular inicialização do sistema de avatares
+    console.log('🎨 Sistema de avatares inicializando...')
+    
+    // Aguardar um pouco para simular carregamento
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    avatarSystemLoaded.value = true
+    console.log('✅ Sistema de avatares inicializado')
+    
+  } catch (error) {
+    console.error('❌ Erro ao inicializar sistema de avatares:', error)
+    avatarSystemLoaded.value = true // Continuar mesmo com erro
   }
 }
 
@@ -766,7 +1012,7 @@ const checkActiveTasks = async () => {
     const hasActive = activeTasks.value.length > 0
     const count = activeTasks.value.length
 
-    const taskType = activeTasks.value[0].type
+    const taskType = activeTasks.value[0]?.type || ''
     
     hasActiveTasks.value = hasActive
     activeTasksCount.value = count
@@ -827,6 +1073,7 @@ watchEffect(async () => {
     winChance.value = 0
   }
 })
+
 const startAdventure = async () => {
   if (!playerCharacter.value || hasActiveTasks.value) {
     console.log('❌ Não é possível iniciar aventura: tarefas ativas ou personagem não disponível')
@@ -856,8 +1103,6 @@ const startAdventure = async () => {
   }
 }
 
-
-
 const startBattle = async () => {
   if (!playerCharacter.value || !currentEncounter.value) return
   
@@ -884,9 +1129,6 @@ const startBattle = async () => {
     if (result.winner.id === playerCharacter.value.id) {
       await checkRecruitmentPossibility(result.loser)
     }
-    
-    // Recarregar personagem do jogador
-    //await characterStore.loadPlayerCharacter()
     
   } catch (error) {
     console.error('❌ Erro na batalha:', error)
@@ -981,7 +1223,8 @@ const viewCrew = () => {
 
 // 🎨 FUNÇÕES DE CORES MELHORADAS
 const calculatePower = (character: Character): number => {
-  return GameLogic.calculatePower(character)
+  const df = devilFruit(character.devilFruitId)
+  return GameLogic.calculatePower(character, df)
 }
 
 const getTypeColor = (type: string): string => {
@@ -1056,7 +1299,7 @@ const formatBounty = (bounty: number): string => {
 }
 
 const opponentStyle = (combat: number): string => {
-  return availableStyleCombat.value.find(comb => comb.id === combat).name
+  return availableStyleCombat.value.find(comb => comb.id === combat)?.name || 'Desconhecido'
 }
 
 const formatSpecialReward = (reward: any): string => {
@@ -1111,8 +1354,185 @@ onMounted(async () => {
   background-color: rgba(76, 175, 80, 0.1);
 }
 
+/* ✅ ESTILOS PARA AVATARES */
+.player-avatar-section {
+  position: relative;
+  display: inline-block;
+}
+
+.player-adventure-avatar {
+  border: 4px solid rgba(25, 118, 210, 0.3);
+  transition: all 0.3s ease;
+}
+
+.player-adventure-avatar:hover {
+  border-color: rgba(25, 118, 210, 0.6);
+  transform: scale(1.05);
+}
+
+.player-stats-card {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
+  border: 2px solid rgba(25, 118, 210, 0.2);
+}
+
+/* ✅ ESTILOS PARA COMPARAÇÃO DE AVATARES */
+.avatar-comparison-card {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+  border: 2px solid rgba(255, 193, 7, 0.3);
+}
+
+.combatant-section {
+  padding: 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.combatant-avatar {
+  transition: all 0.3s ease;
+}
+
+.player-combatant .combatant-avatar {
+  border: 3px solid rgba(25, 118, 210, 0.4);
+}
+
+.opponent-combatant .combatant-avatar {
+  border: 3px solid rgba(244, 67, 54, 0.4);
+}
+
+.vs-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ✅ ESTILOS PARA RESULTADO DA BATALHA */
+.battle-result-card {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.battle-result-avatars {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.result-combatant {
+  padding: 16px;
+}
+
+.result-avatar {
+  transition: all 0.3s ease;
+}
+
+.winner-avatar {
+  border: 4px solid rgba(76, 175, 80, 0.8);
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
+  animation: winnerGlow 2s ease-in-out infinite alternate;
+}
+
+.loser-avatar {
+  border: 4px solid rgba(158, 158, 158, 0.6);
+  filter: grayscale(0.3);
+}
+
+@keyframes winnerGlow {
+  0% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.4); }
+  100% { box-shadow: 0 0 30px rgba(76, 175, 80, 0.7); }
+}
+
+/* ✅ ESTILOS PARA RECRUTAMENTO */
+.recruitment-card {
+  border: 3px solid rgba(255, 152, 0, 0.4);
+}
+
+.recruitment-candidate {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 16px;
+  border: 2px solid rgba(255, 152, 0, 0.3);
+}
+
+.candidate-avatar {
+  border: 3px solid rgba(255, 152, 0, 0.6);
+  transition: all 0.3s ease;
+}
+
+.candidate-avatar:hover {
+  transform: scale(1.05);
+  border-color: rgba(255, 152, 0, 0.8);
+}
+
+/* ✅ ESTILOS PARA MODAL */
+.modal-candidate-avatar {
+  border: 3px solid rgba(25, 118, 210, 0.4);
+  margin: 0 auto;
+}
+
+/* ✅ CARDS ESPECIAIS */
+.adventure-header {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%);
+  border: 2px solid rgba(25, 118, 210, 0.2);
+}
+
+.player-info-card {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border: 2px solid rgba(76, 175, 80, 0.2);
+}
+
+.encounter-card {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 193, 7, 0.1) 100%);
+  border: 2px solid rgba(255, 193, 7, 0.3);
+}
+
+.opponent-details-card {
+  background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, rgba(244, 67, 54, 0.1) 100%);
+  border: 2px solid rgba(244, 67, 54, 0.2);
+}
+
+.special-reward-card {
+  border: 3px solid rgba(76, 175, 80, 0.4);
+}
+
+/* ✅ BOTÕES ESPECIAIS */
+.adventure-start-btn {
+  background: linear-gradient(45deg, #1976D2, #1565C0) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  padding: 16px 32px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.adventure-start-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4) !important;
+}
+
+.battle-btn {
+  background: linear-gradient(45deg, #F44336, #D32F2F) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3) !important;
+}
+
+.battle-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4) !important;
+}
+
+.retreat-btn {
+  background: linear-gradient(45deg, #757575, #616161) !important;
+  color: white !important;
+}
+
+/* ✅ CARDS GERAIS */
 .v-card {
   transition: all 0.3s ease;
+  border-radius: 12px !important;
 }
 
 .v-card:hover {
@@ -1140,6 +1560,7 @@ onMounted(async () => {
 /* MELHOR CONTRASTE PARA CHIPS */
 .v-chip {
   font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
 }
 
 .v-chip .v-chip__content {
@@ -1183,6 +1604,18 @@ onMounted(async () => {
   .v-btn.v-btn--size-x-large {
     font-size: 1rem;
     padding: 12px 24px;
+  }
+
+  .combatant-section {
+    padding: 8px;
+  }
+
+  .vs-section {
+    padding: 10px;
+  }
+
+  .player-avatar-section {
+    margin-bottom: 16px;
   }
 }
 

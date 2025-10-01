@@ -3,6 +3,7 @@
 import { db, type Character, type Task } from './database'
 import { GameLogic } from './gameLogic';
 import {GenerationConfig} from '@/utils/generationConfig'
+import { RecruitmentSystem } from './recruitmentSystem';
 
 export interface CivilianEncounter {
   civilian: Character;
@@ -447,6 +448,7 @@ export class IslandExplorationSystem {
       
       // Buscar personagem e civil
       const character = await db.characters.get(task.characterId);
+      const crewMembers = await db.characters.where('crewId').equals(character.crewId).and(char => char.id != character.id).toArray();
       const civilian = task.targetId ? await db.characters.get(task.targetId) : null;
       
       if (!character) {
@@ -510,7 +512,7 @@ export class IslandExplorationSystem {
       const canRecruit = (civilian && 
                         character.kindness >= 0 && // Só kindness positivo
                         !civilian.crewId && // Civil não está em crew
-                        Math.random() < GenerationConfig.createEpic().civillianRecruitmentChance) || false; 
+                        Math.random() < GenerationConfig.createEpic().civillianRecruitmentChance && await RecruitmentSystem.validateTargetCrewSize(character.crewId, GenerationConfig.createEpic())) || false; 
       
       console.log(`✅ ${character.name} completou tarefa: ${task.description}`);
       console.log(`🎁 Recompensas: +${task.experienceReward} EXP, +${task.kindnessReward} Kindness`);

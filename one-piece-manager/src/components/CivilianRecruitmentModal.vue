@@ -178,7 +178,7 @@
           color="primary"
           variant="elevated"
           @click="attemptRecruitment"
-          :disabled="isAttempting || isLoading || !recruitmentAnalysis"
+          :disabled="isAttempting || isLoading || !recruitmentAnalysis || attempted"
           :loading="isAttempting"
           size="large"
         >
@@ -228,6 +228,7 @@ const emit = defineEmits<{
 // ✅ ESTADOS
 const isLoading = ref(true)
 const isAttempting = ref(false)
+const attempted = ref(false)
 const recruitmentAnalysis = ref<RecruitmentAnalysis | null>(null)
 const recruitmentResult = ref<RecruitmentResult | null>(null)
 
@@ -264,6 +265,7 @@ const attemptRecruitment = async () => {
     )
     
     recruitmentResult.value = result
+    attempted.value = true
     
   } catch (error) {
     console.error('❌ Erro na tentativa de recrutamento:', error)

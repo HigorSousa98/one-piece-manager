@@ -112,7 +112,7 @@ export class NavigationSystem {
         console.log('🎯 NavigationSystem - Buscando ilha de mesma dificuldade:', targetDifficulty)
       } else {
         // 60% chance - dificuldade +1
-        targetDifficulty = Math.min(currentIsland.difficulty + 1, 10) // Max 10
+        targetDifficulty = Math.min(currentIsland.difficulty + 1, 30) // Max 10
         console.log('🎯 NavigationSystem - Buscando ilha de dificuldade +1:', targetDifficulty)
       }
       

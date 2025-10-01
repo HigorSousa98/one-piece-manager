@@ -39,6 +39,13 @@
                   </v-icon>
                   <span>Carregando Tarefas Ativas</span>
                 </div>
+
+                <div class="step-item" :class="{ 'completed': avatarSystemLoaded }">
+                  <v-icon :color="avatarSystemLoaded ? 'success' : 'grey'">
+                    {{ avatarSystemLoaded ? 'mdi-check' : 'mdi-loading mdi-spin' }}
+                  </v-icon>
+                  <span>Inicializando Sistema de Avatares</span>
+                </div>
               </div>
             </v-card-text>
           </v-card>
@@ -52,10 +59,10 @@
       <!-- HEADER -->
       <v-row>
         <v-col cols="12">
-          <v-card class="mb-4">
+          <v-card class="mb-4 exploration-header">
             <v-card-title class="text-center">
               <v-icon left size="large">mdi-island</v-icon>
-              🏝️ EXPLORAÇÃO DA ILHA
+              EXPLORAÇÃO DA ILHA
             </v-card-title>
             <v-card-subtitle class="text-center">
               Explore a ilha e ajude os habitantes locais
@@ -67,7 +74,7 @@
       <!-- TAREFAS ATIVAS COM MELHOR CONTRASTE -->
       <v-row v-if="activeTasks.length > 0">
         <v-col cols="12">
-          <v-card class="mb-4" color="blue-lighten-5">
+          <v-card class="mb-4 active-tasks-card" color="blue-lighten-5">
             <v-card-title class="text-blue-darken-3">
               <v-icon left color="blue-darken-3">mdi-clipboard-list</v-icon>
               Tarefas Ativas ({{ activeTasks.length }})
@@ -144,11 +151,33 @@
         </v-col>
       </v-row>
       
-      <!-- BOTÃO EXPLORAR -->
+      <!-- ✅ SEÇÃO DE EXPLORAÇÃO COM AVATAR DO PLAYER -->
       <v-row v-if="!currentEncounter && activeTasks.length === 0">
         <v-col cols="12">
-          <v-card>
+          <v-card class="exploration-main-card">
             <v-card-text class="text-center py-8">
+              
+              <!-- ✅ AVATAR DO PLAYER -->
+              <div class="player-exploration-avatar mb-4">
+                <CharacterAvatar 
+                  v-if="playerCharacter"
+                  :character="playerCharacter"
+                  size="xl"
+                  variant="circle"
+                  :show-actions="true"
+                  :show-regenerate-button="true"
+                  :show-download-button="true"
+                  :show-status-indicators="true"
+                  :show-level="true"
+                  :show-power-rank="false"
+                  :cache-enabled="true"
+                  :clickable="false"
+                  class="exploration-avatar"
+                  @avatar-regenerated="onPlayerAvatarRegenerated"
+                  @avatar-error="onPlayerAvatarError"
+                />
+              </div>
+
               <v-icon size="80" color="primary" class="mb-4">mdi-compass</v-icon>
               <div class="text-h5 mb-4">Explorar a Ilha</div>
               <div class="text-body-1 mb-6">
@@ -156,7 +185,7 @@
               </div>
               
               <!-- INFO DA ILHA ATUAL -->
-              <v-card variant="outlined" class="mb-4 mx-auto" style="max-width: 400px;">
+              <v-card variant="outlined" class="mb-4 mx-auto island-info-card" style="max-width: 500px;">
                 <v-card-text>
                   <div class="text-h6 mb-2">🏝️ Ilha Atual</div>
                   <div class="text-body-2">
@@ -178,6 +207,7 @@
                 @click="exploreIsland"
                 :loading="exploring"
                 variant="elevated"
+                class="explore-btn"
               >
                 <v-icon left>mdi-walk</v-icon>
                 {{ exploring ? 'Explorando...' : 'EXPLORAR ILHA' }}
@@ -187,10 +217,10 @@
         </v-col>
       </v-row>
       
-      <!-- ENCONTRO COM CIVIL -->
+      <!-- ✅ ENCONTRO COM CIVIL COM AVATARES -->
       <v-row v-if="currentEncounter">
         <v-col cols="12">
-          <v-card>
+          <v-card class="encounter-card">
             <v-card-title>
               <v-icon left>mdi-account</v-icon>
               Encontro em {{ currentEncounter.location }}
@@ -205,11 +235,85 @@
               >
                 {{ currentEncounter.description }}
               </v-alert>
+
+              <!-- ✅ SEÇÃO DE COMPARAÇÃO PLAYER VS CIVIL -->
+              <v-row class="mb-4">
+                <v-col cols="12">
+                  <v-card variant="outlined" class="encounter-comparison-card">
+                    <v-card-title class="text-center">
+                      <v-icon left>mdi-handshake</v-icon>
+                      Encontro
+                    </v-card-title>
+                    <v-card-text>
+                      <v-row align="center">
+                        <!-- PLAYER -->
+                        <v-col cols="5" class="text-center">
+                          <div class="encounter-participant">
+                            <CharacterAvatar 
+                              v-if="playerCharacter"
+                              :character="playerCharacter"
+                              size="lg"
+                              variant="circle"
+                              :show-actions="false"
+                              :show-status-indicators="true"
+                              :show-level="true"
+                              :show-power-rank="false"
+                              :cache-enabled="true"
+                              :clickable="false"
+                              class="participant-avatar player-participant"
+                            />
+                            <div class="text-h6 mt-2 text-primary">{{ playerCharacter?.name }}</div>
+                            <v-chip color="primary" size="small" variant="elevated" class="mt-1">
+                              {{ playerCharacter?.type }}
+                            </v-chip>
+                            <div class="text-body-2 mt-2">
+                              <strong>Kindness: {{ playerCharacter?.kindness || 0 }}</strong>
+                            </div>
+                          </div>
+                        </v-col>
+
+                        <!-- ENCONTRO -->
+                        <v-col cols="2" class="text-center">
+                          <div class="encounter-symbol">
+                            <v-icon size="60" color="success">mdi-handshake</v-icon>
+                            <div class="text-h6 text-success font-weight-bold">ENCONTRO</div>
+                          </div>
+                        </v-col>
+
+                        <!-- CIVIL -->
+                        <v-col cols="5" class="text-center">
+                          <div class="encounter-participant">
+                            <CharacterAvatar 
+                              :character="currentEncounter.civilian"
+                              size="lg"
+                              variant="circle"
+                              :show-actions="false"
+                              :show-status-indicators="true"
+                              :show-level="true"
+                              :show-power-rank="false"
+                              :cache-enabled="true"
+                              :clickable="false"
+                              class="participant-avatar civilian-participant"
+                            />
+                            <div class="text-h6 mt-2 text-success">{{ currentEncounter.civilian.name }}</div>
+                            <v-chip color="success" size="small" variant="elevated" class="mt-1">
+                              {{ currentEncounter.civilian.type }}
+                            </v-chip>
+                            <div class="text-body-2 mt-2">
+                              <strong>Kindness: {{ currentEncounter.civilian.kindness }}</strong>
+                            </div>
+                          </div>
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
               
               <!-- INFO DO CIVIL -->
               <v-row class="mb-4">
                 <v-col cols="12" md="6">
-                  <v-card variant="outlined">
+                  <v-card variant="outlined" class="civilian-info-card">
                     <v-card-title>
                       <v-avatar color="success" class="mr-2">
                         <span>👤</span>
@@ -246,14 +350,14 @@
                 
                 <!-- OPÇÕES DE TAREFA -->
                 <v-col cols="12" md="6">
-                  <v-card variant="outlined">
+                  <v-card variant="outlined" class="task-options-card">
                     <v-card-title>
                       <v-icon left>mdi-hand-heart</v-icon>
                       Como Ajudar?
                     </v-card-title>
                     <v-card-text>
                       <div v-for="option in currentEncounter.taskOptions" :key="option.id" class="mb-3">
-                        <v-card variant="outlined" :color="getTaskOptionColor(option.difficulty)">
+                        <v-card variant="outlined" :color="getTaskOptionColor(option.difficulty)" class="task-option-card">
                           <v-card-text class="pa-3">
                             <div class="d-flex justify-space-between align-center mb-2">
                               <strong>{{ option.name }}</strong>
@@ -268,7 +372,7 @@
                             
                             <div class="text-caption mb-3">
                               <div>⏰ Duração: {{ option.duration }} minutos</div>
-                              <div>�� Bondade: +{{ option.kindnessReward }}</div>
+                              <div>💚 Bondade: +{{ option.kindnessReward }}</div>
                               <div>⭐ Experiência: +{{ option.experienceReward }}</div>
                               <div v-if="option.bountyReward">💰 Bounty: +{{ option.bountyReward }}</div>
                             </div>
@@ -323,8 +427,8 @@
         </v-col>
       </v-row>
       
-      <!-- RESULTADO DE TAREFA COMPLETADA -->
-      <v-dialog v-model="showTaskResult" max-width="500">
+      <!-- ✅ RESULTADO DE TAREFA COMPLETADA COM AVATAR -->
+      <v-dialog v-model="showTaskResult" max-width="600">
         <v-card v-if="taskResult">
           <v-card-title class="text-center">
             <v-icon left size="large" :color="taskResult.success ? 'success' : 'error'">
@@ -349,8 +453,25 @@
                 </v-card-text>
               </v-card>
               
-              <!-- OPÇÃO DE RECRUTAMENTO -->
+              <!-- ✅ OPÇÃO DE RECRUTAMENTO COM AVATAR -->
               <div v-if="taskResult.canRecruit && taskResult.civilian">
+                <!-- AVATAR DO CIVIL CANDIDATO -->
+                <div class="recruitment-candidate-section mb-4">
+                  <CharacterAvatar 
+                    :character="taskResult.civilian"
+                    size="lg"
+                    variant="circle"
+                    :show-actions="false"
+                    :show-status-indicators="true"
+                    :show-level="true"
+                    :show-power-rank="false"
+                    :cache-enabled="true"
+                    :clickable="false"
+                    class="recruitment-candidate-avatar"
+                  />
+                  <div class="text-h6 mt-2">{{ taskResult.civilian.name }}</div>
+                </div>
+
                 <v-alert type="info" class="mb-4" variant="elevated">
                   <div class="text-center">
                     <strong>🤝 Oportunidade de Recrutamento!</strong><br>
@@ -388,8 +509,8 @@
         </v-card>
       </v-dialog>
       
-      <!-- MODAL DE RECRUTAMENTO DE CIVIL -->
-      <v-dialog v-model="showRecruitmentModal" max-width="600">
+      <!-- ✅ MODAL DE RECRUTAMENTO DE CIVIL COM AVATARES -->
+      <v-dialog v-model="showRecruitmentModal" max-width="700">
         <CivilianRecruitmentModal
           v-if="recruitmentTarget"
           :recruiter="playerCharacter!"
@@ -414,6 +535,8 @@ import { useRouter } from 'vue-router'
 import TimeRemaining from '@/components/TimeRemaining.vue'
 import TaskProgressBar from '@/components/TaskProgressBar.vue'
 import CivilianRecruitmentModal from '@/components/CivilianRecruitmentModal.vue'
+// ✅ IMPORT DO COMPONENTE DE AVATAR
+import CharacterAvatar from '@/components/CharacterAvatar.vue'
 import type { Character, Task } from '@/utils/database'
 
 const characterStore = useCharacterStore()
@@ -426,6 +549,7 @@ const { formatTimeRemaining } = useTimeRemaining()
 const playerCharacterLoaded = ref(false)
 const playerCrewLoaded = ref(false)
 const activeTasksLoaded = ref(false)
+const avatarSystemLoaded = ref(false)
 
 // 🎯 REACTIVE DATA
 const currentEncounter = ref<CivilianEncounter | null>(null)
@@ -451,8 +575,20 @@ const playerCrew = computed(() => characterStore.playerCrew)
 
 // ✅ COMPUTED PARA VERIFICAR SE TODOS OS DADOS ESTÃO CARREGADOS
 const allDataLoaded = computed(() => {
-  return playerCharacterLoaded.value && playerCrewLoaded.value && activeTasksLoaded.value
+  return playerCharacterLoaded.value && 
+         playerCrewLoaded.value && 
+         activeTasksLoaded.value && 
+         avatarSystemLoaded.value
 })
+
+// ✅ EVENTOS DE AVATAR
+const onPlayerAvatarRegenerated = (svgData: string) => {
+  console.log('✅ Avatar do player regenerado na exploração')
+}
+
+const onPlayerAvatarError = (error: Error) => {
+  console.error('❌ Erro no avatar do player na exploração:', error)
+}
 
 // 👀 WATCHERS PARA DETECTAR QUANDO OS DADOS SÃO CARREGADOS
 watch(() => playerCharacter.value, (newValue) => {
@@ -493,6 +629,10 @@ const loadDataSequentially = async () => {
     // 2. Carregar tarefas ativas
     console.log('🔄 Carregando tarefas ativas...')
     await loadActiveTasks()
+
+    // 3. ✅ INICIALIZAR SISTEMA DE AVATARES
+    console.log('🎨 Inicializando sistema de avatares...')
+    await initializeAvatarSystem()
     
     console.log('✅ Todos os dados carregados!')
     
@@ -501,7 +641,25 @@ const loadDataSequentially = async () => {
   }
 }
 
-// 🎮 METHODS
+// ✅ INICIALIZAR SISTEMA DE AVATARES
+const initializeAvatarSystem = async () => {
+  try {
+    // Simular inicialização do sistema de avatares
+    console.log('🎨 Sistema de avatares inicializando...')
+    
+    // Aguardar um pouco para simular carregamento
+    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    avatarSystemLoaded.value = true
+    console.log('✅ Sistema de avatares inicializado')
+    
+  } catch (error) {
+    console.error('❌ Erro ao inicializar sistema de avatares:', error)
+    avatarSystemLoaded.value = true // Continuar mesmo com erro
+  }
+}
+
+// �� METHODS
 const exploreIsland = async () => {
   console.log('🚀 Iniciando exploração...')
   console.log('Player:', playerCharacter.value?.name)
@@ -705,8 +863,6 @@ const handleRecruitmentFailed = async (civilian: Character) => {
   closeRecruitmentModal()
 }
 
-
-
 // 🎨 HELPER FUNCTIONS
 const getTaskDifficultyColor = (difficulty: string): string => {
   switch (difficulty) {
@@ -800,12 +956,140 @@ onMounted(async () => {
   background-color: rgba(76, 175, 80, 0.1);
 }
 
+/* ✅ ESTILOS PARA AVATARES */
+.player-exploration-avatar {
+  position: relative;
+  display: inline-block;
+}
+
+.exploration-avatar {
+  border: 4px solid rgba(76, 175, 80, 0.3);
+  transition: all 0.3s ease;
+}
+
+.exploration-avatar:hover {
+  border-color: rgba(76, 175, 80, 0.6);
+  transform: scale(1.05);
+}
+
+/* ✅ ESTILOS PARA COMPARAÇÃO DE ENCONTRO */
+.encounter-comparison-card {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+  border: 2px solid rgba(76, 175, 80, 0.3);
+}
+
+.encounter-participant {
+  padding: 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.participant-avatar {
+  transition: all 0.3s ease;
+}
+
+.player-participant .participant-avatar {
+  border: 3px solid rgba(25, 118, 210, 0.4);
+}
+
+.civilian-participant .participant-avatar {
+  border: 3px solid rgba(76, 175, 80, 0.4);
+}
+
+.encounter-symbol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* ✅ ESTILOS PARA RECRUTAMENTO */
+.recruitment-candidate-section {
+  padding: 20px;
+  background: rgba(25, 118, 210, 0.05);
+  border-radius: 16px;
+  border: 2px solid rgba(25, 118, 210, 0.2);
+}
+
+.recruitment-candidate-avatar {
+  border: 3px solid rgba(25, 118, 210, 0.6);
+  transition: all 0.3s ease;
+}
+
+.recruitment-candidate-avatar:hover {
+  transform: scale(1.05);
+  border-color: rgba(25, 118, 210, 0.8);
+}
+
+/* ✅ CARDS ESPECIAIS */
+.exploration-header {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
+  border: 2px solid rgba(76, 175, 80, 0.2);
+}
+
+.exploration-main-card {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
+  border: 2px solid rgba(25, 118, 210, 0.2);
+}
+
+.encounter-card {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border: 2px solid rgba(76, 175, 80, 0.3);
+}
+
+.active-tasks-card {
+  border: 2px solid rgba(25, 118, 210, 0.3);
+}
+
+.civilian-info-card {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border: 2px solid rgba(76, 175, 80, 0.2);
+}
+
+.task-options-card {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 193, 7, 0.1) 100%);
+  border: 2px solid rgba(255, 193, 7, 0.2);
+}
+
+.task-option-card {
+  transition: all 0.3s ease;
+}
+
+.task-option-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.island-info-card {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border: 2px solid rgba(76, 175, 80, 0.2);
+}
+
+/* ✅ BOTÕES ESPECIAIS */
+.explore-btn {
+  background: linear-gradient(45deg, #4CAF50, #388E3C) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  padding: 16px 32px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3) !important;
+  transition: all 0.3s ease !important;
+}
+
+.explore-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4) !important;
+}
+
 .pulse-animation {
   animation: pulse-glow 2s infinite;
 }
 
 .v-card {
   transition: all 0.3s ease;
+  border-radius: 12px !important;
 }
 
 .v-card:hover {
@@ -834,12 +1118,23 @@ onMounted(async () => {
 .difficulty-chip {
   color: white !important;
   font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
 }
 
 .difficulty-chip .v-chip__content {
   color: white !important;
 }
 
+.v-chip {
+  font-weight: 700 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+.v-chip .v-chip__content {
+  font-weight: 700 !important;
+}
+
+/* ANIMAÇÕES */
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
@@ -859,5 +1154,305 @@ onMounted(async () => {
 
 .mdi-spin {
   animation: spin 1s linear infinite;
+}
+
+/* HOVER EFFECTS */
+.v-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.v-chip:hover {
+  transform: scale(1.05);
+}
+
+.participant-avatar:hover {
+  transform: scale(1.05);
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .island-exploration {
+    padding: 8px;
+  }
+  
+  .v-card-text {
+    padding: 12px;
+  }
+  
+  .text-h5 {
+    font-size: 1.3rem !important;
+  }
+  
+  .v-btn.v-btn--size-x-large {
+    font-size: 1rem;
+    padding: 12px 24px;
+  }
+
+  .encounter-participant {
+    padding: 8px;
+  }
+
+  .encounter-symbol {
+    padding: 10px;
+  }
+
+  .player-exploration-avatar {
+    margin-bottom: 16px;
+  }
+
+  .encounter-comparison-card .v-row {
+    flex-direction: column;
+  }
+
+  .encounter-comparison-card .v-col {
+    max-width: 100%;
+    flex-basis: auto;
+  }
+}
+
+/* CORES CUSTOMIZADAS */
+.text-green-darken-3 {
+  color: #1b5e20 !important;
+}
+
+.text-green-darken-4 {
+  color: #0d5016 !important;
+}
+
+.text-blue-darken-3 {
+  color: #1565c0 !important;
+}
+
+.text-blue-darken-4 {
+  color: #0d47a1 !important;
+}
+
+/* SOMBRAS CUSTOMIZADAS */
+.v-card.v-card--variant-elevated {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.v-alert.v-alert--variant-elevated {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.v-btn.v-btn--variant-elevated {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.v-chip.v-chip--variant-elevated {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+/* EFEITOS ESPECIAIS PARA AVATARES */
+.exploration-avatar {
+  position: relative;
+}
+
+.exploration-avatar::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: inherit;
+  background: linear-gradient(45deg, #4CAF50, #81C784, #4CAF50);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.exploration-avatar:hover::after {
+  opacity: 0.3;
+}
+
+.participant-avatar {
+  position: relative;
+  overflow: hidden;
+}
+
+.participant-avatar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s ease;
+}
+
+.participant-avatar:hover::before {
+  left: 100%;
+}
+
+.recruitment-candidate-avatar {
+  position: relative;
+}
+
+.recruitment-candidate-avatar::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border-radius: inherit;
+  background: linear-gradient(45deg, #1976D2, #42A5F5, #1976D2);
+  z-index: -1;
+  animation: recruitmentGlow 3s ease-in-out infinite;
+}
+
+@keyframes recruitmentGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+/* ESTADOS DE LOADING PARA AVATARES */
+.avatar-loading {
+  position: relative;
+}
+
+.avatar-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top: 2px solid #fff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* TRANSIÇÕES SUAVES PARA MUDANÇAS DE ESTADO */
+.encounter-card {
+  transition: all 0.5s ease;
+}
+
+.encounter-card.entering {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.encounter-card.entered {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.task-option-card {
+  transition: all 0.3s ease;
+}
+
+.task-option-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* INDICADORES VISUAIS PARA DIFERENTES TIPOS DE ENCONTRO */
+.encounter-card[data-urgency="high"] {
+  border-left: 5px solid #f44336;
+}
+
+.encounter-card[data-urgency="medium"] {
+  border-left: 5px solid #ff9800;
+}
+
+.encounter-card[data-urgency="low"] {
+  border-left: 5px solid #4caf50;
+}
+
+/* MELHORIAS PARA ACESSIBILIDADE */
+.v-btn:focus {
+  outline: 2px solid #1976D2;
+  outline-offset: 2px;
+}
+
+.participant-avatar:focus {
+  outline: 3px solid #1976D2;
+  outline-offset: 3px;
+}
+
+/* ANIMAÇÕES DE ENTRADA PARA ELEMENTOS */
+@keyframes slideInFromLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.player-participant {
+  animation: slideInFromLeft 0.6s ease-out;
+}
+
+.civilian-participant {
+  animation: slideInFromRight 0.6s ease-out;
+}
+
+.encounter-symbol {
+  animation: fadeInUp 0.8s ease-out 0.3s both;
+}
+
+.task-option-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.task-option-card:nth-child(1) { animation-delay: 0.1s; }
+.task-option-card:nth-child(2) { animation-delay: 0.2s; }
+.task-option-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* EFEITOS PARA DIFERENTES DIFICULDADES DE TAREFA */
+.task-option-card[data-difficulty="easy"] {
+  border-left: 4px solid #4caf50;
+}
+
+.task-option-card[data-difficulty="medium"] {
+  border-left: 4px solid #ff9800;
+}
+
+.task-option-card[data-difficulty="hard"] {
+  border-left: 4px solid #f44336;
+}
+
+.task-option-card[data-difficulty="easy"]:hover {
+  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+}
+
+.task-option-card[data-difficulty="medium"]:hover {
+  box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
+}
+
+.task-option-card[data-difficulty="hard"]:hover {
+  box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
 }
 </style>

@@ -46,7 +46,7 @@ export const POWER_CONFIG = {
   // Sistema de Level
   level: {
     basePowerPerLevel: 15,
-    multiplierPerLevel: 0.01,
+    multiplierPerLevel: 0.0,
     veteranThreshold: 50,
     veteranBonusPerLevel: 25
   },
@@ -65,7 +65,7 @@ export const POWER_CONFIG = {
   },
   
   // Outros fatores
-  kindnessInfluence: 0.005,
+  kindnessInfluence: 0.001,
   bountyLogBase: 2
 } as const
 

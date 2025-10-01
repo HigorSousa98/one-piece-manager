@@ -76,7 +76,7 @@
           <v-card class="mb-4" variant="elevated">
             <v-card-title class="text-center">
               <v-icon left size="large">mdi-account-group</v-icon>
-              👥 GERENCIAMENTO DE TRIPULAÇÃO
+              GERENCIAMENTO DE TRIPULAÇÃO
             </v-card-title>
             <v-card-subtitle class="text-center">
               Gerencie sua tripulação e veja informações detalhadas de cada membro

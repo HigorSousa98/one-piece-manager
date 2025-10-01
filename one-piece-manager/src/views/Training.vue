@@ -477,7 +477,8 @@ const handleTrainingCompleted = async (event: any) => {
 
 // 🎨 HELPER FUNCTIONS
 const calculatePower = (character: Character): number => {
-  return GameLogic.calculatePower(character)
+  const df = devilFruit(character.devilFruitId)
+  return GameLogic.calculatePower(character, df)
 }
 
 const formatNumber = (num: number): string => {

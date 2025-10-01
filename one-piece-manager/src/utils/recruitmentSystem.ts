@@ -93,7 +93,7 @@ export class RecruitmentSystem {
   }
   
   // 👥 VALIDAR TAMANHO DO CREW ALVO
-  private static async validateTargetCrewSize(targetCrew: number | undefined, generator: GenerationConfig): Promise<boolean> {
+  public static async validateTargetCrewSize(targetCrew: number | undefined, generator: GenerationConfig): Promise<boolean> {
     const crewMembers = targetCrew ? await db.characters.where('crewId').equals(targetCrew).toArray() : null
     const ship = targetCrew ? await db.ships.where('crewId').equals(targetCrew).limit(1).toArray() : null
     if(crewMembers && ship){

@@ -47,7 +47,7 @@
           <v-card class="mb-4" variant="elevated">
             <v-card-title class="text-center bg-orange-darken-1 text-white">
               <v-icon left size="large" color="white">mdi-sword-cross</v-icon>
-              🏴‍☠️ LIBERAÇÃO DE TERRITÓRIOS
+              LIBERAÇÃO DE TERRITÓRIOS
             </v-card-title>
             <v-card-subtitle class="text-center pa-4">
               Liberte ilhas do controle de crews hostis e ganhe recompensas épicas!

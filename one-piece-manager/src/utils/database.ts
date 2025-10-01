@@ -23,6 +23,45 @@ export const FIELD_CONSTRAINTS = {
   }
 } as const
 
+export interface AvatarComponents {
+  face: {
+    shape: 'round' | 'oval' | 'square' | 'heart'
+    skinTone: string
+    expression: 'neutral' | 'serious' | 'kind' | 'angry' | 'confident' | 'mysterious'
+  }
+  eyes: {
+    shape: 'normal' | 'sharp' | 'round' | 'narrow' | 'wide'
+    color: string
+    hasGlasses: boolean
+    eyepatch: boolean
+  }
+  hair: {
+    style: string
+    color: string
+    length: 'short' | 'medium' | 'long'
+    hasHat: boolean
+  }
+  clothing: {
+    type: 'marine' | 'government' | 'pirate' | 'civilian' | 'bounty_hunter'
+    color: string
+    accessories: string[]
+  }
+  scars: {
+    face: boolean
+    faceType: 'cross' | 'vertical' | 'horizontal' | 'diagonal' | 'none'
+    body: boolean
+  }
+  devilFruit: {
+    hasSymbol: boolean
+    symbolType: 'paramecia' | 'zoan' | 'logia' | null
+    glowEffect: boolean
+  }
+  background: {
+    color: string
+    pattern: 'solid' | 'gradient' | 'stars' | 'waves'
+  }
+}
+
 // ✅ FUNÇÃO PARA VALIDAR CONSTRAINTS
 function validateConstraints(tableName: string, data: any): void {
   const constraints = FIELD_CONSTRAINTS[tableName as keyof typeof FIELD_CONSTRAINTS]
@@ -85,6 +124,15 @@ export interface Character {
   defendingBase: 0 | 1
   kindness: number
   loyalty: number
+}
+
+export interface Avatar {
+  id?: number
+  characterId: number
+  svgData: string
+  components: AvatarComponents
+  createdAt: Date
+  version: number
 }
 
 export interface DevilFruit {
@@ -251,6 +299,7 @@ class OnePieceGameDB extends Dexie {
   gameState!: Table<GameState>
   islands!: Table<Island>
   tasks!: Table<Task>
+  avatars!: Table<Avatar>
 
   constructor() {
     super('OnePieceGameDB')
@@ -271,7 +320,8 @@ class OnePieceGameDB extends Dexie {
       battles: '++id, timestamp, winner, challenger, opponent, challengerCrewId, opponentCrewId',
       gameState: '++id, key',
       islands: '++id, name, difficulty',
-      tasks: '++id, characterId, targetId, startTime, endTime, isCompleted, type, helpType, crewId' 
+      tasks: '++id, characterId, targetId, startTime, endTime, isCompleted, type, helpType, crewId',
+      avatars: '++id, characterId, createdAt' 
     })
 
 // Hook para CREATE (add)

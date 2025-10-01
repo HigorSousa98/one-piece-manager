@@ -9,7 +9,7 @@
           <div>
             <h1 class="text-h3 mb-2">
               <v-icon left color="blue-lighten-2" size="large">mdi-compass</v-icon>
-              🧭 Sistema de Navegação
+              Sistema de Navegação
             </h1>
             <p class="text-h6 text-grey-lighten-4">
               Explore novos mares e descubra ilhas misteriosas

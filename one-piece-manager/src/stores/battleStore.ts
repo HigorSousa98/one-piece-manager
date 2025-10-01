@@ -329,7 +329,7 @@ export const useBattleStore = defineStore('battle', {
 
         if (isWinner) {
           // ✅ Calcular ganhos dos membros (30-50% do capitão)
-          const memberExpGain = Math.floor(expGained * percentage)
+          const memberExpGain = Math.floor(expGained * percentage * Math.min(1, 0.9 * Math.random() * 0.2))
           const memberBountyGain = Math.floor(bountyGained * percentage)
 
           // ✅ Calcular nova experiência SEM mutar o objeto original

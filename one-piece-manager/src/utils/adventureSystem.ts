@@ -202,13 +202,11 @@ export class AdventureSystem {
   // 5. 📊 FILTRAR POR LEVEL COMPATÍVEL
   private static filterByLevel(player: Character, opponents: Character[]): Character[] {
     const levelRange = this.calculateLevelRange(player.level);
-
-    return opponents
     
-    /*return opponents.filter(opponent => 
+    return opponents.filter(opponent => 
       opponent.level >= levelRange.min && 
       opponent.level <= levelRange.max
-    );*/
+    );
   }
   
   // 6. 🎭 CRIAR ENCONTRO COM NARRATIVA (ATUALIZADO)
