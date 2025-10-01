@@ -3,6 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { createPinia } from 'pinia'
+import AdSense from './plugins/adsense'
 
 // Vuetify
 import 'vuetify/styles'
@@ -52,4 +53,7 @@ createApp(App)
   .use(pinia)
   .use(router)
   .use(vuetify)
+  .use(AdSense, {
+    adClient: import.meta.env.VITE_ADSENSE_CLIENT_ID // Substitua pelo seu ID
+  })
   .mount('#app')

@@ -64,6 +64,18 @@
         </v-col>
       </v-row>
 
+      <!-- ✅ ANÚNCIO BANNER HORIZONTAL NO TOPO -->
+      <v-row>
+        <v-col cols="12">
+          <AdBanner 
+            ad-slot="1234567890"
+            ad-format="horizontal"
+            :height="90"
+            class="mb-4"
+          />
+        </v-col>
+      </v-row>
+
       <!-- ✅ NOVA SEÇÃO: CONTROLE DO MUNDO -->
       <v-row>
         <v-col cols="12">
@@ -183,7 +195,7 @@
       
       <v-row>
         <!-- ✅ INFORMAÇÕES DO JOGADOR COM AVATAR -->
-        <v-col cols="12" lg="6">
+        <v-col cols="12" lg="8">
           <v-card variant="elevated" class="mb-4">
             <v-card-title class="bg-blue-lighten-5 text-blue-darken-3">
               <v-icon left color="blue-darken-3">mdi-account-circle</v-icon>
@@ -374,8 +386,21 @@
           </v-card>
         </v-col>
 
-        <!-- AÇÕES RÁPIDAS -->
-        <v-col cols="12" lg="6">
+        <!-- ✅ SIDEBAR COM AÇÕES RÁPIDAS E ANÚNCIOS -->
+        <v-col cols="12" lg="4">
+          
+          <!-- ✅ ANÚNCIO VERTICAL STICKY NO TOPO DA SIDEBAR -->
+          <div class="sidebar-ad-container mb-4">
+            <AdBanner 
+              ad-slot="2345678901"
+              ad-format="vertical"
+              :width="300"
+              :height="250"
+              class="sticky-ad"
+            />
+          </div>
+
+          <!-- AÇÕES RÁPIDAS -->
           <v-card variant="elevated" class="mb-4">
             <v-card-title class="bg-green-darken-1 text-green-darken-3">
               <v-icon left color="green-darken-3">mdi-sword-cross</v-icon>
@@ -559,6 +584,29 @@
               
             </v-card-text>
           </v-card>
+
+          <!-- ✅ ANÚNCIO QUADRADO ADICIONAL -->
+          <div class="sidebar-ad-container mb-4">
+            <AdBanner 
+              ad-slot="3456789012"
+              ad-format="rectangle"
+              :width="300"
+              :height="250"
+            />
+          </div>
+
+        </v-col>
+      </v-row>
+
+      <!-- ✅ ANÚNCIO BANNER HORIZONTAL NO MEIO -->
+      <v-row>
+        <v-col cols="12">
+          <AdBanner 
+            ad-slot="4567890123"
+            ad-format="horizontal"
+            :height="250"
+            class="my-4"
+          />
         </v-col>
       </v-row>
 
@@ -578,30 +626,6 @@
                     <v-icon size="30" color="primary">mdi-cached</v-icon>
                     <div class="text-h6 mt-1">{{ cacheStats.totalEntries }}</div>
                     <div class="text-caption">Avatares em Cache</div>
-                  </v-card>
-                </v-col>
-                
-                <v-col cols="12" md="3">
-                  <v-card variant="outlined" class="text-center pa-3">
-                    <v-icon size="30" color="success">mdi-harddisk</v-icon>
-                    <div class="text-h6 mt-1">{{ formattedCacheSize }}</div>
-                    <div class="text-caption">Tamanho do Cache</div>
-                  </v-card>
-                </v-col>
-                
-                <v-col cols="12" md="3">
-                  <v-card variant="outlined" class="text-center pa-3">
-                    <v-icon size="30" color="info">mdi-speedometer</v-icon>
-                    <div class="text-h6 mt-1">{{ cacheStats.hitRate.toFixed(1) }}%</div>
-                    <div class="text-caption">Taxa de Acerto</div>
-                  </v-card>
-                </v-col>
-                
-                <v-col cols="12" md="3">
-                  <v-card variant="outlined" class="text-center pa-3">
-                    <v-icon size="30" color="warning">mdi-timer</v-icon>
-                    <div class="text-h6 mt-1">{{ cacheStats.averageAccessTime.toFixed(1) }}ms</div>
-                    <div class="text-caption">Tempo Médio</div>
                   </v-card>
                 </v-col>
               </v-row>
@@ -626,17 +650,7 @@
                   <v-icon left>mdi-delete-sweep</v-icon>
                   Limpar Cache
                 </v-btn>
-                
-                <v-btn 
-                  @click="regeneratePlayerAvatar" 
-                  color="secondary" 
-                  size="small"
-                  variant="outlined"
-                  :loading="isRegeneratingAvatar"
-                >
-                  <v-icon left>mdi-account-convert</v-icon>
-                  Regenerar Avatar
-                </v-btn>
+
               </div>
             </v-card-text>
           </v-card>
@@ -792,6 +806,18 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- ✅ ANÚNCIO BANNER HORIZONTAL NO FINAL -->
+      <v-row>
+        <v-col cols="12">
+          <AdBanner 
+            ad-slot="5678901234"
+            ad-format="horizontal"
+            :height="90"
+            class="mt-4"
+          />
+        </v-col>
+      </v-row>
       
     </div>
 
@@ -884,7 +910,7 @@
           </div>
         </v-card-text>
         
-        <v-card-actions class="pa-6">
+                <v-card-actions class="pa-6">
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
@@ -915,8 +941,11 @@ import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 
 // ✅ IMPORTS PARA SISTEMA DE AVATARES
 import CharacterAvatar from '@/components/CharacterAvatar.vue'
-import { useAvatarManager } from '@/composables/useAvatarManager'
+import { useAvatarManager } from '@/composables/useAvataaarsManager'
 import { PowerCalculationSystem } from '@/utils/powerCalculationSystem'
+
+// ✅ IMPORT DO COMPONENTE DE ANÚNCIOS
+import AdBanner from '@/components/AdBanner.vue'
 
 const router = useRouter()
 
@@ -926,10 +955,8 @@ const characterStore = useCharacterStore()
 // ✅ COMPOSABLE DE AVATARES
 const {
   cacheStats,
-  formattedCacheSize,
   updateCacheStats,
   clearCache: clearAvatarCache,
-  regenerateAvatar
 } = useAvatarManager()
 
 // 🌍 ESTADOS DO CONTROLE DO MUNDO
@@ -960,7 +987,7 @@ const devilFruitLoaded = ref(false)
 const styleCombatLoaded = ref(false)
 const activeTasksCount = ref(0)
 
-// �� COMPUTED
+// 📱 COMPUTED
 const playerCharacter = computed(() => characterStore.playerCharacter)
 
 const playerDevilFruit = ref<DevilFruit | null>(null)
@@ -1081,7 +1108,7 @@ const onAvatarError = (error: Error) => {
   avatarLoaded.value = true // Marcar como carregado mesmo com erro para não travar o loading
 }
 
-const regeneratePlayerAvatar = async () => {
+/*const regeneratePlayerAvatar = async () => {
   if (!playerCharacter.value) return
   
   try {
@@ -1098,7 +1125,7 @@ const regeneratePlayerAvatar = async () => {
   } finally {
     isRegeneratingAvatar.value = false
   }
-}
+}*/
 
 // 🎮 METHODS
 const calculatePower = (character: Character): number => {
@@ -1223,7 +1250,7 @@ const forceReload = async () => {
   // Recarregar avatar
   if (playerCharacter.value) {
     try {
-      await regeneratePlayerAvatar()
+      //await regeneratePlayerAvatar()
     } catch (error) {
       console.error('❌ Erro ao recarregar avatar:', error)
       avatarLoaded.value = true
@@ -1368,6 +1395,30 @@ onMounted(async () => {
   align-items: flex-start;
 }
 
+/* ✅ ESTILOS PARA ANÚNCIOS */
+.sidebar-ad-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.sticky-ad {
+  position: sticky;
+  top: 20px;
+  z-index: 1;
+}
+
+/* ✅ RESPONSIVIDADE PARA ANÚNCIOS */
+@media (max-width: 1200px) {
+  .sticky-ad {
+    position: static;
+  }
+  
+  .sidebar-ad-container {
+    margin: 16px 0;
+  }
+}
+
 @media (max-width: 768px) {
   .character-header .d-flex {
     flex-direction: column;
@@ -1396,6 +1447,11 @@ onMounted(async () => {
   
   .world-actions .v-btn {
     flex: 1;
+  }
+  
+  /* ✅ ANÚNCIOS EM MOBILE */
+  .sidebar-ad-container {
+    order: -1; /* Mover anúncios para o topo em mobile */
   }
 }
 
@@ -1548,5 +1604,28 @@ onMounted(async () => {
 
 .experience-section {
   background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(63, 81, 181, 0.05) 100%);
+}
+
+/* ✅ ESTILOS PARA ANÚNCIOS - INTEGRAÇÃO HARMONIOSA */
+.sidebar-ad-container {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.v-theme--dark .sidebar-ad-container {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ✅ TRANSIÇÕES SUAVES PARA ANÚNCIOS */
+.sidebar-ad-container {
+  transition: all 0.3s ease;
+}
+
+.sidebar-ad-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 </style>
