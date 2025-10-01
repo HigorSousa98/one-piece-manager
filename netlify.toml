@@ -1,7 +1,8 @@
-# netlify.toml
+# netlify.toml (na raiz do repositório)
 [build]
-  publish = "dist"
-  command = "npm run build"  # ✅ MUDANÇA AQUI: build em vez de build-only
+  base = "one-piece-manager"  # ✅ PASTA DO PROJETO
+  publish = "one-piece-manager/dist"
+  command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -14,13 +15,11 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# ✅ PERMITIR GOOGLE ADSENSE
 [[headers]]
   for = "/*"
   [headers.values]
     Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; frame-src https://googleads.g.doubleclick.net; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
 
-# Redirecionamentos SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
