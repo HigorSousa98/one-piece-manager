@@ -129,8 +129,8 @@ const formatPirateBounty = (bounty: number): string => {
 const formatMarineRank = (bounty: number): string => {
   if (bounty === 0) return 'Recruta'
   
-  // Dividir por 1 bilhão para ter escala de 0-5 estrelas
-  const starValue = bounty / 1000000000
+  // Dividir por 100 milhões para ter escala de 0-5 estrelas
+  const starValue = bounty / 100000000
   
   // Limitar entre 0 e 5
   const clampedValue = Math.min(Math.max(starValue, 0), 5)
@@ -175,8 +175,8 @@ const formatBountyHunterRank = (bounty: number): string => {
 const formatGovernmentRank = (bounty: number): string => {
   if (bounty === 0) return 'Agente'
   
-  // Dividir por 1 bilhão para ter escala similar
-  const rankValue = bounty / 1000000000
+  // Dividir por 100 milhões para ter escala similar
+  const rankValue = bounty / 100000000
   
   // 5 níveis hierárquicos
   if (rankValue < 0.5) return 'Agente'
