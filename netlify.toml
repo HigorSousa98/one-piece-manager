@@ -1,7 +1,7 @@
 # netlify.toml
 [build]
   publish = "dist"
-  command = "npm run build-only"
+  command = "npm run build"  # ✅ MUDANÇA AQUI: build em vez de build-only
 
 [build.environment]
   NODE_VERSION = "18"

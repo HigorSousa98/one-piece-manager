@@ -1,4 +1,4 @@
-<!-- src/components/AdBanner.vue (versão melhorada) -->
+<!-- src/components/AdBanner.vue -->
 <template>
   <div class="ad-container" :class="containerClasses">
     <div class="ad-label" v-if="showLabel">
@@ -7,11 +7,11 @@
     
     <!-- ✅ ANÚNCIO REAL (PRODUÇÃO) -->
     <ins 
-      v-if="isProduction && adsenseEnabled"
+      v-if="shouldShowRealAd"
       class="adsbygoogle"
       :style="adStyle"
-      :data-ad-client="adClient"
-      :data-ad-slot="adSlot"
+      :data-ad-client="ADSENSE_CONFIG.CLIENT_ID"
+      :data-ad-slot="resolvedAdSlot"
       :data-ad-format="adFormat"
       :data-full-width-responsive="fullWidthResponsive"
     ></ins>
@@ -25,7 +25,10 @@
       <div class="placeholder-content">
         <v-icon size="48" color="grey-lighten-2">mdi-advertisement</v-icon>
         <div class="text-caption text-grey mt-2">
-          Anúncio {{ adSlot }}
+          Anúncio: {{ adSlotName || resolvedAdSlot }}
+        </div>
+        <div class="text-caption text-grey">
+          {{ adFormat }} - {{ width }}x{{ height }}
         </div>
       </div>
     </div>
@@ -34,9 +37,12 @@
 
 <script setup lang="ts">
 import { onMounted, computed, inject } from 'vue'
+import { ADSENSE_CONFIG } from '@/config/adsense'
 
 interface Props {
-  adSlot: string
+  // ✅ AGORA ACEITA NOME DO SLOT OU SLOT DIRETO
+  adSlot?: string
+  adSlotName?: keyof typeof ADSENSE_CONFIG.AD_SLOTS
   adFormat?: 'auto' | 'rectangle' | 'vertical' | 'horizontal'
   width?: string | number
   height?: string | number
@@ -52,6 +58,20 @@ const props = withDefaults(defineProps<Props>(), {
   fullWidthResponsive: true,
   showLabel: true,
   centered: true
+})
+
+// ✅ RESOLVER AD SLOT
+const resolvedAdSlot = computed(() => {
+  if (props.adSlot) return props.adSlot
+  if (props.adSlotName) return ADSENSE_CONFIG.AD_SLOTS[props.adSlotName]
+  return 'placeholder'
+})
+
+// ✅ VERIFICAR SE DEVE MOSTRAR ANÚNCIO REAL
+const shouldShowRealAd = computed(() => {
+  const isProduction = import.meta.env.PROD
+  const adsenseEnabled = ADSENSE_CONFIG.ENABLED[isProduction ? 'production' : 'development']
+  return isProduction && adsenseEnabled && resolvedAdSlot.value !== 'placeholder'
 })
 
 // Injetar função de carregamento
