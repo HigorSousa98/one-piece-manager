@@ -53,6 +53,11 @@ const router = createRouter({
       path: '/territory-liberation',
       name: 'territory-liberation',
       component: () => import('@/views/TerritoryLiberation.vue')
+    },
+    {
+      path: '/encyclopedia',
+      name: 'WorldEncyclopedia',
+      component: () => import('@/views/WorldEncyclopedia.vue')
     }
   ]
 })

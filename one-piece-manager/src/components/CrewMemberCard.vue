@@ -342,8 +342,7 @@ const getKindnessIcon = (kindness: number): string => {
 }
 
 .captain-avatar {
-  border: 3px solid #FFD700;
-  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+  
 }
 
 .avatar-badges {

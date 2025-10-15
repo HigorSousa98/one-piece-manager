@@ -46,8 +46,11 @@
               <div class="text-body-2">Level {{ playerCharacter.level }}</div>
               <div class="text-caption">Exp {{ playerCharacter.experience }} / {{ expForNextLevel }}</div>
               <div class="text-caption">
-                <v-icon small>mdi-treasure-chest</v-icon>
-                {{ playerCharacter.bounty.toLocaleString() + ' B$' }}
+                <CharacterBountyDisplay 
+                  :character="playerCharacter" 
+                  size="small" 
+                  variant="elevated" 
+                />
               </div>
             </v-card-text>
           </v-card>
@@ -70,22 +73,19 @@
         v-if="gameStore.isInitialized"
         color="success" 
         variant="elevated"
-        class="mr-2"
+        class="mb-2"
       >
         <v-icon start>mdi-check-circle</v-icon>
         Jogo Ativo
       </v-chip>
 
       <!-- Bounty Display -->
-      <v-chip 
-        v-if="playerCharacter"
-        color="accent" 
-        variant="elevated"
-        class="mr-2"
-      >
-        <v-icon start>mdi-treasure-chest</v-icon>
-        {{ formatBounty(playerCharacter.bounty) }}
-      </v-chip>
+      <CharacterBountyDisplay 
+      v-if="gameLoaded"
+                  :character="playerCharacter" 
+                  size="default" 
+                  variant="elevated" 
+                />
 
       <!-- Loading Indicator -->
       <v-progress-circular
@@ -141,10 +141,12 @@ import { ref, onMounted, computed, reactive } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GameLogic } from '@/utils/gameLogic' 
+import CharacterBountyDisplay from './components/CharacterBountyDisplay.vue'
 
 const drawer = ref(true)
 const gameStore = useGameStore()
 const characterStore = useCharacterStore()
+const gameLoaded = ref(false)
 
 const playerCharacter = computed(() => characterStore.playerCharacter)
 
@@ -196,6 +198,11 @@ const menuItems = [
     icon: 'mdi-dumbbell', 
     route: '/training' 
   },
+  { 
+    title: 'Mundo', 
+    icon: 'mdi-earth', 
+    route: '/encyclopedia' 
+  },
   
   { 
     title: 'Histórico', 
@@ -234,6 +241,7 @@ onMounted(async () => {
     
     if (playerCharacter.value) {
       showNotification(`Bem-vindo de volta, ${playerCharacter.value.name}!`)
+      gameLoaded.value = true
     } else {
       showNotification('Clique em "Criar Personagem" para começar!', 'info')
     }

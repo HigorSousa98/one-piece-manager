@@ -449,7 +449,7 @@ let shipUpgradeComposable: ReturnType<typeof useShipUpgrade> | null = null
 // 🎛️ FILTROS E ORDENAÇÃO
 const selectedTypeFilter = ref<string | null>(null)
 const selectedPositionFilter = ref<string | null>(null)
-const sortBy = ref('level')
+const sortBy = ref('power')
 
 // 📊 COMPUTED
 const playerCharacter = computed(() => characterStore.playerCharacter)
@@ -622,10 +622,10 @@ const positionFilterOptions = computed(() => {
 })
 
 const sortOptions = [
-  { title: 'Level (Maior → Menor)', value: 'level' },
-  { title: 'Level (Menor → Maior)', value: 'level_asc' },
   { title: 'Poder (Maior → Menor)', value: 'power' },
   { title: 'Poder (Menor → Maior)', value: 'power_asc' },
+  { title: 'Level (Maior → Menor)', value: 'level' },
+  { title: 'Level (Menor → Maior)', value: 'level_asc' },
   { title: 'Bounty (Maior → Menor)', value: 'bounty' },
   { title: 'Bounty (Menor → Maior)', value: 'bounty_asc' },
   { title: 'Nome (A → Z)', value: 'name' },

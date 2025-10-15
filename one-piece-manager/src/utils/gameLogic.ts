@@ -182,12 +182,12 @@ export class GameLogic {
       if (winner.type === 'Pirate') {
         typeMultiplier = 1.8; // Piratas vs Marines = bounty alto
       } else {
-        typeMultiplier = 0.5; // Marines matando Marines = bounty baixo
+        typeMultiplier = 1; // Marines matando Marines = bounty baixo
       }
       break;
     case 'Pirate':
       if (winner.type === 'Marine') {
-        typeMultiplier = 0.3; // Marines matando piratas = pouco bounty
+        typeMultiplier = 1.3; // Marines matando piratas = pouco bounty
       } else if (winner.type === 'Pirate') {
         typeMultiplier = 1.2; // Pirata vs Pirata = bounty moderado
       }
@@ -285,7 +285,7 @@ export class GameLogic {
   // 12. �� LIMITADORES E BALANCEAMENTO
   
   // Limite máximo baseado no level do vencedor
-  const maxBountyGain = winner.level * 100000; // 100k por level máximo
+  const maxBountyGain = winner.level * 50000; // 50k por level máximo
   
   // Limite mínimo
   const minBountyGain = Math.max(10000, winner.level * 1000); // 1K por level mínimo
@@ -293,18 +293,6 @@ export class GameLogic {
   // Aplicar limites
   bountyGain = Math.min(bountyGain, maxBountyGain);
   bountyGain = Math.max(bountyGain, minBountyGain);
-  
-  // 13. 🚫 CASOS ESPECIAIS
-  
-  // Marines não ganham bounty por matar piratas (na verdade, reduzem)
-  if (winner.type === 'Marine' && loser.type === 'Pirate') {
-    return 0; // Marines não ganham bounty
-  }
-  
-  // Government agents têm bounty reduzido (agem nas sombras)
-  if (winner.type === 'Government') {
-    bountyGain *= 0.3; // 70% de redução
-  }
   
   return Math.floor(bountyGain);
 }
@@ -407,7 +395,7 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
     if(newLevel >= 50){
         statsAvailable += 6
         if(character.potentialToHaveKngHaki > GenerationConfig.createEpic().allowKingHakiFor){
-          if((Math.random() > (1 - character.potentialToHaveKngHaki) && character.stats.kingHaki == 0) || character.stats.kingHaki > 0){
+          if((Math.random() > (1 - character.potentialToHaveKngHaki) * (1 / GenerationConfig.createEpic().allowKingHakiFor) && character.stats.kingHaki == 0) || character.stats.kingHaki > 0){
             if(character.stats.kingHaki == 0){
               console.log(character.name + '(' + character.id +') despertou Haki do Rei! Os mares tremem!!!');
             }
@@ -449,183 +437,6 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   static calculatePower(character: Character, fruit: DevilFruit | null = null): number {
     return PowerCalculationSystem.calculatePower(character, fruit)
   }
-
-
-  /*
-  static calculatePower(character: Character, fruit: DevilFruit | null = null): number {
-  const { attack, defense, speed, armHaki, obsHaki, kingHaki, devilFruit } = character.stats;
-  
-  // 1. ⚔️ PODER BASE - Combinação balanceada dos atributos físicos
-  const physicalPower = (attack * 4.0) + (defense * 2.0) + (speed * 3.0);
-  
-  // 2. 🥊 SISTEMA DE HAKI - Cada tipo tem papel específico
-  let hakiPower = 0;
-  
-  // Armament Haki - Aumenta ataque e defesa
-  if (armHaki > 0) {
-    const armamentBonus = armHaki * 2.5;
-    const armamentSynergy = (attack + defense) * (armHaki * 0.1); // Sinergia com físico
-    hakiPower += armamentBonus + armamentSynergy;
-  }
-  
-  // Observation Haki - Aumenta velocidade e precisão
-  if (obsHaki > 0) {
-    const observationBonus = obsHaki * 2.0;
-    const observationSynergy = speed * (obsHaki * 0.15); // Sinergia com velocidade
-    hakiPower += observationBonus + observationSynergy;
-  }
-  
-  // Conqueror's Haki - Multiplicador de poder geral (muito raro e poderoso)
-  let conquerorMultiplier = 1.0;
-  if (kingHaki > 0) {
-    conquerorMultiplier = 1.0 + (kingHaki * 0.2); // 20% por nível
-    hakiPower += kingHaki * 8; // Bonus base alto
-    
-    // Bonus especial para Conqueror's Haki avançado
-    if (kingHaki >= 5) {
-      conquerorMultiplier += 0.5; // +50% para masters
-    }
-  }
-  
-  // 3. 🍎 SISTEMA DE DEVIL FRUIT - Complexo e variado
-  let devilFruitPower = 0;
-  let devilFruitMultiplier = 1.0;
-  
-  if (fruit && devilFruit > 0) {
-    // Poder base da fruta baseado no nível de domínio
-    const fruitBasePower = devilFruit * 10.0;
-    
-    // Multiplicador baseado na raridade da fruta
-    const rarityMultiplier = 1.0 + (fruit.rarity * 0.4); // 40% por nível de raridade
-    
-    // Bonus por tipo de fruta
-    let typeMultiplier = 1.0;
-    switch (fruit.type) {
-      case 'Logia':
-        typeMultiplier = 1.5; // Logias são naturalmente mais poderosas
-        break;
-      case 'Zoan':
-        typeMultiplier = 1.2; // Zoans aumentam físico
-        // Bonus especial para stats físicos
-        devilFruitPower += (attack + defense + speed) * (devilFruit * 0.2);
-        break;
-      case 'Paramecia':
-        typeMultiplier = 1.3; // Paramecias são versáteis
-        break;
-    }
-    
-    // Sistema de Despertar (Awakening)
-    let awakeningMultiplier = 1.0;
-    if (fruit.awakeningOn <= character.level) {
-      awakeningMultiplier = 2.2; // Despertar dobra o poder da fruta
-      //devilFruitPower += devilFruit * 3 ; // Bonus adicional significativo
-    }
-    
-    // Cálculo final da Devil Fruit
-    devilFruitPower += fruitBasePower * rarityMultiplier * typeMultiplier * awakeningMultiplier;
-    
-    // Multiplicador geral para usuários de Devil Fruit
-    devilFruitMultiplier = 1.0 //+ (devilFruit * 0.2);
-  }
-  
-  // 4. 📈 SISTEMA DE LEVEL E EXPERIÊNCIA
-  const levelPower = character.level * 15; // Base por level
-  const levelMultiplier = 1.0 + (character.level * 0.01); // 1% por level
-  
-  // Bonus para levels altos (veteranos)
-  let veteranBonus = 0;
-  if (character.level >= 50) {
-    veteranBonus = (character.level - 49) * 25; // Bonus exponencial para veteranos
-  }
-  
-  // 5. 🎯 SISTEMA DE ESPECIALIZAÇÃO
-  let specializationBonus = 0;
-  
-  // Detectar especialização do personagem
-  const totalStats = attack + defense + speed + armHaki + obsHaki + kingHaki + devilFruit;
-  const avgStat = totalStats / 7;
-  
-  // Bonus para especialistas (que focam em poucos atributos)
-  [attack, defense, speed, armHaki, obsHaki, kingHaki, devilFruit].forEach(stat => {
-    if (stat > avgStat * 1.5) { // Se o stat é 50% acima da média
-      specializationBonus += stat * 1.5; // Bonus por especialização
-    }
-  });
-  
-  // 6. 🌟 SISTEMA DE SINERGIA ENTRE ATRIBUTOS
-  let synergyBonus = 0;
-  
-  // Sinergia Haki + Físico
-  if (armHaki > 0 && attack > 0) {
-    synergyBonus += Math.min(armHaki, attack) * 1.5;
-  }
-  
-  if (obsHaki > 0 && speed > 0) {
-    synergyBonus += Math.min(obsHaki, speed) * 1.2;
-  }
-  
-  // Sinergia Devil Fruit + Haki (usuários avançados)
-  if (devilFruit > 0 && (armHaki > 0 || obsHaki > 0)) {
-    synergyBonus += Math.min(devilFruit, armHaki + obsHaki) * 2.0;
-  }
-  
-  // 7. 🏴‍☠️ BONUS POR POSIÇÃO E TIPO
-  let positionMultiplier = 1.0;
-  
-  switch (character.position) {
-    case 'Captain':
-      positionMultiplier = 1.3; // Líderes são mais fortes
-      break;
-    case 'First Mate':
-      positionMultiplier = 1.2;
-      break;
-  }
-  
-  // Bonus por tipo de personagem
-  let typeMultiplier = 1.0;
-  switch (character.type) {
-    case 'Government':
-      typeMultiplier = 1.15; // Governo tem recursos superiores
-      break;
-    case 'Marine':
-      typeMultiplier = 1.1; // Marines têm treinamento militar
-      break;
-    case 'Pirate':
-      typeMultiplier = 1.05; // Piratas têm experiência de combate
-      break;
-  }
-  
-  
-  // 8. 🎲 FATOR IMPREVISIBILIDADE (baseado em kindness)
-  const unpredictabilityFactor = 1.0 + Math.abs((character.kindness * 0.02)); // Personagens únicos são mais imprevisíveis
-  
-  // 9. 📊 CÁLCULO FINAL
-  let totalPower = 0;
-  
-  // Somar todos os componentes base
-  totalPower += physicalPower;
-  totalPower += hakiPower;
-  totalPower += devilFruitPower;
-  totalPower += levelPower;
-  totalPower += veteranBonus;
-  totalPower += specializationBonus;
-  totalPower += synergyBonus;
-  
-  // Aplicar multiplicadores
-  totalPower *= conquerorMultiplier;
-  totalPower *= devilFruitMultiplier;
-  totalPower *= levelMultiplier;
-  totalPower *= positionMultiplier;
-  totalPower *= typeMultiplier;
-  totalPower *= unpredictabilityFactor;
-  
-  // 10. 🏆 SISTEMA DE BOUNTY INFLUENCE (personagens famosos são mais perigosos)
-  const bountyInfluence = Math.pow(2, Math.log10(character.bounty + 1)); // Influência logarítmica do bounty
-  totalPower += bountyInfluence;
-  
-  // Garantir que o poder mínimo seja 1
-  return Math.max(1, Math.ceil(totalPower));
-}*/
 
 // 🎯 Função auxiliar para calcular "rating" do personagem
 static getCharacterRating(character: Character, fruit: DevilFruit | null = null): string {

@@ -91,7 +91,7 @@ export class AvataaarsOnePieceSystem {
     const baseUrl = 'https://avataaars.io/'
     
     const params = new URLSearchParams({
-      avatarStyle: 'Circle',
+      avatarStyle: 'Transparent',
       topType: config.topType,
       accessoriesType: config.accessoriesType,
       hatColor: config.hatColor,

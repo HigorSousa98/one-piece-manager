@@ -219,6 +219,9 @@ export class RecruitmentSystem {
           await db.crews.update(actualCrew.id!, {
             captainId: characterOnCrew[0].id
           });
+          await db.characters.update(characterOnCrew[0].id!, {
+            position: 'Captain'
+          });
         }
         else{
           await db.crews.update(actualCrew.id!, {

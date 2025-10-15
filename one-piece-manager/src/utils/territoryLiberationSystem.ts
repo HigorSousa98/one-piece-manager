@@ -306,7 +306,7 @@ export class TerritoryLiberationSystem {
       const luck = (Math.random() * 0.2) - 0.1
       const finalWinChance = Math.max(0.1, Math.min(0.9, playerWinChance + luck))
       
-      const playerWins = Math.random() < finalWinChance
+      const playerWins = playerWinChance > 0.5
       const winner = playerWins ? player : opponent
       const loser = playerWins ? opponent : player
 

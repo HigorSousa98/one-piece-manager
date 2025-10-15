@@ -301,7 +301,7 @@ export const useBattleStore = defineStore('battle', {
       }
       
       // ✅ Atualizar bounty (apenas para piratas vencedores)
-      if (isWinner && bountyGained > 0 && character.type === 'Pirate') {
+      if (isWinner && bountyGained > 0) {
         updates.bounty = character.bounty + bountyGained
       }
 
@@ -329,7 +329,7 @@ export const useBattleStore = defineStore('battle', {
 
         if (isWinner) {
           // ✅ Calcular ganhos dos membros (30-50% do capitão)
-          const memberExpGain = Math.floor(expGained * percentage * Math.min(1, 0.9 * Math.random() * 0.2))
+          const memberExpGain = Math.floor(expGained * percentage * Math.min(1, 1 + Math.random() * 0.2))
           const memberBountyGain = Math.floor(bountyGained * percentage)
 
           // ✅ Calcular nova experiência SEM mutar o objeto original
@@ -376,7 +376,7 @@ export const useBattleStore = defineStore('battle', {
           }
           
           // Atualizar bounty para piratas
-          if (memberBountyGain > 0 && member.type === 'Pirate') {
+          if (memberBountyGain > 0) {
             updates.bounty = member.bounty + memberBountyGain
           }
           

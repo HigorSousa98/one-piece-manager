@@ -260,17 +260,19 @@ export class GameDataGenerator {
     for (let i = 0; i < this.config.totalPirates; i++) {
       const level = this.randomBetween(1, 100)
       const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
-      
+
+      const potentialToHaveKngHaki = Math.random(); 
+
       pirates.push({
         name: NameGenerator.generateRandomName('Pirate'),
         level,
         experience: 0,
         bounty: this.calculateBounty(level, 'Pirate'),
         type: 'Pirate',
-        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0, // Será atribuído depois
-        potentialToHaveKngHaki: Math.random(),
+        potentialToHaveKngHaki: potentialToHaveKngHaki,
         position: i < Math.floor(this.config.totalPirates / this.config.avgCrewSize) ? 'Captain' : 'Crew Member', // Primeiros 50 são capitães
         isPlayer: 0,
         createdAt: new Date(),
@@ -291,6 +293,7 @@ export class GameDataGenerator {
     for (let i = 0; i < this.config.totalBountyHunter; i++) {
       const level = this.randomBetween(1, 100)
       const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const potentialToHaveKngHaki = Math.random(); 
       
       bountyHunters.push({
         name: NameGenerator.generateRandomName('BountyHunter'),
@@ -298,10 +301,10 @@ export class GameDataGenerator {
         experience: 0,
         bounty: this.calculateBounty(level, 'BountyHunter'),
         type: 'BountyHunter',
-        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0, // Será atribuído depois
-        potentialToHaveKngHaki: Math.random(),
+        potentialToHaveKngHaki: potentialToHaveKngHaki,
         position: i < Math.floor(this.config.totalBountyHunter / this.config.avgCrewSize) ? 'Captain' : 'Crew Member', // Primeiros 50 são capitães
         isPlayer: 0,
         createdAt: new Date(),
@@ -322,6 +325,7 @@ export class GameDataGenerator {
     for (let i = 0; i < this.config.totalMarines; i++) {
       const level = this.randomBetween(1, 100)
       const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const potentialToHaveKngHaki = Math.random(); 
       
       marines.push({
         name: NameGenerator.generateRandomName('Marine'),
@@ -329,10 +333,10 @@ export class GameDataGenerator {
         experience: 0,
         bounty: this.calculateBounty(level, 'Marine'),
         type: 'Marine',
-        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0,
-        potentialToHaveKngHaki: Math.random(),
+        potentialToHaveKngHaki: potentialToHaveKngHaki,
         position: i < Math.floor(this.config.totalMarines / this.config.avgCrewSize) ? 'Captain' : 'Crew Member',
         isPlayer: 0,
         createdAt: new Date(),
@@ -353,6 +357,7 @@ export class GameDataGenerator {
     for (let i = 0; i < this.config.totalGovernment; i++) {
       const level = this.randomBetween(1, 100)
       const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const potentialToHaveKngHaki = Math.random(); 
       
       government.push({
         name: NameGenerator.generateRandomName('Government'),
@@ -360,10 +365,10 @@ export class GameDataGenerator {
         experience: 0,
         bounty: 0,
         type: 'Government',
-        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0,
-        potentialToHaveKngHaki: Math.random(),
+        potentialToHaveKngHaki: potentialToHaveKngHaki,
         position: 'Crew Member',
         isPlayer: 0,
         createdAt: new Date(),
@@ -384,17 +389,17 @@ export class GameDataGenerator {
     for (let i = 0; i < this.config.totalCivillians; i++) {
       const level = this.randomBetween(1, 100)
       const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
-      
+      const potentialToHaveKngHaki = Math.random(); 
       civillian.push({
         name: NameGenerator.generateRandomName('Civillian'),
         level,
         experience: 0,
         bounty: 0,
         type: 'Civillian',
-        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name),
+        stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0,
-        potentialToHaveKngHaki: Math.random(),
+        potentialToHaveKngHaki: potentialToHaveKngHaki,
         position: 'Crew Member',
         isPlayer: 0,
         createdAt: new Date(),
@@ -408,13 +413,13 @@ export class GameDataGenerator {
     return civillian.map((civ, index) => ({ ...civ, id: civIds[index] }))
   }
 
-  private generateStats(level: number, styleCombat: string): Character['stats'] {
+  private generateStats(level: number, styleCombat: string, potentialToHaveKngHaki: number): Character['stats'] {
     // Buscar o estilo de combate (assumindo IDs 1-4)
     const styleMultipliers = [
-      { attack: 4, defense: 2, speed: 3, armHaki: 4, obsHaki: 2, name: 'Fighter' }, // Fighter
-      { attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 3, name: 'Swordsman' }, // Swordsman
-      { attack: 2, defense: 2, speed: 5, armHaki: 2, obsHaki: 4, name: 'Sniper' }, // Sniper
-      { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3, name: 'Support' }  // Support
+      { attack: 4, defense: 2, speed: 3, armHaki: 4, obsHaki: 2,kingHaki: 1, name: 'Fighter' }, // Fighter
+      { attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 3,kingHaki: 1, name: 'Swordsman' }, // Swordsman
+      { attack: 2, defense: 2, speed: 5, armHaki: 2, obsHaki: 4,kingHaki: 1, name: 'Sniper' }, // Sniper
+      { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3,kingHaki: 1, name: 'Support' }  // Support
     ].find(st => st.name == styleCombat)
 
     const quantPoints = Math.ceil(((level - 1) / 2) * (2 + level) * 0.5)
@@ -422,6 +427,9 @@ export class GameDataGenerator {
     
     // Distribuir pontos baseado no estilo
     let totalStylePoints = 15
+    if(potentialToHaveKngHaki > this.config.allowKingHakiFor && Math.random() < (1-potentialToHaveKngHaki)* (1 / this.config.allowKingHakiFor)){
+      totalStylePoints += 1
+    }
 
     if(level < 50) totalStylePoints = 9
     
@@ -431,7 +439,7 @@ export class GameDataGenerator {
       speed: Math.ceil((basePoints * styleMultipliers.speed) / totalStylePoints),
       armHaki: level >= 50 ? Math.ceil((basePoints * styleMultipliers.armHaki) / totalStylePoints) : 0,
       obsHaki: level >= 50 ? Math.ceil((basePoints * styleMultipliers.obsHaki) / totalStylePoints) : 0,
-      kingHaki: 0, // Será calculado depois baseado no potentialToHaveKngHaki
+      kingHaki: level >= 50 && totalStylePoints > 15 ? Math.ceil((basePoints * styleMultipliers.kingHaki) / totalStylePoints) : 0,
       devilFruit: 0 // Será calculado depois se tiver Devil Fruit
     }
   }
@@ -471,15 +479,24 @@ export class GameDataGenerator {
   private async organizeHierarchies(pirates: Character[], marines: Character[], government: Character[]): Promise<void> {
     // Organizar piratas por bounty (mais forte = maior bounty)
     const sortedPirates = pirates.sort((a, b) => GameLogic.calculatePower(b) - GameLogic.calculatePower(a))
-    
+    const allIslands = await db.islands.toArray().then(islands => islands.sort((a, b) => a.difficulty - b.difficulty));
+    console.log('allIslands', allIslands)
+    var usedIsland = []
     // Yonkou (4 mais fortes)
     for (let i = 0; i < this.config.yonkouCount; i++) {
       const pirate = sortedPirates[i]
+      var islandIndex = this.getHighestDifficultyIslandId()
+      while(usedIsland.includes(islandIndex)){
+        islandIndex = this.getHighestDifficultyIslandId()
+      }
+      usedIsland.push(islandIndex)
+      console.log('using', islandIndex)
       await db.yonkous.add({
         captainId: pirate.id!,
-        baseIsland: this.getHighDifficultyIslandId(),
+        baseIsland: allIslands[islandIndex].id,
         foundedAt: new Date()
       })
+      
       
       // Atualizar posição
       await db.characters.update(pirate.id!, { position: 'Captain' })
@@ -488,9 +505,15 @@ export class GameDataGenerator {
     // Shichibukai (próximos 7 mais fortes)
     for (let i = this.config.yonkouCount; i < this.config.yonkouCount + this.config.schichibukai; i++) {
       const pirate = sortedPirates[i]
+      var islandIndex = this.getMidHighDifficultyIslandId()
+      while(usedIsland.includes(islandIndex)){
+        islandIndex = this.getMidHighDifficultyIslandId()
+      }
+      usedIsland.push(islandIndex)
+      console.log('using', islandIndex)
       await db.shichibukais.add({
         captainId: pirate.id!,
-        baseIsland: this.getMidHighDifficultyIslandId(),
+        baseIsland: allIslands[islandIndex].id,
         foundedAt: new Date()
       })
       
@@ -498,12 +521,18 @@ export class GameDataGenerator {
     }
 
     // Organizar marines por level
-    const sortedMarines = marines.sort((a, b) => b.level - a.level)
+    const sortedMarines = marines.sort((a, b) => GameLogic.calculatePower(b) - GameLogic.calculatePower(a))
     
     // Admirais (3 mais fortes)
     for (let i = 0; i < this.config.admiralCount; i++) {
       const marine = sortedMarines[i]
-      const baseIslandId = this.getHighDifficultyIslandId()
+      var islandIndex = this.getHighDifficultyIslandId()
+      while(usedIsland.includes(islandIndex)){
+        islandIndex = this.getHighDifficultyIslandId()
+      }
+      usedIsland.push(islandIndex)
+      console.log('using', islandIndex)
+      const baseIslandId = allIslands[islandIndex].id
       
       await db.admirals.add({
         marineId: marine.id!,
@@ -516,19 +545,29 @@ export class GameDataGenerator {
         baseIsland: baseIslandId,
         foundedAt: new Date()
       })
+
+      await db.characters.update(marine.id!, { position: 'Captain' })
     }
 
     // Organizar governo por level
-    const sortedGovernment = government.sort((a, b) => b.level - a.level)
+    const sortedGovernment = government.sort((a, b) => GameLogic.calculatePower(b) - GameLogic.calculatePower(a))
     
     // Gorousei (5 mais fortes)
     for (let i = 0; i < this.config.gorouseiCount; i++) {
       const gov = sortedGovernment[i]
+      var islandIndex = this.getHighDifficultyIslandId()
+      while(usedIsland.includes(islandIndex)){
+        islandIndex = this.getHighDifficultyIslandId()
+      }
+      usedIsland.push(islandIndex)
+      console.log('using', islandIndex)
       await db.gorouseis.add({
         govId: gov.id!,
-        currentIsland: this.getHighestDifficultyIslandId(),
+        currentIsland: allIslands[islandIndex].id,
         foundedAt: new Date()
       })
+
+      await db.characters.update(gov.id!, { position: 'Captain' })
     }
 
     // Cypher Pol (próximos 90 mais fortes)
@@ -537,9 +576,11 @@ export class GameDataGenerator {
       await db.cypherPols.add({
         captainId: gov.id!,
         reputation: this.randomBetween(1000, 10000),
-        currentIsland: this.randomBetween(1, 120),
+        currentIsland: allIslands[this.randomBetween(0, 119)].id,
         foundedAt: new Date()
       })
+
+      await db.characters.update(gov.id!, { position: 'Captain' })
     }
   }
 
@@ -632,12 +673,16 @@ export class GameDataGenerator {
     
     try {
       // Buscar todos os capitães e dados necessários
-      const [pirateCaptains, marineCaptains, bountyHuntersCaptains, allIslands, allCharacters] = await Promise.all([
+      const [pirateCaptains, marineCaptains, bountyHuntersCaptains, allIslands, allCharacters, yonkous, shichibukais, admirals, gorouseis] = await Promise.all([
         db.characters.where('type').equals('Pirate').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
         db.characters.where('type').equals('Marine').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
         db.characters.where('type').equals('BountyHunter').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
         db.islands.toArray(),
-        db.characters.toArray() // Buscar todos NPCs
+        db.characters.toArray(), // Buscar todos NPCs
+        db.yonkous.toArray(),
+        db.shichibukais.toArray(),
+        db.admirals.toArray(),
+        db.gorouseis.toArray()
       ])
 
       console.log(`🎯 Encontrados ${pirateCaptains.length} capitães piratas, ${marineCaptains.length} capitães marines, ${bountyHuntersCaptains.length} capitães bounty hunters`)
@@ -668,6 +713,29 @@ export class GameDataGenerator {
 
       // Função para criar crew e associar membros
       const createCrewWithMembers = async (captains: Character[], type: 'Pirate' | 'Marine' | 'BountyHunter') => {
+      const islandDecider = (captain: Character): number => {
+        const yonkou = yonkous.find(char => char.captainId === captain.id)
+        const shichibukai = shichibukais.find(char => char.captainId === captain.id)
+        const admiral = admirals.find(char => char.marineId === captain.id)
+        const gorousei = gorouseis.find(char => char.govId === captain.id)
+
+        if(yonkou){
+          return yonkou.baseIsland
+        }
+        else if(shichibukai){
+          return shichibukai.baseIsland
+        }
+        else if(admiral){
+          return admiral.baseIsland
+        }
+        else if(gorousei){
+          return gorousei.currentIsland
+        }
+        else{
+          return this.selectIslandForCrew(captain, allIslands)
+        }
+      }
+
       // ✅ Helper para criar dados do crew
       const createCrewData = (captain: Character): Omit<Crew, 'id'> => ({
         name: type === 'Marine' ? CrewNameGenerator.generateMarineBaseName() : type === 'Pirate' ? CrewNameGenerator.generatePirateCrewName() : CrewNameGenerator.generateBountyHunterOrgName(),
@@ -678,7 +746,7 @@ export class GameDataGenerator {
         reputation: type === 'Marine'
           ? this.randomBetween(5000, 100000)
           : this.randomBetween(captain.bounty * 0.3, captain.bounty * 1.5),
-        currentIsland: this.selectIslandForCrew(captain, allIslands),
+        currentIsland: islandDecider(captain),
         docked: Math.random() < this.config.dockedFactor ? 1 : 0,
         foundedAt: new Date(),
         type
@@ -1134,7 +1202,7 @@ export class GameDataGenerator {
     // Retorna um ID de ilha aleatório dentro do range de dificuldade
     const difficultyRange = maxDiff - minDiff + 1
     const selectedDifficulty = minDiff + Math.floor(Math.random() * difficultyRange)
-    const islandIndex = ((selectedDifficulty - 1) * 4) + Math.floor(Math.random() * 4) + 1
+    const islandIndex = ((selectedDifficulty - 1) * 4) + Math.floor(Math.random() * 4)
     return islandIndex
   }
 

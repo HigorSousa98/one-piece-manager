@@ -310,6 +310,10 @@
                         <span>{{ getTypeIcon(currentEncounter.opponent.type) }}</span>
                       </v-avatar>
                       {{ currentEncounter.opponent.name }}
+                      <div class="text-body-1 mb-6">
+                        <div v-if="currentEncounter.opponent.position == 'Captain'">Capitão do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div> 
+                        <div v-else>Membro do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div>
+                      </div>
                     </v-card-title>
                     <v-card-text>
                       <v-chip :color="getTypeColor(currentEncounter.opponent.type)" class="mb-2" variant="elevated">
@@ -841,6 +845,7 @@ const router = useRouter()
 const playerCharacterLoaded = ref(false)
 const activeTasksLoaded = ref(false)
 const devilFruitLoaded = ref(false)
+const crewsLoaded = ref(false)
 const avatarSystemLoaded = ref(false)
 
 // Usar o composable
@@ -853,6 +858,7 @@ const battleStarted = ref(false)
 const lastBattleResult = ref<any>(null)
 const availableStyleCombat = ref<StyleCombat[]>([])
 const availableDevilFruit = ref<DevilFruit[]>([])
+const allCrews = ref<Crew[]>([])
 
 // Tarefas ativas
 const hasActiveTasks = ref(false)
@@ -883,7 +889,8 @@ const allDataLoaded = computed(() => {
   return playerCharacterLoaded.value && 
          activeTasksLoaded.value && 
          devilFruitLoaded.value && 
-         avatarSystemLoaded.value
+         avatarSystemLoaded.value &&
+         crewsLoaded.value
 })
 
 // ✅ EVENTOS DE AVATAR
@@ -915,6 +922,10 @@ const devilFruit = (devilFruit: number): DevilFruit => {
     return availableDevilFruit.value.find(fruit => fruit.id === devilFruit)
 }
 
+const crew = (crew: number): Crew => {
+  return allCrews.value.find(cr => cr.id === crew)
+}
+
 const getDevilFruits = async () => {
     try {
     console.log('🔄 Carregando akumas no mi...')
@@ -934,6 +945,28 @@ const getDevilFruits = async () => {
   } catch (error) {
     console.error('❌ Erro ao carregar Akuma no mi:', error)
     devilFruitLoaded.value = true
+  }
+}
+
+const getCrews = async () => {
+    try {
+    console.log('🔄 Carregando crews...')
+    
+    const crw = await db.crews.toArray()
+    if(crw){
+      allCrews.value = crw
+      console.log(`✅ Crews carregados`)
+      console.log('Crews ', allCrews.value)
+    }
+    else {
+      console.log('⚠️ Nenhum crew encontrado')
+    }
+    
+    crewsLoaded.value = true
+    
+  } catch (error) {
+    console.error('❌ Erro ao carregar crew:', error)
+    crewsLoaded.value = true
   }
 }
 
@@ -966,6 +999,10 @@ const loadDataSequentially = async () => {
 
     console.log('🔄 Carregando akumas no mi...')
     await getDevilFruits()
+
+    console.log('🔄 Carregando crews...')
+    await getCrews()
+    
 
     // 3. ✅ INICIALIZAR SISTEMA DE AVATARES
     console.log('🎨 Inicializando sistema de avatares...')
@@ -1427,13 +1464,11 @@ onMounted(async () => {
 }
 
 .winner-avatar {
-  border: 4px solid rgba(76, 175, 80, 0.8);
   box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
   animation: winnerGlow 2s ease-in-out infinite alternate;
 }
 
 .loser-avatar {
-  border: 4px solid rgba(158, 158, 158, 0.6);
   filter: grayscale(0.3);
 }
 

@@ -243,11 +243,6 @@ defineExpose({
   margin-right: 4px;
 }
 
-/* ANIMAÇÕES PARA DIFERENTES TIPOS */
-.character-bounty-chip:hover {
-  transform: scale(1.05);
-  transition: transform 0.2s ease;
-}
 
 /* ESTILOS ESPECÍFICOS POR TIPO */
 .character-bounty-chip.pirate {

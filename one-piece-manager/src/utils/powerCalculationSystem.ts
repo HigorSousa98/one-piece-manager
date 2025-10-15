@@ -32,14 +32,14 @@ export const POWER_CONFIG = {
   // Sistema de Devil Fruit
   devilFruit: {
     basePowerPerLevel: 10.0,
-    rarityMultiplier: 0.7,
+    rarityMultiplier: 0.5,
     typeMultipliers: {
-      Logia: 1.5,
-      Zoan: 1.2,
-      Paramecia: 1.3
+      Logia: 1.2,
+      Zoan: 1.1,
+      Paramecia: 1.1
     },
-    zoanPhysicalBonus: 0.2,
-    awakeningMultiplier: 2.2,
+    zoanPhysicalBonus: 0.1,
+    awakeningMultiplier: 1.5,
     awakeningThreshold: 0.8 // 80% do level necessário
   },
   

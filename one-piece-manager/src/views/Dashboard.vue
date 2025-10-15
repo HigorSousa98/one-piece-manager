@@ -67,7 +67,7 @@
       <!-- ✅ ANÚNCIO BANNER HORIZONTAL NO TOPO -->
       <v-row>
         <v-col cols="12">
-          <AdBanner 
+          <AdBanner v-if="showAd"
             ad-slot="1234567890"
             ad-format="horizontal"
             :height="90"
@@ -391,7 +391,7 @@
           
           <!-- ✅ ANÚNCIO VERTICAL STICKY NO TOPO DA SIDEBAR -->
           <div class="sidebar-ad-container mb-4">
-            <AdBanner 
+            <AdBanner v-if="showAd"
               ad-slot="2345678901"
               ad-format="vertical"
               :width="300"
@@ -587,7 +587,7 @@
 
           <!-- ✅ ANÚNCIO QUADRADO ADICIONAL -->
           <div class="sidebar-ad-container mb-4">
-            <AdBanner 
+            <AdBanner v-if="showAd"
               ad-slot="3456789012"
               ad-format="rectangle"
               :width="300"
@@ -601,7 +601,7 @@
       <!-- ✅ ANÚNCIO BANNER HORIZONTAL NO MEIO -->
       <v-row>
         <v-col cols="12">
-          <AdBanner 
+          <AdBanner v-if="showAd"
             ad-slot="4567890123"
             ad-format="horizontal"
             :height="250"
@@ -810,7 +810,7 @@
       <!-- ✅ ANÚNCIO BANNER HORIZONTAL NO FINAL -->
       <v-row>
         <v-col cols="12">
-          <AdBanner 
+          <AdBanner v-if="showAd"
             ad-slot="5678901234"
             ad-format="horizontal"
             :height="90"
@@ -938,7 +938,7 @@ import type { Character, DevilFruit, StyleCombat } from '@/utils/database'
 // ✅ IMPORTS PARA CONTROLE DO MUNDO
 import { WorldResetSystem, type WorldResetResult } from '@/utils/worldResetSystem'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
-
+import { GenerationConfig } from '@/utils/generationConfig'
 // ✅ IMPORTS PARA SISTEMA DE AVATARES
 import CharacterAvatar from '@/components/CharacterAvatar.vue'
 import { useAvatarManager } from '@/composables/useAvataaarsManager'
@@ -989,6 +989,7 @@ const activeTasksCount = ref(0)
 
 // 📱 COMPUTED
 const playerCharacter = computed(() => characterStore.playerCharacter)
+const showAd = computed(() => GenerationConfig.createEpic().showAd)
 
 const playerDevilFruit = ref<DevilFruit | null>(null)
 const playerStyleCombat = ref<StyleCombat | null>(null)

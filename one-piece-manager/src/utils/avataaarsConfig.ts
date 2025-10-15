@@ -213,60 +213,60 @@ export type AvataarsFacialHairType =
 // �� CONFIGURAÇÕES TEMÁTICAS POR TIPO DE PERSONAGEM
 export const AVATAAARS_THEME_CONFIGS = {
   'Pirate': {
-    topTypes: ['LongHairStraight', 'LongHairCurly', 'ShortHairShaggyMullet', 'Hat', 'Turban', 'Eyepatch'] as AvataaarsTopType[],
+    topTypes: ['LongHairStraight', 'LongHairCurly', 'ShortHairShaggyMullet', 'Hat', 'NoHair', 'Eyepatch', 'LongHairDreads', 'LongHairFro', 'LongHairShavedSides', 'ShortHairDreads01', 'ShortHairDreads02', 'ShortHairFrizzle', 'ShortHairShortCurly', 'ShortHairShortFlat', 'ShortHairShortRound', ''] as AvataaarsTopType[],
     clotheTypes: ['BlazerShirt', 'GraphicShirt', 'Overall', 'ShirtCrewNeck', 'Hoodie'] as AvataaarsClothesType[],
-    clotheColors: ['Red', 'Black', 'Blue01', 'Brown', 'Gray01'] as AvataaarsClothesColor[],
+    clotheColors: ['Red', 'Black', 'Blue01', 'Brown', 'Gray01', 'Blue02', 'Blue03', 'Gray02', 'Heather', 'PastelBlue', ] as AvataaarsClothesColor[],
     accessoriesTypes: ['Blank', 'Prescription01', 'Round', 'Sunglasses', 'Wayfarers'] as AvataaarsAccessoriesType[],
-    hatColors: ['Black', 'Red', 'Blue01', 'Brown'] as AvataaarsHatColor[],
-    facialHairTypes: ['BeardMedium', 'BeardLight', 'MoustacheFancy', 'MoustacheMagnum', 'Blank'] as AvataarsFacialHairType[],
+    hatColors: ['Black', 'Red', 'Blue01', 'Brown', 'Blonde', 'BlondeGolden', 'Platinum', 'SilverGray'] as AvataaarsHatColor[],
+    facialHairTypes: ['BeardMedium', 'BeardLight', 'MoustacheFancy', 'MoustacheMagnum', 'Blank', 'BeardMajestic'] as AvataarsFacialHairType[],
     graphicTypes: ['Skull', 'SkullOutline', 'Bear', 'Diamond', 'Resist'] as AvataaarsGraphicType[],
     eyeTypes: ['Default', 'Happy', 'Squint', 'Side', 'Wink'] as AvataaarsEyeType[],
     mouthTypes: ['Smile', 'Default', 'Serious', 'Grimace'] as AvataarsMouthType[]
   },
   
   'Marine': {
-    topTypes: ['ShortHairShortFlat', 'ShortHairShortRound', 'ShortHairSides', 'Hat', 'ShortHairTheCaesar'] as AvataaarsTopType[],
+    topTypes: ['LongHairStraight', 'LongHairCurly', 'ShortHairShaggyMullet', 'Hat', 'NoHair', 'Eyepatch', 'LongHairDreads', 'LongHairFro', 'LongHairShavedSides', 'ShortHairDreads01', 'ShortHairDreads02', 'ShortHairFrizzle', 'ShortHairShortCurly', 'ShortHairShortFlat', 'ShortHairShortRound', ''] as AvataaarsTopType[],
     clotheTypes: ['BlazerSweater', 'CollarSweater', 'ShirtCrewNeck', 'BlazerShirt'] as AvataaarsClothesType[],
-    clotheColors: ['White', 'Blue01', 'Blue02', 'Gray01', 'Black'] as AvataaarsClothesColor[],
+    clotheColors: ['Red', 'Black', 'Blue01', 'Brown', 'Gray01', 'Blue02', 'Blue03', 'Gray02', 'Heather', 'PastelBlue', ] as AvataaarsClothesColor[],
     accessoriesTypes: ['Blank', 'Prescription01', 'Prescription02', 'Round'] as AvataaarsAccessoriesType[],
-    hatColors: ['White', 'Blue01', 'Gray01', 'Black'] as AvataaarsHatColor[],
-    facialHairTypes: ['Blank', 'BeardLight', 'MoustacheFancy'] as AvataarsFacialHairType[],
+    hatColors: ['Black', 'Red', 'Blue01', 'Brown', 'Blonde', 'BlondeGolden', 'Platinum', 'SilverGray'] as AvataaarsHatColor[],
+    facialHairTypes: ['BeardMedium', 'BeardLight', 'MoustacheFancy', 'MoustacheMagnum', 'Blank', 'BeardMajestic'] as AvataarsFacialHairType[],
     graphicTypes: ['Resist', 'Bear', 'Diamond'] as AvataaarsGraphicType[],
     eyeTypes: ['Default', 'Happy', 'Serious'] as AvataaarsEyeType[],
     mouthTypes: ['Default', 'Smile', 'Serious'] as AvataarsMouthType[]
   },
   
   'Government': {
-    topTypes: ['ShortHairShortFlat', 'ShortHairShortRound', 'ShortHairSides', 'ShortHairTheCaesar'] as AvataaarsTopType[],
+    topTypes: ['LongHairStraight', 'LongHairCurly', 'ShortHairShaggyMullet', 'Hat', 'NoHair', 'Eyepatch', 'LongHairDreads', 'LongHairFro', 'LongHairShavedSides', 'ShortHairDreads01', 'ShortHairDreads02', 'ShortHairFrizzle', 'ShortHairShortCurly', 'ShortHairShortFlat', 'ShortHairShortRound', ''] as AvataaarsTopType[],
     clotheTypes: ['BlazerSweater', 'BlazerShirt', 'CollarSweater', 'ShirtVNeck'] as AvataaarsClothesType[],
-    clotheColors: ['Black', 'Gray01', 'Gray02', 'Blue01', 'White'] as AvataaarsClothesColor[],
+    clotheColors: ['Red', 'Black', 'Blue01', 'Brown', 'Gray01', 'Blue02', 'Blue03', 'Gray02', 'Heather', 'PastelBlue', ] as AvataaarsClothesColor[],
     accessoriesTypes: ['Prescription01', 'Prescription02', 'Round', 'Sunglasses'] as AvataaarsAccessoriesType[],
-    hatColors: ['Black', 'Gray01', 'Blue01'] as AvataaarsHatColor[],
-    facialHairTypes: ['Blank', 'BeardLight', 'MoustacheFancy'] as AvataarsFacialHairType[],
+    hatColors: ['Black', 'Red', 'Blue01', 'Brown', 'Blonde', 'BlondeGolden', 'Platinum', 'SilverGray'] as AvataaarsHatColor[],
+    facialHairTypes: ['BeardMedium', 'BeardLight', 'MoustacheFancy', 'MoustacheMagnum', 'Blank', 'BeardMajestic'] as AvataarsFacialHairType[],
     graphicTypes: ['Resist', 'Diamond'] as AvataaarsGraphicType[],
     eyeTypes: ['Default', 'Serious', 'Squint'] as AvataaarsEyeType[],
     mouthTypes: ['Default', 'Serious', 'Concerned'] as AvataarsMouthType[]
   },
   
   'BountyHunter': {
-    topTypes: ['LongHairBigHair', 'LongHairBob', 'ShortHairShaggyMullet', 'Hat', 'LongHairDreads'] as AvataaarsTopType[],
+    topTypes: ['LongHairStraight', 'LongHairCurly', 'ShortHairShaggyMullet', 'Hat', 'NoHair', 'Eyepatch', 'LongHairDreads', 'LongHairFro', 'LongHairShavedSides', 'ShortHairDreads01', 'ShortHairDreads02', 'ShortHairFrizzle', 'ShortHairShortCurly', 'ShortHairShortFlat', 'ShortHairShortRound', ''] as AvataaarsTopType[],
     clotheTypes: ['GraphicShirt', 'Overall', 'ShirtCrewNeck', 'BlazerShirt', 'Hoodie'] as AvataaarsClothesType[],
-    clotheColors: ['Brown', 'Black', 'Green', 'Red', 'Gray01'] as AvataaarsClothesColor[],
+    clotheColors: ['Red', 'Black', 'Blue01', 'Brown', 'Gray01', 'Blue02', 'Blue03', 'Gray02', 'Heather', 'PastelBlue', ] as AvataaarsClothesColor[],
     accessoriesTypes: ['Sunglasses', 'Wayfarers', 'Round', 'Blank'] as AvataaarsAccessoriesType[],
-    hatColors: ['Brown', 'Black', 'Green', 'Red'] as AvataaarsHatColor[],
-    facialHairTypes: ['BeardMedium', 'BeardLight', 'MoustacheFancy', 'Blank'] as AvataarsFacialHairType[],
+    hatColors: ['Black', 'Red', 'Blue01', 'Brown', 'Blonde', 'BlondeGolden', 'Platinum', 'SilverGray'] as AvataaarsHatColor[],
+    facialHairTypes: ['BeardMedium', 'BeardLight', 'MoustacheFancy', 'MoustacheMagnum', 'Blank', 'BeardMajestic'] as AvataarsFacialHairType[],
     graphicTypes: ['Skull', 'SkullOutline', 'Diamond', 'Bear'] as AvataaarsGraphicType[],
     eyeTypes: ['Default', 'Squint', 'Side', 'Happy'] as AvataaarsEyeType[],
     mouthTypes: ['Default', 'Smile', 'Serious', 'Grimace'] as AvataarsMouthType[]
   },
   
   'Civillian': {
-    topTypes: ['LongHairStraight', 'LongHairCurly', 'ShortHairShortFlat', 'ShortHairShortRound', 'LongHairBob'] as AvataaarsTopType[],
+    topTypes: ['LongHairStraight', 'LongHairCurly', 'ShortHairShaggyMullet', 'Hat', 'NoHair', 'Eyepatch', 'LongHairDreads', 'LongHairFro', 'LongHairShavedSides', 'ShortHairDreads01', 'ShortHairDreads02', 'ShortHairFrizzle', 'ShortHairShortCurly', 'ShortHairShortFlat', 'ShortHairShortRound', ''] as AvataaarsTopType[],
     clotheTypes: ['ShirtCrewNeck', 'ShirtScoopNeck', 'CollarSweater', 'GraphicShirt'] as AvataaarsClothesType[],
-    clotheColors: ['Blue01', 'Red', 'PastelGreen', 'PastelYellow', 'Pink', 'White'] as AvataaarsClothesColor[],
+    clotheColors: ['Red', 'Black', 'Blue01', 'Brown', 'Gray01', 'Blue02', 'Blue03', 'Gray02', 'Heather', 'PastelBlue', ] as AvataaarsClothesColor[],
     accessoriesTypes: ['Blank', 'Prescription01', 'Round'] as AvataaarsAccessoriesType[],
-    hatColors: ['Blue01', 'Red', 'PastelBlue', 'Pink'] as AvataaarsHatColor[],
-    facialHairTypes: ['Blank', 'BeardLight'] as AvataarsFacialHairType[],
+    hatColors: ['Black', 'Red', 'Blue01', 'Brown', 'Blonde', 'BlondeGolden', 'Platinum', 'SilverGray'] as AvataaarsHatColor[],
+    facialHairTypes: ['BeardMedium', 'BeardLight', 'MoustacheFancy', 'MoustacheMagnum', 'Blank', 'BeardMajestic'] as AvataarsFacialHairType[],
     graphicTypes: ['Bear', 'Pizza', 'Deer', 'Diamond'] as AvataaarsGraphicType[],
     eyeTypes: ['Default', 'Happy', 'Hearts', 'Smile'] as AvataaarsEyeType[],
     mouthTypes: ['Default', 'Smile', 'Happy', 'Twinkle'] as AvataarsMouthType[]
