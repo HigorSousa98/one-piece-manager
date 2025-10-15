@@ -30,7 +30,7 @@
 
         <!-- Character Name -->
         <div class="name-area">
-          <h2 class="character-name">{{ character.name.toUpperCase() }}</h2>
+          <h2 class="character-name">{{ character.name.toUpperCase().substring(character.name.length - 30,character.name.length) }}</h2>
         </div>
 
         <!-- Bounty Amount -->
