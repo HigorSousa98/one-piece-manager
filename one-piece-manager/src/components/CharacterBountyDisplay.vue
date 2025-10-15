@@ -54,7 +54,7 @@ const getBountyDisplay = (character: Character): string => {
       return formatMarineRank(character.bounty)
     
     case 'BountyHunter':
-      return formatBountyHunterRank(character.bounty)
+      return formatPirateBounty(character.bounty)
     
     case 'Government':
       return formatGovernmentRank(character.bounty)
@@ -208,7 +208,7 @@ const getBountyDetails = (character: Character): {
       break
     
     case 'BountyHunter':
-      description = `Ranking de Caçador: ${formatBountyHunterRank(character.bounty)}`
+      description = `Recompensa oficial: ${formatPirateBounty(character.bounty)}`
       break
     
     case 'Government':

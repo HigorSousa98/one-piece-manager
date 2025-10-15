@@ -761,7 +761,7 @@ const getPercentile = (): number => {
 
 const getTypeColor = (type: string): string => {
   const colors: Record<string, string> = {
-    pirate: 'red',
+    Pirate: 'red',
     Marine: 'blue',
     BountyHunter: 'green',
     Government: 'purple'

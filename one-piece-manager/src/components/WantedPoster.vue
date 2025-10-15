@@ -35,7 +35,7 @@
 
         <!-- Bounty Amount -->
         <div class="bounty-area">
-          <div class="bounty-amount">{{ formatBounty(character.bounty || 0) }}</div>
+          <div class="bounty-amount">{{ formatBounty(character) }}</div>
         </div>
 
       </div>
@@ -216,14 +216,74 @@ const loadHtmlToImage = async () => {
 }
 
 // Methods
-const formatBounty = (bounty: number): string => {
-  if (props.customBounty !== undefined) {
-    bounty = props.customBounty
-  }
-  return bounty.toLocaleString('pt-BR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
+const formatBounty = (character: Character): string => {
+    var bounty
+    if (props.customBounty !== undefined) {
+        bounty = props.customBounty.toLocaleString('pt-BR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        })
+    }
+    else if(character.type == 'Pirate' || character.type == 'BountyHunter'){
+        bounty = character.bounty.toLocaleString('pt-BR', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        })
+    }
+    else if(character.type == 'Marine'){
+        bounty = formatMarineRank(character.bounty)
+    }
+    else{
+        bounty = formatGovernmentRank(character.bounty)
+    }
+  
+  return bounty;
+}
+
+// ✅ FORMATAÇÃO PARA MARINES (ESTRELAS)
+const formatMarineRank = (bounty: number): string => {
+  if (bounty === 0) return 'Recruta'
+  
+  // Dividir por 100 milhões para ter escala de 0-5 estrelas
+  const starValue = bounty / 100000000
+  
+  // Limitar entre 0 e 5
+  const clampedValue = Math.min(Math.max(starValue, 0), 5)
+  
+  // Arredondar para 0.5
+  const roundedValue = Math.round(clampedValue * 2) / 2
+  
+  return formatStars(roundedValue)
+}
+
+const formatStars = (value: number): string => {
+  if (value === 0) return 'Recruta'
+  if (value <= 0.5) return '★'
+  if (value <= 1) return '★'
+  if (value <= 1.5) return '★*'
+  if (value <= 2) return '★★'
+  if (value <= 2.5) return '★★*'
+  if (value <= 3) return '★★★'
+  if (value <= 3.5) return '★★★*'
+  if (value <= 4) return '★★★★'
+  if (value <= 4.5) return '★★★★*'
+  if (value <= 5) return '★★★★★'
+  return '★★★★★'
+}
+
+// ✅ FORMATAÇÃO PARA GOVERNO (HIERARQUIA)
+const formatGovernmentRank = (bounty: number): string => {
+  if (bounty === 0) return 'Agente'
+  
+  // Dividir por 100 milhões para ter escala similar
+  const rankValue = bounty / 100000000
+  
+  // 5 níveis hierárquicos
+  if (rankValue < 0.5) return 'Agente'
+  if (rankValue < 1.5) return 'Oficial'
+  if (rankValue < 2.5) return 'Comandante'
+  if (rankValue < 4) return 'Diretor'
+  return 'Alto Comando'
 }
 
 const onBackgroundLoad = () => {
@@ -288,13 +348,13 @@ const sharePoster = async () => {
       
       await navigator.share({
         title: `Wanted: ${props.character.name}`,
-        text: `Bounty: ${formatBounty(props.character.bounty || 0)} Berry`,
+        text: `Bounty: ${formatBounty(props.character)} Berry`,
         files: [file]
       })
       
       emit('share-complete', true)
     } else {
-      await navigator.clipboard.writeText(`Wanted: ${props.character.name} - Bounty: ${formatBounty(props.character.bounty || 0)} Berry`)
+      await navigator.clipboard.writeText(`Wanted: ${props.character.name} - Bounty: ${formatBounty(props.character)} Berry`)
       emit('share-complete', true)
     }
     
@@ -486,19 +546,19 @@ onMounted(async () => {
 
 /* ✅ AJUSTES DA BOUNTY POR TAMANHO */
 .wanted-poster-small .bounty-area {
-  top: 82.5%;
+  top: 83.5%;
 }
 
 .wanted-poster-medium .bounty-area {
-  top: 82.5%;
+  top: 83.5%;
 }
 
 .wanted-poster-large .bounty-area {
-  top: 82.5%;
+  top: 83.5%;
 }
 
 .wanted-poster-xl .bounty-area {
-  top: 82.5%;
+  top: 83.5%;
 }
 
 .bounty-amount {

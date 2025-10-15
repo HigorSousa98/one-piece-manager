@@ -233,6 +233,9 @@
                             <v-chip :color="getTypeColor(playerCharacter?.type || '')" size="small" variant="elevated" class="mt-1">
                               {{ playerCharacter?.type }}
                             </v-chip>
+                            <v-chip :color="getTypeColor(playerCharacter.type)" size="small" variant="elevated" class="mt-1">
+                              Level {{ playerCharacter.level }}
+                            </v-chip>
                             <div class="text-body-2 mt-2">
                               <strong>Poder: {{ calculatePower(playerCharacter!) }}</strong>
                             </div>
@@ -276,6 +279,9 @@
                             </div>
                             <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1">
                               {{ currentEncounter.opponent.type }}
+                            </v-chip>
+                            <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1">
+                              Level {{ currentEncounter.opponent.level }}
                             </v-chip>
                             <div class="text-body-2 mt-2">
                               <strong>Poder: {{ calculatePower(currentEncounter.opponent) }}</strong>
