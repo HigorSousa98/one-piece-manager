@@ -113,22 +113,12 @@
               
               <!-- ✅ AVATAR DO PLAYER -->
               <div class="player-avatar-section mb-4">
-                <CharacterAvatar 
-                  v-if="playerCharacter"
+                <WantedPoster
                   :character="playerCharacter"
-                  size="xl"
-                  variant="circle"
-                  :show-actions="true"
-                  :show-regenerate-button="true"
-                  :show-download-button="true"
-                  :show-status-indicators="true"
-                  :show-level="true"
-                  :show-power-rank="true"
-                  :cache-enabled="true"
-                  :clickable="false"
-                  class="player-adventure-avatar"
-                  @avatar-regenerated="onPlayerAvatarRegenerated"
-                  @avatar-error="onPlayerAvatarError"
+                  size="small"
+                  :show-actions="false"
+                  :show-size-controls="false"
+                  class="main-poster"
                 />
               </div>
 
@@ -228,20 +218,18 @@
                         <!-- PLAYER -->
                         <v-col cols="5" class="text-center">
                           <div class="combatant-section">
-                            <CharacterAvatar 
-                              v-if="playerCharacter"
+                            <WantedPoster
                               :character="playerCharacter"
-                              size="lg"
-                              variant="circle"
+                              size="small"
                               :show-actions="false"
-                              :show-status-indicators="true"
-                              :show-level="true"
-                              :show-power-rank="true"
-                              :cache-enabled="true"
-                              :clickable="false"
-                              class="combatant-avatar player-combatant"
+                              :show-size-controls="false"
+                              class="main-poster"
                             />
                             <div class="text-h6 mt-2 text-primary">{{ playerCharacter?.name }}</div>
+                            <div class="text-body-1 mb-6">
+                              <div v-if="playerCharacter.position == 'Captain'">Capitão do bando {{ crew(playerCharacter.crewId)?.name }}</div> 
+                              <div v-else>Membro do bando {{ crew(playerCharacter.crewId)?.name }}</div>
+                            </div>
                             <v-chip :color="getTypeColor(playerCharacter?.type || '')" size="small" variant="elevated" class="mt-1">
                               {{ playerCharacter?.type }}
                             </v-chip>
@@ -274,19 +262,18 @@
                         <!-- OPONENTE -->
                         <v-col cols="5" class="text-center">
                           <div class="combatant-section">
-                            <CharacterAvatar 
+                            <WantedPoster
                               :character="currentEncounter.opponent"
-                              size="lg"
-                              variant="circle"
+                              size="small"
                               :show-actions="false"
-                              :show-status-indicators="true"
-                              :show-level="true"
-                              :show-power-rank="true"
-                              :cache-enabled="true"
-                              :clickable="false"
-                              class="combatant-avatar opponent-combatant"
+                              :show-size-controls="false"
+                              class="main-poster"
                             />
                             <div class="text-h6 mt-2 text-error">{{ currentEncounter.opponent.name }}</div>
+                            <div class="text-body-1 mb-6">
+                              <div v-if="currentEncounter.opponent.position == 'Captain'">Capitão do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div> 
+                              <div v-else>Membro do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div>
+                            </div>
                             <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1">
                               {{ currentEncounter.opponent.type }}
                             </v-chip>
@@ -300,82 +287,6 @@
                   </v-card>
                 </v-col>
               </v-row>
-
-              <!-- Info do Oponente COM MELHOR CONTRASTE -->
-              <v-row>
-                <v-col cols="12" md="6">
-                  <v-card variant="outlined" class="opponent-details-card">
-                    <v-card-title>
-                      <v-avatar :color="getTypeColor(currentEncounter.opponent.type)" class="mr-2">
-                        <span>{{ getTypeIcon(currentEncounter.opponent.type) }}</span>
-                      </v-avatar>
-                      {{ currentEncounter.opponent.name }}
-                      <div class="text-body-1 mb-6">
-                        <div v-if="currentEncounter.opponent.position == 'Captain'">Capitão do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div> 
-                        <div v-else>Membro do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div>
-                      </div>
-                    </v-card-title>
-                    <v-card-text>
-                      <v-chip :color="getTypeColor(currentEncounter.opponent.type)" class="mb-2" variant="elevated">
-                        <strong>{{ currentEncounter.opponent.type }}</strong>
-                      </v-chip>
-                      <v-chip color="blue-darken-2" class="mb-2 ml-2" variant="elevated">
-                        <strong>Level {{ currentEncounter.opponent.level }}</strong>
-                      </v-chip>
-                      <v-chip color="accent-darken-2" class="mb-2 ml-2" variant="elevated">
-                        <strong>{{ opponentStyle(currentEncounter.opponent.styleCombatId) }}</strong>
-                      </v-chip>
-                      <v-chip v-if="currentEncounter.opponent.devilFruitId != 0" color="amber-darken-2" class="mb-2 ml-2" variant="elevated">
-                        <strong>Akuma no Mi User</strong>
-                      </v-chip>
-                      <v-divider class="my-2"></v-divider>
-                      <CharacterBountyDisplay 
-                        :character="currentEncounter.opponent" 
-                        size="small" 
-                        variant="elevated" 
-                      />
-                      <v-divider class="my-4"></v-divider>
-                      
-                      <!-- Stats Resumidos -->
-                      <div class="text-center">
-                        <div class="text-h6 mb-2">Poder Estimado: {{ calculatePower(currentEncounter.opponent) }}</div>
-                        <v-progress-linear
-                          :model-value="winChance"
-                          :color="winChance > 60 ? 'success' : winChance > 40 ? 'warning' : 'error'"
-                          height="20"
-                          rounded
-                        >
-                          <template v-slot:default>
-                            <strong :class="winChance >= 52 ? 'text-white' : 'text-black'">{{ winChance }}% chance de vitória</strong>
-                          </template>
-                        </v-progress-linear>
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-
-                <!-- Recompensa Especial -->
-                <v-col cols="12" md="6" v-if="currentEncounter.specialReward">
-                  <v-card variant="outlined" color="green-lighten-4" class="special-reward-card">
-                    <v-card-title class="text-green-darken-3">
-                      <v-icon left color="green-darken-3">mdi-treasure-chest</v-icon>
-                      Recompensa Especial
-                    </v-card-title>
-                    <v-card-text>
-                      <div class="text-center">
-                        <v-icon size="40" color="green-darken-2">mdi-star</v-icon>
-                        <div class="text-h6 mt-2 text-green-darken-4">
-                          Bonus {{ currentEncounter.specialReward.type }}
-                        </div>
-                        <div class="text-body-1 text-green-darken-3">
-                          +{{ formatSpecialReward(currentEncounter.specialReward) }}
-                        </div>
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
-
               <!-- Ações -->
               <v-row class="mt-4">
                 <v-col cols="12" class="text-center">
@@ -431,16 +342,14 @@
                       <!-- VENCEDOR -->
                       <v-col cols="5" class="text-center">
                         <div class="result-combatant winner">
-                          <CharacterAvatar 
+                          <WantedPoster
                             :character="lastBattleResult.winner"
-                            size="lg"
-                            variant="circle"
+                            size="small"
                             :show-actions="false"
-                            :show-status-indicators="false"
-                            :cache-enabled="true"
-                            :clickable="false"
-                            class="result-avatar winner-avatar"
+                            :show-size-controls="false"
+                            class="main-poster"
                           />
+                          
                           <div class="text-h6 mt-2">🏆 {{ lastBattleResult.winner.name }}</div>
                           <v-chip color="white" :text-color="lastBattleResult.winner.id === playerCharacter?.id ? 'success' : 'error'" variant="elevated">
                             <strong>VENCEDOR</strong>
@@ -458,15 +367,12 @@
                       <!-- PERDEDOR -->
                       <v-col cols="5" class="text-center">
                         <div class="result-combatant loser">
-                          <CharacterAvatar 
+                          <WantedPoster
                             :character="lastBattleResult.loser"
-                            size="lg"
-                            variant="circle"
+                            size="small"
                             :show-actions="false"
-                            :show-status-indicators="false"
-                            :cache-enabled="true"
-                            :clickable="false"
-                            class="result-avatar loser-avatar"
+                            :show-size-controls="false"
+                            class="main-poster"
                           />
                           <div class="text-h6 mt-2">💔 {{ lastBattleResult.loser.name }}</div>
                           <v-chip color="white" text-color="error" variant="elevated">
@@ -836,6 +742,7 @@ import type { Character, Crew, Task, StyleCombat, DevilFruit } from '@/utils/dat
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 // ✅ IMPORT DO COMPONENTE DE AVATAR
 import CharacterAvatar from '@/components/CharacterAvatar.vue'
+import WantedPoster from '@/components/WantedPoster.vue'
 
 const characterStore = useCharacterStore()
 const battleStore = useBattleStore()

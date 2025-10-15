@@ -72,59 +72,165 @@
 
       <!-- POSIÇÃO DO PLAYER HEADER -->
       <v-row v-if="playerInfo">
-        <v-col cols="12">
-          <v-card variant="elevated" class="mb-4" color="yellow-lighten-5">
-            <v-card-title class="text-yellow-darken-4">
-              <v-icon left color="yellow-darken-4">mdi-account-star</v-icon>
+  <v-col cols="12">
+    <v-card 
+      variant="elevated" 
+      class="mb-4 player-position-card" 
+      :class="getPlayerCardClass()"
+    >
+      <!-- Header -->
+      <v-card-title class="player-header pa-4">
+        <div class="header-content">
+          <div class="header-icon">
+            <v-icon size="32" color="white">mdi-crown</v-icon>
+          </div>
+          <div class="header-text">
+            <h2 class="text-h5 font-weight-bold text-white mb-1">
               👑 SUA POSIÇÃO NO MUNDO
-            </v-card-title>
-            <v-card-text class="pa-4">
-              <v-row align="center">
-                <v-col cols="12" md="2" class="text-center">
-                  <AvataaarsAvatar
-                    v-if="playerCharacter"
-                    :character="playerCharacter"
-                    size="80"
-                    variant="circle"
-                    :show-status-indicators="false"
-                    :show-level="false"
-                    :show-power-rank="true"
-                    :clickable="false"
-                  />
-                </v-col>
-                <v-col cols="12" md="6">
-                  <h3 class="text-h5 font-weight-bold mb-2">{{ playerCharacter?.name }}</h3>
-                  <div class="d-flex flex-wrap gap-2 mb-2">
-                    <v-chip
-                      :color="getTypeColor(playerInfo.category)"
-                      size="small"
-                      variant="elevated"
-                    >
-                      {{ formatType(playerInfo.category) }}
-                    </v-chip>
-                    <CharacterBountyDisplay
-                      v-if="playerCharacter"
-                      :character="playerCharacter"
-                      size="small"
-                      variant="elevated"
-                    />
+            </h2>
+            <p class="text-subtitle-2 text-white-secondary mb-0">
+              Ranking Global de {{ formatType(playerInfo.category) }}s
+            </p>
+          </div>
+        </div>
+      </v-card-title>
+
+      <!-- Content -->
+      <v-card-text class="pa-6">
+        <v-row align="center" justify="center">
+          
+          <!-- Wanted Poster -->
+          <v-col cols="12" md="4" class="text-center">
+            <div class="poster-container">
+              <WantedPoster
+                :character="playerCharacter"
+                size="small"
+                :show-actions="false"
+                :show-size-controls="false"
+                class="player-poster"
+              />
+              
+              <!-- Player Badge -->
+              <div class="player-badge-overlay">
+                <v-chip
+                  color="success"
+                  variant="elevated"
+                  size="large"
+                  prepend-icon="mdi-account-star"
+                  class="player-chip"
+                >
+                  VOCÊ
+                </v-chip>
+              </div>
+            </div>
+          </v-col>
+
+          <!-- Rank Info -->
+          <v-col cols="12" md="8">
+            <div class="rank-info-section">
+              
+              <!-- Main Rank Display -->
+              <div class="main-rank mb-4">
+                <div class="rank-number">
+                  <span class="rank-hash">#</span>
+                  <span class="rank-value">{{ playerInfo.rank }}</span>
+                </div>
+                <div class="rank-context">
+                  <v-chip
+                    :color="getRankColor(playerInfo.rank)"
+                    variant="elevated"
+                    size="large"
+                    class="rank-chip"
+                  >
+                    {{ getRankTitle(playerInfo.rank) }}
+                  </v-chip>
+                </div>
+              </div>
+
+              <!-- Stats Grid -->
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-icon">
+                    <v-icon color="primary">mdi-account-group</v-icon>
                   </div>
-                </v-col>
-                <v-col cols="12" md="4" class="text-center">
-                  <div class="rank-display">
-                    <div class="text-h2 font-weight-bold text-yellow-darken-4">
-                      #{{ playerInfo.rank }}
-                    </div>
-                    <div class="text-body-2 text-yellow-darken-3">
-                      de {{ playerInfo.totalInCategory }} {{ formatType(playerInfo.category) }}s
-                    </div>
+                  <div class="stat-content">
+                    <div class="stat-value">{{ playerInfo.totalInCategory }}</div>
+                    <div class="stat-label">Total {{ formatType(playerInfo.category) }}s</div>
                   </div>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">
+                    <v-icon color="success">mdi-trending-up</v-icon>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-value">{{ getPercentile() }}%</div>
+                    <div class="stat-label">Top Percentil</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">
+                    <v-icon color="warning">mdi-trophy</v-icon>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-value">{{ playerCharacter.level }}</div>
+                    <div class="stat-label">Nível Atual</div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="stat-icon">
+                    <v-icon :color="getTypeColor(playerInfo.category)">{{ getTypeIcon(playerInfo.category) }}</v-icon>
+                  </div>
+                  <div class="stat-content">
+                    <div class="stat-value">{{ formatType(playerInfo.category) }}</div>
+                    <div class="stat-label">Categoria</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Progress to Next Rank -->
+              <div class="rank-progress mt-4" v-if="playerInfo.rank > 1">
+                <div class="progress-header mb-2">
+                  <span class="text-subtitle-2 font-weight-medium">
+                    Próximo Objetivo: Rank #{{ playerInfo.rank - 1 }}
+                  </span>
+                  <v-chip size="small" color="info" variant="tonal">
+                    {{ getProgressToNextRank() }}
+                  </v-chip>
+                </div>
+                <v-progress-linear
+                  :model-value="getProgressPercentage()"
+                  color="primary"
+                  height="8"
+                  rounded
+                  class="progress-bar"
+                />
+              </div>
+
+              <!-- Achievement Badge -->
+              <div class="achievement-section mt-4" v-if="getAchievementBadge()">
+                <v-alert
+                  :color="getAchievementColor()"
+                  variant="tonal"
+                  :icon="getAchievementIcon()"
+                  class="achievement-alert"
+                >
+                  <template v-slot:title>
+                    {{ getAchievementTitle() }}
+                  </template>
+                  {{ getAchievementDescription() }}
+                </v-alert>
+              </div>
+
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+  </v-col>
+</v-row>
 
       <!-- ESTATÍSTICAS GERAIS -->
       <v-row v-if="showStats && worldStats">
@@ -505,6 +611,7 @@ import RankingSection from '@/components/RankingSection.vue'
 import CharacterDetailsDialog from '@/components/CharacterDetailsDialog.vue'
 import AvataaarsAvatar from '@/components/AvataaarsAvatar.vue'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
+import WantedPoster from '@/components/WantedPoster.vue'
 
 const characterStore = useCharacterStore()
 
@@ -596,16 +703,6 @@ const showCharacterDetails = (character: RankingCharacter): void => {
   characterDialog.value = true
 }
 
-// Helper functions
-const getTypeColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    pirate: 'red',
-    marine: 'blue',
-    bountyHunter: 'green',
-    government: 'purple'
-  }
-  return colors[type] || 'grey'
-}
 
 const formatType = (type: string): string => {
   return type.replace(/([A-Z])/g, ' $1').trim()
@@ -627,9 +724,334 @@ onMounted(async () => {
   await nextTick()
   await loadRankings(true)
 })
+
+const getPlayerCardClass = (): string => {
+  if (!playerInfo.value) return ''
+  
+  const rank = playerInfo.value.rank
+  if (rank === 1) return 'rank-first'
+  if (rank <= 3) return 'rank-top3'
+  if (rank <= 10) return 'rank-top10'
+  if (rank <= 50) return 'rank-top50'
+  return 'rank-normal'
+}
+
+const getRankColor = (rank: number): string => {
+  if (rank === 1) return 'amber'
+  if (rank <= 3) return 'grey-lighten-1'
+  if (rank <= 10) return 'blue'
+  if (rank <= 50) return 'green'
+  return 'grey'
+}
+
+const getRankTitle = (rank: number): string => {
+  if (rank === 1) return 'LENDA'
+  if (rank <= 3) return 'ELITE'
+  if (rank <= 10) return 'VETERANO'
+  if (rank <= 50) return 'EXPERIENTE'
+  if (rank <= 100) return 'COMPETENTE'
+  return 'INICIANTE'
+}
+
+const getPercentile = (): number => {
+  if (!playerInfo.value) return 0
+  const { rank, totalInCategory } = playerInfo.value
+  return Math.round(((totalInCategory - rank) / totalInCategory) * 100)
+}
+
+const getTypeColor = (type: string): string => {
+  const colors: Record<string, string> = {
+    pirate: 'red',
+    Marine: 'blue',
+    BountyHunter: 'green',
+    Government: 'purple'
+  }
+  return colors[type] || 'grey'
+}
+
+const getTypeIcon = (type: string): string => {
+  const icons: Record<string, string> = {
+    Pirate: 'mdi-pirate',
+    Marine: 'mdi-anchor',
+    BountyHunter: 'mdi-target',
+    Government: 'mdi-bank'
+  }
+  return icons[type] || 'mdi-account'
+}
+
+const getProgressToNextRank = (): string => {
+  // Lógica para calcular o que falta para o próximo rank
+  return 'Melhore suas stats'
+}
+
+const getProgressPercentage = (): number => {
+  // Lógica para calcular porcentagem de progresso
+  return 65 // Exemplo
+}
+
+const getAchievementBadge = (): boolean => {
+  if (!playerInfo.value) return false
+  return playerInfo.value.rank <= 10
+}
+
+const getAchievementColor = (): string => {
+  if (!playerInfo.value) return 'info'
+  const rank = playerInfo.value.rank
+  if (rank === 1) return 'amber'
+  if (rank <= 3) return 'purple'
+  if (rank <= 10) return 'blue'
+  return 'info'
+}
+
+const getAchievementIcon = (): string => {
+  if (!playerInfo.value) return 'mdi-trophy'
+  const rank = playerInfo.value.rank
+  if (rank === 1) return 'mdi-crown'
+  if (rank <= 3) return 'mdi-medal'
+  if (rank <= 10) return 'mdi-trophy'
+  return 'mdi-star'
+}
+
+const getAchievementTitle = (): string => {
+  if (!playerInfo.value) return ''
+  const rank = playerInfo.value.rank
+  if (rank === 1) return '🏆 IMPERADOR DOS MARES!'
+  if (rank <= 3) return '⭐ TOP 3 MUNDIAL!'
+  if (rank <= 10) return '🎖️ TOP 10 MUNDIAL!'
+  return '🌟 Excelente Posição!'
+}
+
+const getAchievementDescription = (): string => {
+  if (!playerInfo.value) return ''
+  const rank = playerInfo.value.rank
+  if (rank === 1) return 'Você é o mais poderoso do mundo! Parabéns!'
+  if (rank <= 3) return 'Entre os 3 mais fortes do mundo! Incrível!'
+  if (rank <= 10) return 'Entre os 10 mais fortes! Continue assim!'
+  return 'Você está indo muito bem!'
+}
 </script>
 
 <style scoped>
+.player-position-card {
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.player-position-card.rank-first {
+  border-color: #FFC107;
+  box-shadow: 0 0 30px rgba(255, 193, 7, 0.3);
+}
+
+.player-position-card.rank-top3 {
+  border-color: #9E9E9E;
+  box-shadow: 0 0 25px rgba(158, 158, 158, 0.3);
+}
+
+.player-position-card.rank-top10 {
+  border-color: #2196F3;
+  box-shadow: 0 0 20px rgba(33, 150, 243, 0.3);
+}
+
+.player-header {
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  position: relative;
+}
+
+.player-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-white-secondary {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.poster-container {
+  position: relative;
+  display: inline-block;
+}
+
+.player-poster {
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
+}
+
+.player-badge-overlay {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 10;
+}
+
+.player-chip {
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.rank-info-section {
+  padding: 0 16px;
+}
+
+.main-rank {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.rank-number {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.rank-hash {
+  font-size: 2rem;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.6);
+  margin-right: 4px;
+}
+
+.rank-value {
+  font-size: 4rem;
+  font-weight: bold;
+  color: #1976D2;
+  line-height: 1;
+}
+
+.rank-chip {
+  font-size: 1rem !important;
+  font-weight: bold;
+  padding: 8px 16px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: rgba(25, 118, 210, 0.05);
+  border: 1px solid rgba(25, 118, 210, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  background: rgba(25, 118, 210, 0.1);
+  transform: translateY(-2px);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(25, 118, 210, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #1976D2;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 2px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.progress-bar {
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.achievement-alert {
+  border-radius: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .rank-number {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .rank-hash {
+    font-size: 1.5rem;
+    margin-right: 0;
+  }
+  
+  .rank-value {
+    font-size: 3rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+}
+
+/* Animations */
+@keyframes rankGlow {
+  0%, 100% { 
+    text-shadow: 0 0 10px rgba(25, 118, 210, 0.3);
+  }
+  50% { 
+    text-shadow: 0 0 20px rgba(25, 118, 210, 0.6);
+  }
+}
+
+.rank-value {
+  animation: rankGlow 3s ease-in-out infinite;
+}
 .world-encyclopedia-container {
   max-width: 1400px;
   margin: 0 auto;

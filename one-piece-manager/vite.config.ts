@@ -12,5 +12,16 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  optimizeDeps: {
+    include: ['html-to-image']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/html-to-image/, /node_modules/]
+    }
+  },
+  define: {
+    global: 'globalThis'
   }
 })

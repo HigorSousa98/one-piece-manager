@@ -1,4 +1,3 @@
-<!-- src/views/Dashboard.vue -->
 <template>
   <div class="dashboard-container">
     <!-- LOADING STATE GLOBAL -->
@@ -32,7 +31,6 @@
                   <span>Carregando Personagem</span>
                 </div>
                 
-                <!-- ✅ NOVA ETAPA: AVATAR -->
                 <div class="step-item" :class="{ 'completed': avatarLoaded }">
                   <v-icon :color="avatarLoaded ? 'success' : 'grey'">
                     {{ avatarLoaded ? 'mdi-check' : 'mdi-loading mdi-spin' }}
@@ -52,7 +50,7 @@
       <!-- HEADER DO DASHBOARD -->
       <v-row>
         <v-col cols="12">
-          <v-card class="mb-4">
+          <v-card class="mb-4 dashboard-header">
             <v-card-title class="text-center">
               <v-icon left size="large">mdi-view-dashboard</v-icon>
               DASHBOARD
@@ -194,9 +192,9 @@
       </v-row>
       
       <v-row>
-        <!-- ✅ INFORMAÇÕES DO JOGADOR COM AVATAR -->
+        <!-- ✅ INFORMAÇÕES DO JOGADOR COM WANTED POSTER -->
         <v-col cols="12" lg="8">
-          <v-card variant="elevated" class="mb-4">
+          <v-card variant="elevated" class="mb-4 player-card">
             <v-card-title class="bg-blue-lighten-5 text-blue-darken-3">
               <v-icon left color="blue-darken-3">mdi-account-circle</v-icon>
               Seu Personagem
@@ -205,182 +203,272 @@
             <!-- Personagem existe -->
             <v-card-text v-if="playerCharacter" class="pa-4">
               
-              <!-- ✅ HEADER DO PERSONAGEM COM AVATAR -->
-              <div class="character-header mb-4">
-                <div class="d-flex align-center mb-3">
+              <!-- ✅ WANTED POSTER HERO SECTION -->
+              <div class="poster-hero-section mb-6">
+                <v-row align="center">
                   
-                  <!-- ✅ AVATAR DO PERSONAGEM -->
-                  <div class="avatar-section mr-4">
-                    <CharacterAvatar 
-                      :character="playerCharacter"
-                      size="lg"
-                      variant="circle"
-                      :show-actions="true"
-                      :show-regenerate-button="true"
-                      :show-download-button="true"
-                      :show-status-indicators="true"
-                      :show-level="true"
-                      :show-power-rank="true"
-                      :cache-enabled="true"
-                      :auto-regenerate="true"
-                      @avatar-generated="onAvatarGenerated"
-                      @avatar-regenerated="onAvatarRegenerated"
-                      @avatar-clicked="onAvatarClicked"
-                      @avatar-error="onAvatarError"
-                    />
-                  </div>
-                  
-                  <!-- INFORMAÇÕES BÁSICAS -->
-                  <div class="character-info flex-grow-1">
-                    <div class="text-h5 mb-1">{{ playerCharacter.name }}</div>
-                    <div class="d-flex gap-2 flex-wrap">
-                      <v-chip :color="getTypeColor(playerCharacter.type)" size="small" variant="elevated">
-                        <strong>{{ playerCharacter.type }}</strong>
-                      </v-chip>
-                      <v-chip color="blue-darken-2" size="small" variant="elevated">
-                        <strong>Level {{ playerCharacter.level }}</strong>
-                      </v-chip>
-                      <CharacterBountyDisplay 
-                        :character="playerCharacter" 
-                        size="small" 
-                        variant="elevated" 
+                  <!-- WANTED POSTER -->
+                  <v-col cols="12" md="5" class="text-center">
+                    <div class="poster-container">
+                      <WantedPoster
+                        :character="playerCharacter"
+                        size="small"
+                        :show-actions="false"
+                        :show-size-controls="false"
+                        class="dashboard-poster"
+                        @download-complete="onPosterDownload"
+                        @share-complete="onPosterShare"
                       />
-                      <v-chip color="accent-darken-2" size="small" variant="elevated">
-                        <strong>{{ playerStyleCombat?.name || 'Carregando...' }}</strong>
-                      </v-chip>
+                      
+                      <!-- PLAYER BADGE -->
+                      <div class="player-badge-overlay">
+                        <v-chip
+                          color="success"
+                          variant="elevated"
+                          size="large"
+                          prepend-icon="mdi-account-star"
+                          class="player-chip"
+                        >
+                          VOCÊ
+                        </v-chip>
+                      </div>
                     </div>
-                    
-                    <!-- ✅ POWER RANK DESTACADO -->
-                  </div>
-                </div>
+                  </v-col>
+                  
+                  <!-- CHARACTER INFO -->
+                  <v-col cols="12" md="7">
+                    <div class="character-dashboard-info">
+                      <div class="character-title mb-3">
+                        <h2 class="text-h4 font-weight-bold character-name mb-2">
+                          {{ playerCharacter.name }}
+                        </h2>
+                        <div class="character-subtitle">
+                          <span class="text-h6 text-medium-emphasis">
+                            {{ playerCharacter.position || 'Capitão Pirata' }}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <!-- BASIC INFO CHIPS -->
+                      <div class="character-chips mb-4">
+                        <v-chip :color="getTypeColor(playerCharacter.type)" variant="elevated" size="large" class="info-chip">
+                          <v-icon left>{{ getTypeIconMdi(playerCharacter.type) }}</v-icon>
+                          {{ playerCharacter.type }}
+                        </v-chip>
+                        <v-chip color="orange-darken-2" variant="elevated" size="large" class="info-chip">
+                          <v-icon left>mdi-star</v-icon>
+                          Level {{ playerCharacter.level }}
+                        </v-chip>
+                        <v-chip v-if="playerStyleCombat" color="purple-darken-2" variant="elevated" size="large" class="info-chip">
+                          <v-icon left>mdi-sword</v-icon>
+                          {{ playerStyleCombat.name }}
+                        </v-chip>
+                      </div>
+                      
+                      <!-- POWER & BOUNTY DISPLAY -->
+                      <div class="character-stats-quick">
+                        <v-card variant="outlined" color="purple-darken-1" class="power-display-card mb-3">
+                          <v-card-text class="text-center pa-3">
+                            <v-icon size="30" color="purple-darken-2">mdi-flash</v-icon>
+                            <div class="text-h5 mt-1 text-purple-darken-3 font-weight-bold">
+                              {{ calculatePower(playerCharacter) }}
+                            </div>
+                            <div class="text-subtitle-2 text-purple-darken-2">Poder Total</div>
+                          </v-card-text>
+                        </v-card>
+                      </div>
+                    </div>
+                  </v-col>
+                </v-row>
               </div>
               
               <!-- STATS PRINCIPAIS -->
-              <v-row class="mb-4">
-                <v-col cols="12" md="6">
-                  <v-card variant="outlined" color="red-darken-1">
-                    <v-card-text class="text-center pa-3">
-                      <v-icon size="30" color="red-darken-2">mdi-sword</v-icon>
-                      <div class="text-h6 mt-1 text-red-darken-3">{{ playerCharacter.stats.attack }}</div>
-                      <div class="text-caption">Attack</div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="12" md="6">
-                  <v-card variant="outlined" color="blue-darken-1">
-                    <v-card-text class="text-center pa-3">
-                      <v-icon size="30" color="blue-darken-2">mdi-shield</v-icon>
-                      <div class="text-h6 mt-1 text-blue-darken-3">{{ playerCharacter.stats.defense }}</div>
-                      <div class="text-caption">Defense</div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
+              <div class="stats-section mb-4">
+                <h3 class="text-h6 mb-3 stats-title">
+                  <v-icon left color="primary">mdi-chart-line</v-icon>
+                  Estatísticas de Combate
+                </h3>
+                
+                <v-row class="mb-4">
+                  <v-col cols="12" md="4">
+                    <v-card variant="outlined" color="red-darken-1" class="stat-card attack-card">
+                      <v-card-text class="text-center pa-3">
+                        <v-icon size="35" color="red-darken-2">mdi-sword</v-icon>
+                        <div class="text-h5 mt-2 text-red-darken-3 font-weight-bold">{{ playerCharacter.stats.attack }}</div>
+                        <div class="text-subtitle-2 text-red-darken-2">Ataque</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="12" md="4">
+                    <v-card variant="outlined" color="blue-darken-1" class="stat-card defense-card">
+                      <v-card-text class="text-center pa-3">
+                        <v-icon size="35" color="blue-darken-2">mdi-shield</v-icon>
+                        <div class="text-h5 mt-2 text-blue-darken-3 font-weight-bold">{{ playerCharacter.stats.defense }}</div>
+                        <div class="text-subtitle-2 text-blue-darken-2">Defesa</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="12" md="4">
+                    <v-card variant="outlined" color="green-darken-1" class="stat-card speed-card">
+                      <v-card-text class="text-center pa-3">
+                        <v-icon size="35" color="green-darken-2">mdi-run-fast</v-icon>
+                        <div class="text-h5 mt-2 text-green-darken-3 font-weight-bold">{{ playerCharacter.stats.speed }}</div>
+                        <div class="text-subtitle-2 text-green-darken-2">Velocidade</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </div>
               
-              <!-- STATS SECUNDÁRIOS -->
-              <v-row class="mb-4">
-                <v-col cols="4">
-                  <v-card variant="outlined" color="green-darken-1">
-                    <v-card-text class="text-center pa-2">
-                      <v-icon color="green-darken-2">mdi-run-fast</v-icon>
-                      <div class="text-body-2 mt-1 text-green-darken-3">
-                        <strong>{{ playerCharacter.stats.speed }}</strong>
-                      </div>
-                      <div class="text-caption">Speed</div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="4">
-                  <v-card variant="outlined" color="orange-darken-1">
-                    <v-card-text class="text-center pa-2">
-                      <v-icon color="orange-darken-2">mdi-arm-flex</v-icon>
-                      <div class="text-body-2 mt-1 text-orange-darken-3">
-                        <strong>{{ playerCharacter.stats.armHaki }}</strong>
-                      </div>
-                      <div class="text-caption">Busoshoku Haki</div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="4">
-                  <v-card variant="outlined" color="purple-darken-1">
-                    <v-card-text class="text-center pa-2">
-                      <v-icon color="purple-darken-2">mdi-eye</v-icon>
-                      <div class="text-body-2 mt-1 text-purple-darken-3">
-                        <strong>{{ playerCharacter.stats.obsHaki }}</strong>
-                      </div>
-                      <div class="text-caption">Kenbunshoku Haki</div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
-              
-              <!-- Haoshoku Haki E KINDNESS -->
-              <v-row class="mb-4">
-                <v-col cols="6">
-                  <v-card variant="outlined" color="amber-darken-1">
-                    <v-card-text class="text-center pa-3">
-                      <v-icon size="25" color="amber-darken-3">mdi-crown</v-icon>
-                      <div class="text-h6 mt-1 text-amber-darken-4">{{ playerCharacter.stats.kingHaki }}</div>
-                      <div class="text-caption">Haoshoku Haki</div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-                <v-col cols="6">
-                  <v-card variant="outlined" :color="getKindnessCardColor(playerCharacter.kindness)">
-                    <v-card-text class="text-center pa-3">
-                      <v-icon size="25" :color="getKindnessIconColor(playerCharacter.kindness)">
+              <!-- HAKI STATS -->
+              <div class="haki-section mb-4" v-if="hasHakiStats">
+                <h3 class="text-h6 mb-3 stats-title">
+                  <v-icon left color="orange-darken-2">mdi-meditation</v-icon>
+                  Habilidades Haki
+                </h3>
+                
+                <v-row>
+                  <v-col cols="4" v-if="playerCharacter.stats.armHaki > 0">
+                    <v-card variant="outlined" color="orange-darken-1" class="haki-card">
+                      <v-card-text class="text-center pa-2">
+                        <v-icon size="25" color="orange-darken-2">mdi-arm-flex</v-icon>
+                        <div class="text-h6 mt-1 text-orange-darken-3 font-weight-bold">{{ playerCharacter.stats.armHaki }}</div>
+                        <div class="text-caption text-orange-darken-2">Busoshoku</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="4" v-if="playerCharacter.stats.obsHaki > 0">
+                    <v-card variant="outlined" color="purple-darken-1" class="haki-card">
+                      <v-card-text class="text-center pa-2">
+                        <v-icon size="25" color="purple-darken-2">mdi-eye</v-icon>
+                        <div class="text-h6 mt-1 text-purple-darken-3 font-weight-bold">{{ playerCharacter.stats.obsHaki }}</div>
+                        <div class="text-caption text-purple-darken-2">Kenbunshoku</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="4" v-if="playerCharacter.stats.kingHaki > 0">
+                    <v-card variant="outlined" color="amber-darken-1" class="haki-card">
+                      <v-card-text class="text-center pa-2">
+                        <v-icon size="25" color="amber-darken-3">mdi-crown</v-icon>
+                        <div class="text-h6 mt-1 text-amber-darken-4 font-weight-bold">{{ playerCharacter.stats.kingHaki }}</div>
+                        <div class="text-caption text-amber-darken-3">Haoshoku</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </div>
+
+              <!-- KINDNESS -->
+              <div class="kindness-section mb-4">
+                <h3 class="text-h6 mb-3 stats-title">
+                  <v-icon left color="pink-darken-2">mdi-heart</v-icon>
+                  Personalidade
+                </h3>
+                
+                <v-card variant="outlined" :color="getKindnessCardColor(playerCharacter.kindness)" class="kindness-card">
+                  <v-card-text class="pa-3">
+                    <div class="d-flex align-center">
+                      <v-icon size="30" :color="getKindnessIconColor(playerCharacter.kindness)" class="mr-3">
                         {{ getKindnessIcon(playerCharacter.kindness) }}
                       </v-icon>
-                      <div class="text-h6 mt-1" :class="getKindnessTextColor(playerCharacter.kindness)">
-                        {{ playerCharacter.kindness }}
+                      <div class="flex-grow-1">
+                        <div class="text-h6 font-weight-bold" :class="getKindnessTextColor(playerCharacter.kindness)">
+                          {{ playerCharacter.kindness }}
+                        </div>
+                        <div class="text-subtitle-2">Nível de Bondade</div>
                       </div>
-                      <div class="text-caption">Bondade</div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
+                      <div class="kindness-status">
+                        <v-chip :color="getKindnessIconColor(playerCharacter.kindness)" variant="elevated" size="small">
+                          {{ getKindnessStatus(playerCharacter.kindness) }}
+                        </v-chip>
+                      </div>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </div>
 
               <!-- Akuma no Mi -->
-              <v-card v-if="playerCharacter.devilFruitId != 0" variant="outlined" color="teal-darken-1" class="mb-4">
-                <v-card-text class="text-center pa-3">
-                  <v-icon size="35" color="teal-darken-2">mdi-fruit-pineapple</v-icon>
-                  <div class="text-h5 mt-1 text-teal-darken-3">
-                    <strong>{{ playerCharacter.stats.devilFruit }}</strong>
-                  </div>
-                  <div class="text-body-2">{{ playerDevilFruit?.name || 'Carregando...' }} - {{ playerDevilFruit?.type || '' }}<strong>{{playerCharacter.level >= (playerDevilFruit?.awakeningOn || 999) ? ' (Despertada)' : ''}}</strong></div>
-                </v-card-text>
-              </v-card>
-              
-              <!-- PODER TOTAL -->
-              <v-card variant="outlined" color="deep-purple-darken-1" class="mb-4">
-                <v-card-text class="text-center pa-3">
-                  <v-icon size="35" color="deep-purple-darken-2">mdi-flash</v-icon>
-                  <div class="text-h5 mt-1 text-deep-purple-darken-3">
-                    <strong>{{ calculatePower(playerCharacter) }}</strong>
-                  </div>
-                  <div class="text-body-2">Poder Total</div>
-                </v-card-text>
-              </v-card>
+              <div v-if="playerCharacter.devilFruitId != 0" class="devil-fruit-section mb-4">
+                <h3 class="text-h6 mb-3 stats-title">
+                  <v-icon left color="teal-darken-2">mdi-fruit-pineapple</v-icon>
+                  Akuma no Mi
+                </h3>
+                
+                <v-card variant="outlined" color="teal-lighten-5" class="devil-fruit-card">
+                  <v-card-text class="pa-3">
+                    <div class="d-flex align-center">
+                      <div class="devil-fruit-icon">
+                        <v-icon size="40" color="teal-darken-2">mdi-fruit-pineapple</v-icon>
+                      </div>
+                      <div class="flex-grow-1 ml-3">
+                        <div class="text-h6 font-weight-bold text-teal-darken-3">
+                          {{ playerDevilFruit?.name || 'Carregando...' }}
+                        </div>
+                        <div class="text-subtitle-2 text-teal-darken-2 mb-1">
+                          {{ playerDevilFruit?.type || '' }} • Poder: {{ playerCharacter.stats.devilFruit }}
+                        </div>
+                        <div class="d-flex align-center gap-2">
+                          <v-chip 
+                            v-if="playerCharacter.level >= (playerDevilFruit?.awakeningOn || 999)"
+                            size="small"
+                            color="teal-darken-2"
+                            variant="elevated"
+                          >
+                            <v-icon size="small" class="mr-1">mdi-star</v-icon>
+                            Despertada
+                          </v-chip>
+                          <v-chip 
+                            size="small"
+                            color="teal"
+                            variant="tonal"
+                          >
+                            Nível {{ playerCharacter.stats.devilFruit }}
+                          </v-chip>
+                        </div>
+                      </div>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </div>
               
               <!-- EXPERIÊNCIA -->
               <div class="experience-section">
-                <div class="text-body-1 mb-2">
-                  <strong>Experiência:</strong> {{ playerCharacter.experience }} / {{ expForNextLevel }} XP
-                </div>
-                <v-progress-linear
-                  :model-value="experiencePercentage"
-                  color="primary"
-                  height="20"
-                  rounded
-                  class="mb-2"
-                >
-                  <template v-slot:default>
-                    <strong :class="Math.round(experiencePercentage) >= 52 ? 'text-white' : 'text-black'">{{ Math.round(experiencePercentage) }}%</strong>
-                  </template>
-                </v-progress-linear>
-                <div class="text-caption text-center">
-                  Faltam {{ expForNextLevel - playerCharacter.experience }} XP para o próximo level
-                </div>
+                <h3 class="text-h6 mb-3 stats-title">
+                  <v-icon left color="blue-darken-2">mdi-trending-up</v-icon>
+                  Progressão de Experiência
+                </h3>
+                
+                <v-card variant="outlined" color="blue-lighten-5" class="experience-card">
+                  <v-card-text class="pa-3">
+                    <div class="d-flex justify-space-between align-center mb-2">
+                      <div class="text-subtitle-1 text-blue-darken-3">
+                        <strong>{{ playerCharacter.experience.toLocaleString() }} XP</strong>
+                      </div>
+                      <div class="text-subtitle-1 text-blue-darken-3">
+                        <strong>{{ expForNextLevel.toLocaleString() }} XP</strong>
+                      </div>
+                    </div>
+                    
+                    <v-progress-linear
+                      :model-value="experiencePercentage"
+                      color="blue-darken-2"
+                      height="16"
+                      rounded
+                      class="mb-2"
+                    >
+                      <template v-slot:default>
+                        <strong class="text-white text-caption">{{ Math.round(experiencePercentage) }}%</strong>
+                      </template>
+                    </v-progress-linear>
+                    
+                    <div class="text-center">
+                      <v-chip color="blue-darken-2" variant="elevated" size="small">
+                        <v-icon left size="small">mdi-target</v-icon>
+                        {{ (expForNextLevel - playerCharacter.experience).toLocaleString() }} XP restantes
+                      </v-chip>
+                    </div>
+                  </v-card-text>
+                </v-card>
               </div>
             </v-card-text>
           </v-card>
@@ -402,14 +490,14 @@
 
           <!-- AÇÕES RÁPIDAS -->
           <v-card variant="elevated" class="mb-4">
-            <v-card-title class="bg-green-darken-1 text-green-darken-3">
-              <v-icon left color="green-darken-3">mdi-sword-cross</v-icon>
+            <v-card-title class="bg-green-darken-1 text-white">
+              <v-icon left color="white">mdi-sword-cross</v-icon>
               Ações Rápidas
             </v-card-title>
             <v-card-text class="pa-4">
               
               <!-- AVENTURAS -->
-              <v-card variant="outlined" color="red-darken-1" class="mb-3">
+              <v-card variant="outlined" color="red-darken-1" class="mb-3 action-card">
                 <v-card-text class="pa-3">
                   <div class="d-flex align-center mb-2">
                     <v-icon color="red-darken-2" class="mr-2">mdi-map</v-icon>
@@ -434,7 +522,7 @@
                 </v-card-text>
               </v-card>
 
-              <v-card variant="outlined" color="grey-darken-1" class="mb-3">
+              <v-card variant="outlined" color="grey-darken-1" class="mb-3 action-card">
                 <v-card-text class="pa-3">
                   <div class="d-flex align-center mb-2">
                     <v-icon color="grey-darken-2" class="mr-2">mdi-sword-cross</v-icon>
@@ -459,7 +547,7 @@
                 </v-card-text>
               </v-card>
 
-              <v-card variant="outlined" color="cyan-darken-1" class="mb-3">
+              <v-card variant="outlined" color="cyan-darken-1" class="mb-3 action-card">
                 <v-card-text class="pa-3">
                   <div class="d-flex align-center mb-2">
                     <v-icon color="cyan-darken-2" class="mr-2">mdi-compass</v-icon>
@@ -485,7 +573,7 @@
               </v-card>
               
               <!-- EXPLORAÇÃO DE ILHAS -->
-              <v-card variant="outlined" color="blue-darken-1" class="mb-3">
+              <v-card variant="outlined" color="blue-darken-1" class="mb-3 action-card">
                 <v-card-text class="pa-3">
                   <div class="d-flex align-center mb-2">
                     <v-icon color="blue-darken-2" class="mr-2">mdi-island</v-icon>
@@ -511,7 +599,7 @@
               </v-card>
               
               <!-- TRIPULAÇÃO -->
-              <v-card variant="outlined" color="green-darken-1" class="mb-3">
+              <v-card variant="outlined" color="green-darken-1" class="mb-3 action-card">
                 <v-card-text class="pa-3">
                   <div class="d-flex align-center mb-2">
                     <v-icon color="green-darken-2" class="mr-2">mdi-account-group</v-icon>
@@ -534,7 +622,7 @@
               </v-card>
 
               <!-- TREINO -->
-              <v-card variant="outlined" color="brown-darken-1" class="mb-3">
+              <v-card variant="outlined" color="brown-darken-1" class="mb-3 action-card">
                 <v-card-text class="pa-3">
                   <div class="d-flex align-center mb-2">
                     <v-icon color="brown-darken-2" class="mr-2">mdi-dumbbell</v-icon>
@@ -560,23 +648,18 @@
               </v-card>
               
               <!-- STATUS RÁPIDO -->
-              <v-card variant="outlined" color="purple-darken-1" v-if="playerCharacter">
+              <v-card variant="outlined" color="purple-darken-1" v-if="playerCharacter" class="status-quick-card">
                 <v-card-text class="pa-3">
                   <div class="text-h6 text-purple-darken-3 mb-2">Status Rápido</div>
-                  <div class="d-flex justify-space-between">
-                    <v-chip color="blue-darken-2" size="small" variant="elevated">
-                      <strong>Level {{ playerCharacter.level }}</strong>
+                  <div class="d-flex justify-space-between flex-wrap gap-1">
+                    <v-chip color="blue-darken-2" size="x-small" variant="elevated">
+                      <strong>Lv.{{ playerCharacter.level }}</strong>
                     </v-chip>
-                    <CharacterBountyDisplay 
-                      :character="playerCharacter" 
-                      size="small" 
-                      variant="elevated" 
-                    />
-                    <v-chip color="deep-purple-darken-2" size="small" variant="elevated">
-                      <strong>{{ calculatePower(playerCharacter) }} Power</strong>
+                    <v-chip color="deep-purple-darken-2" size="x-small" variant="elevated">
+                      <strong>{{ calculatePower(playerCharacter) }}</strong>
                     </v-chip>
-                    <v-chip color="accent-darken-2" size="small" variant="elevated">
-                      <strong>{{ playerStyleCombat?.name || 'N/A' }}</strong>
+                    <v-chip :color="getPowerRankColor(currentPowerRank)" size="x-small" variant="elevated">
+                      <strong>{{ currentPowerRank }}</strong>
                     </v-chip>
                   </div>
                 </v-card-text>
@@ -702,7 +785,6 @@
                     </v-card-text>
                   </v-card>
                 </v-col>
-                <!-- ✅ NOVA COLUNA: STATUS DO AVATAR -->
                 <v-col cols="12" md="3">
                   <v-card variant="outlined">
                     <v-card-text class="text-center pa-3">
@@ -790,7 +872,6 @@
                   Exportar Dados
                 </v-btn>
                 
-                <!-- ✅ NOVA AÇÃO: TOGGLE AVATAR STATS -->
                 <v-btn 
                   @click="showAvatarStats = !showAvatarStats" 
                   color="indigo" 
@@ -834,7 +915,7 @@
         <v-card-text class="pa-6">
           <div class="text-center">
             <v-icon size="80" color="error" class="mb-4">mdi-earth-off</v-icon>
-            <div class="text-h5 mb-4">Tem certeza absoluta?</div>
+                        <div class="text-h5 mb-4">Tem certeza absoluta?</div>
             <div class="text-body-1 mb-4">
               Esta ação irá <strong>apagar completamente</strong> o mundo atual:
             </div>
@@ -910,7 +991,7 @@
           </div>
         </v-card-text>
         
-                <v-card-actions class="pa-6">
+        <v-card-actions class="pa-6">
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
@@ -939,8 +1020,8 @@ import type { Character, DevilFruit, StyleCombat } from '@/utils/database'
 import { WorldResetSystem, type WorldResetResult } from '@/utils/worldResetSystem'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 import { GenerationConfig } from '@/utils/generationConfig'
-// ✅ IMPORTS PARA SISTEMA DE AVATARES
-import CharacterAvatar from '@/components/CharacterAvatar.vue'
+// ✅ IMPORTS PARA WANTED POSTER
+import WantedPoster from '@/components/WantedPoster.vue'
 import { useAvatarManager } from '@/composables/useAvataaarsManager'
 import { PowerCalculationSystem } from '@/utils/powerCalculationSystem'
 
@@ -994,6 +1075,14 @@ const showAd = computed(() => GenerationConfig.createEpic().showAd)
 const playerDevilFruit = ref<DevilFruit | null>(null)
 const playerStyleCombat = ref<StyleCombat | null>(null)
 
+// ✅ COMPUTED PARA HAKI STATS
+const hasHakiStats = computed(() => {
+  if (!playerCharacter.value) return false
+  return playerCharacter.value.stats.armHaki > 0 || 
+         playerCharacter.value.stats.obsHaki > 0 || 
+         playerCharacter.value.stats.kingHaki > 0
+})
+
 // ✅ COMPUTED PARA POWER RANK
 const currentPowerRank = computed(() => {
   if (!playerCharacter.value) return 'N/A'
@@ -1016,6 +1105,23 @@ const expForNextLevel = computed(() => {
   if (!playerCharacter.value) return 0
   return GameLogic.nextLevelUp(playerCharacter.value)
 })
+
+// ✅ MÉTODOS PARA POSTER
+const onPosterDownload = (success: boolean) => {
+  if (success) {
+    console.log('✅ Poster baixado com sucesso!')
+  } else {
+    console.log('❌ Erro ao baixar poster')
+  }
+}
+
+const onPosterShare = (success: boolean) => {
+  if (success) {
+    console.log('✅ Poster compartilhado com sucesso!')
+  } else {
+    console.log('❌ Erro ao compartilhar poster')
+  }
+}
 
 // ✅ MÉTODOS PARA POWER RANK
 const getPowerRankColor = (rank: string): string => {
@@ -1087,47 +1193,6 @@ const closeResultDialog = () => {
   lastResult.value = null
 }
 
-// ✅ MÉTODOS DO SISTEMA DE AVATARES
-const onAvatarGenerated = (svgData: string) => {
-  console.log('✅ Avatar gerado com sucesso')
-  avatarLoaded.value = true
-  updateCacheStats()
-}
-
-const onAvatarRegenerated = (svgData: string) => {
-  console.log('✅ Avatar regenerado com sucesso')
-  updateCacheStats()
-}
-
-const onAvatarClicked = (character: Character) => {
-  console.log('🖱️ Avatar clicado:', character.name)
-  // Aqui você pode implementar alguma ação, como abrir perfil detalhado
-}
-
-const onAvatarError = (error: Error) => {
-  console.error('❌ Erro no avatar:', error)
-  avatarLoaded.value = true // Marcar como carregado mesmo com erro para não travar o loading
-}
-
-/*const regeneratePlayerAvatar = async () => {
-  if (!playerCharacter.value) return
-  
-  try {
-    isRegeneratingAvatar.value = true
-    console.log('🔄 Regenerando avatar do player...')
-    
-    const newAvatar = await regenerateAvatar(playerCharacter.value)
-    if (newAvatar) {
-      console.log('✅ Avatar do player regenerado')
-      await updateCacheStats()
-    }
-  } catch (error) {
-    console.error('❌ Erro ao regenerar avatar do player:', error)
-  } finally {
-    isRegeneratingAvatar.value = false
-  }
-}*/
-
 // 🎮 METHODS
 const calculatePower = (character: Character): number => {
   return GameLogic.calculatePower(character, playerDevilFruit.value)
@@ -1160,18 +1225,7 @@ const checkActiveTasks = async () => {
   }
 }
 
-const formatBounty = (bounty: number): string => {
-  if (bounty >= 1000000000) {
-    return `${(bounty / 1000000000).toFixed(2)}B B$`
-  } else if (bounty >= 1000000) {
-    return `${(bounty / 1000000).toFixed(2)}M B$`
-  } else if (bounty >= 1000) {
-    return `${(bounty / 1000).toFixed(2)}K B$`
-  }
-  return `${bounty} B$`
-}
-
-// 🎨 HELPER FUNCTIONS
+// �� HELPER FUNCTIONS
 const getTypeColor = (type: string): string => {
   switch (type) {
     case 'Pirate': return 'red-darken-2'
@@ -1182,13 +1236,13 @@ const getTypeColor = (type: string): string => {
   }
 }
 
-const getTypeIcon = (type: string): string => {
+const getTypeIconMdi = (type: string): string => {
   switch (type) {
-    case 'Pirate': return '🏴‍☠️'
-    case 'Marine': return '⚓'
-    case 'Government': return '🏛️'
-    case 'BountyHunter': return '💰'
-    default: return '❓'
+    case 'Pirate': return 'mdi-pirate'
+    case 'Marine': return 'mdi-anchor'
+    case 'Government': return 'mdi-bank'
+    case 'BountyHunter': return 'mdi-target'
+    default: return 'mdi-account'
   }
 }
 
@@ -1220,24 +1274,17 @@ const getKindnessIcon = (kindness: number): string => {
   return 'mdi-skull'
 }
 
-// 🔧 DEBUG ACTIONS
-const createCharacter = async () => {
-  try {
-    //await characterStore.createPlayerCharacter('Monkey D. Luffy')
-    characterLoaded.value = true
-  } catch (error) {
-    console.error('❌ Erro ao criar personagem:', error)
-  }
+const getKindnessStatus = (kindness: number): string => {
+  if (kindness >= 50) return 'BONDOSO'
+  if (kindness >= 0) return 'EQUILIBRADO'
+  if (kindness >= -50) return 'RIGOROSO'
+  return 'CRUEL'
 }
 
+// 🔧 DEBUG ACTIONS
 const findRandomBattle = () => {
   console.log('🗺️ Redirecionando para aventuras...')
   router.push('/adventure')
-}
-
-const redirect = () => {
-  if(taskType.value == 'exploration') router.push('/island')
-  else if(taskType.value == 'training') router.push('/training')
 }
 
 const forceReload = async () => {
@@ -1251,7 +1298,11 @@ const forceReload = async () => {
   // Recarregar avatar
   if (playerCharacter.value) {
     try {
-      //await regeneratePlayerAvatar()
+      setTimeout(() => {
+        if (!avatarLoaded.value) {
+          avatarLoaded.value = true
+        }
+      }, 2000)
     } catch (error) {
       console.error('❌ Erro ao recarregar avatar:', error)
       avatarLoaded.value = true
@@ -1319,8 +1370,7 @@ onMounted(async () => {
       console.log('🎨 Inicializando sistema de avatares...')
       await updateCacheStats()
       
-      // Avatar será carregado pelo componente CharacterAvatar
-      // Marcar como carregado após um pequeno delay para dar tempo do componente carregar
+      // Avatar será carregado pelo componente WantedPoster
       setTimeout(() => {
         if (!avatarLoaded.value) {
           avatarLoaded.value = true
@@ -1353,11 +1403,20 @@ onMounted(async () => {
   justify-content: center;
 }
 
+/* ✅ HEADER DO DASHBOARD */
+.dashboard-header {
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.3);
+}
+
 /* ✅ ESTILOS PARA CONTROLE DO MUNDO */
 .world-control-panel {
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid rgba(25, 118, 210, 0.2);
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
 }
 
 .status-compact {
@@ -1371,29 +1430,207 @@ onMounted(async () => {
   gap: 8px;
 }
 
-/* ✅ ESTILOS PARA AVATAR */
-.avatar-section {
-  position: relative;
-  flex-shrink: 0;
+/* ✅ PLAYER CARD */
+.player-card {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
+  border: 2px solid rgba(25, 118, 210, 0.2);
+  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.1);
 }
 
-.character-info {
-  min-width: 0; /* Permite que o flex item encolha */
+/* ✅ POSTER HERO SECTION */
+.poster-hero-section {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.poster-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dashboard-poster {
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
+  transition: all 0.3s ease;
+}
+
+.dashboard-poster:hover {
+  transform: scale(1.02) rotate(1deg);
+  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.4));
+}
+
+.player-badge-overlay {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  z-index: 10;
+}
+
+.power-rank-overlay {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  z-index: 10;
+}
+
+.player-chip {
+  background: linear-gradient(45deg, #4CAF50, #388E3C) !important;
+  color: white !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4) !important;
 }
 
 .power-rank-chip {
-  font-size: 1.1rem !important;
-  height: 36px !important;
-  font-weight: 700 !important;
+  font-weight: bold !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-.character-header {
-  border-bottom: 2px solid rgba(0,0,0,0.1);
-  padding-bottom: 16px;
+/* ✅ CHARACTER INFO */
+.character-dashboard-info {
+  padding: 16px;
 }
 
-.character-header .d-flex {
-  align-items: flex-start;
+.character-name {
+  color: #1565C0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  line-height: 1.1;
+}
+
+.character-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.info-chip {
+  font-weight: bold !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.power-display-card {
+  border: 2px solid rgba(156, 39, 176, 0.3);
+  transition: all 0.3s ease;
+}
+
+.power-display-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.3);
+}
+
+.bounty-display-dashboard {
+  display: flex;
+  justify-content: center;
+}
+
+/* ✅ SECTION TITLES */
+.stats-title {
+  color: #1565C0;
+  border-bottom: 2px solid rgba(25, 118, 210, 0.3);
+  padding-bottom: 4px;
+  margin-bottom: 16px;
+}
+
+/* ✅ STATS CARDS */
+.stat-card {
+  transition: all 0.3s ease;
+  border-width: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.stat-card:hover::before {
+  left: 100%;
+}
+
+.attack-card { border-color: #c62828; }
+.defense-card { border-color: #1565c0; }
+.speed-card { border-color: #2e7d32; }
+
+/* ✅ HAKI CARDS */
+.haki-card {
+  transition: all 0.3s ease;
+  border-width: 2px;
+}
+
+.haki-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* ✅ KINDNESS CARD */
+.kindness-card {
+  border-width: 2px;
+  transition: all 0.3s ease;
+}
+
+.kindness-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* ✅ DEVIL FRUIT SECTION */
+.devil-fruit-card {
+  border: 2px solid rgba(77, 182, 172, 0.3);
+  animation: devilFruitPulse 4s ease-in-out infinite;
+}
+
+@keyframes devilFruitPulse {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(77, 182, 172, 0.2);
+  }
+  50% { 
+    transform: scale(1.005);
+    box-shadow: 0 6px 16px rgba(77, 182, 172, 0.3);
+  }
+}
+
+.devil-fruit-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(77, 182, 172, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ✅ EXPERIENCE CARD */
+.experience-card {
+  border: 2px solid #1976D2;
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
+}
+
+/* ✅ ACTION CARDS */
+.action-card {
+  transition: all 0.3s ease;
+  border-width: 2px;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.status-quick-card {
+  border-width: 2px;
 }
 
 /* ✅ ESTILOS PARA ANÚNCIOS */
@@ -1401,6 +1638,16 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   width: 100%;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.sidebar-ad-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .sticky-ad {
@@ -1409,53 +1656,7 @@ onMounted(async () => {
   z-index: 1;
 }
 
-/* ✅ RESPONSIVIDADE PARA ANÚNCIOS */
-@media (max-width: 1200px) {
-  .sticky-ad {
-    position: static;
-  }
-  
-  .sidebar-ad-container {
-    margin: 16px 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .character-header .d-flex {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-  }
-  
-  .avatar-section {
-    margin-right: 0 !important;
-    margin-bottom: 16px;
-  }
-  
-  .character-info {
-    width: 100%;
-  }
-  
-  .d-flex.align-center.justify-space-between {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .world-actions {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .world-actions .v-btn {
-    flex: 1;
-  }
-  
-  /* ✅ ANÚNCIOS EM MOBILE */
-  .sidebar-ad-container {
-    order: -1; /* Mover anúncios para o topo em mobile */
-  }
-}
-
+/* ✅ LOADING STEPS */
 .loading-steps {
   display: flex;
   flex-direction: column;
@@ -1477,13 +1678,7 @@ onMounted(async () => {
   background-color: rgba(76, 175, 80, 0.1);
 }
 
-.experience-section {
-  background: rgba(25, 118, 210, 0.05);
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(25, 118, 210, 0.2);
-}
-
+/* ✅ DEBUG STYLES */
 .debug-json {
   background: #f5f5f5;
   padding: 16px;
@@ -1492,6 +1687,7 @@ onMounted(async () => {
   max-height: 300px;
   overflow-y: auto;
   border: 1px solid #ddd;
+  font-family: 'Courier New', monospace;
 }
 
 .debug-calculations {
@@ -1512,25 +1708,108 @@ onMounted(async () => {
   gap: 8px;
 }
 
+/* ✅ RESPONSIVE */
+@media (max-width: 1200px) {
+  .sticky-ad {
+    position: static;
+  }
+  
+  .sidebar-ad-container {
+    margin: 16px 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 8px;
+  }
+  
+  .poster-hero-section .v-row {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .character-dashboard-info {
+    margin-top: 16px;
+  }
+  
+  .player-badge-overlay, .power-rank-overlay {
+    position: static;
+    margin-top: 8px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .character-chips {
+    justify-content: center;
+  }
+  
+  .character-name {
+    font-size: 1.8rem;
+  }
+  
+  .d-flex.align-center.justify-space-between {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .world-actions {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .world-actions .v-btn {
+    flex: 1;
+  }
+  
+  .sidebar-ad-container {
+    order: -1;
+  }
+  
+  .debug-actions {
+    justify-content: center;
+  }
+}
+
+/* ✅ ANIMAÇÕES */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.mdi-spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes posterGlow {
+  0%, 100% { 
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
+  }
+  50% { 
+    filter: drop-shadow(0 12px 32px rgba(25, 118, 210, 0.4));
+  }
+}
+
+.dashboard-poster:hover {
+  animation: posterGlow 2s ease-in-out infinite;
+}
+
+/* ✅ CORES CUSTOMIZADAS */
+.text-red-darken-3 { color: #c62828 !important; }
+.text-blue-darken-3 { color: #1565c0 !important; }
+.text-green-darken-3 { color: #2e7d32 !important; }
+.text-orange-darken-3 { color: #ef6c00 !important; }
+.text-purple-darken-3 { color: #6a1b9a !important; }
+.text-amber-darken-4 { color: #ff8f00 !important; }
+.text-teal-darken-3 { color: #00695c !important; }
+
+/* ✅ HOVER EFFECTS GLOBAIS */
 .v-card {
   transition: all 0.3s ease;
 }
 
 .v-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.v-progress-linear {
-  border-radius: 10px;
-}
-
-.text-h6 {
-  font-weight: 600;
-}
-
-.v-alert {
-  border-radius: 12px;
 }
 
 .v-btn {
@@ -1542,91 +1821,13 @@ onMounted(async () => {
   font-weight: 700 !important;
 }
 
-/* ✅ ANIMAÇÕES PARA AVATAR */
-@keyframes avatarPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-}
-
-.avatar-section:hover {
-  animation: avatarPulse 2s ease-in-out infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.mdi-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* RESPONSIVE DESIGN */
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 8px;
-  }
-  
-  .debug-actions {
-    justify-content: center;
-  }
-  
-  .d-flex.gap-2.flex-wrap {
-    justify-content: center;
-  }
-}
-
-/* CORES CUSTOMIZADAS */
-.text-red-darken-3 { color: #c62828 !important; }
-.text-blue-darken-3 { color: #1565c0 !important; }
-.text-green-darken-3 { color: #2e7d32 !important; }
-.text-orange-darken-3 { color: #ef6c00 !important; }
-.text-purple-darken-3 { color: #6a1b9a !important; }
-.text-deep-purple-darken-3 { color: #4527a0 !important; }
-.text-yellow-darken-4 { color: #f57f17 !important; }
-
-/* ✅ ESTILOS ESPECÍFICOS PARA POWER RANK */
-.power-rank-chip {
-  background: linear-gradient(45deg, var(--v-theme-surface), var(--v-theme-primary)) !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
-  border: 2px solid rgba(255,255,255,0.3) !important;
-}
-
-/* ✅ HOVER EFFECTS PARA CARDS DE STATS */
-.v-card[color*="darken"]:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 30px rgba(0,0,0,0.2);
-}
-
-/* ✅ GRADIENTES PARA SEÇÕES ESPECIAIS */
-.world-control-panel {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
-}
-
-.experience-section {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(63, 81, 181, 0.05) 100%);
-}
-
-/* ✅ ESTILOS PARA ANÚNCIOS - INTEGRAÇÃO HARMONIOSA */
-.sidebar-ad-container {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 12px;
-  padding: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
+/* ✅ DARK MODE SUPPORT */
 .v-theme--dark .sidebar-ad-container {
   background: rgba(255, 255, 255, 0.02);
   border-color: rgba(255, 255, 255, 0.1);
 }
 
-/* ✅ TRANSIÇÕES SUAVES PARA ANÚNCIOS */
-.sidebar-ad-container {
-  transition: all 0.3s ease;
-}
-
-.sidebar-ad-container:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+.v-theme--dark .poster-hero-section {
+  background: rgba(0, 0, 0, 0.1);
 }
 </style>

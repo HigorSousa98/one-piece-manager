@@ -1,4 +1,3 @@
-<!-- src/components/MemberDetailsModal.vue -->
 <template>
   <v-card class="member-details-modal">
     <v-card-title class="bg-primary text-white">
@@ -10,155 +9,143 @@
     
     <v-card-text class="pa-6">
       
-      <!-- ✅ HEADER DO PERSONAGEM COM AVATAR -->
-      <div class="character-header mb-4">
-        <div class="d-flex align-center mb-3">
-          
-          <!-- ✅ AVATAR GRANDE DO MEMBRO -->
-          <div class="avatar-section mr-4">
-            <CharacterAvatar 
-              :character="member"
-              size="xl"
-              variant="circle"
-              :show-actions="true"
-              :show-regenerate-button="true"
-              :show-download-button="true"
-              :show-status-indicators="true"
-              :show-level="true"
-              :show-power-rank="true"
-              :cache-enabled="true"
-              :clickable="false"
-              class="member-detail-avatar"
-              :class="{ 'captain-detail-avatar': isCaptain }"
-              @avatar-regenerated="onAvatarRegenerated"
-              @avatar-error="onAvatarError"
-            />
-            
-            <!-- BADGES ESPECIAIS -->
-            <div class="detail-avatar-badges">
-              <v-chip 
-                v-if="isCaptain" 
-                size="small"
-                color="yellow-darken-3"
-                variant="elevated"
-                class="captain-detail-badge"
-              >
-                <v-icon size="small" class="mr-1">mdi-crown</v-icon>
-                CAPITÃO
-              </v-chip>
+      <!-- ✅ WANTED POSTER HERO SECTION -->
+      <div class="poster-hero-section mb-6">
+        <v-card variant="elevated" class="poster-hero-card" :class="{ 'captain-poster-card': isCaptain }">
+          <v-card-text class="pa-4">
+            <v-row align="center">
               
-              <v-chip 
-                v-if="member.devilFruitId != 0" 
-                size="small"
-                color="teal-darken-3"
-                variant="elevated"
-                class="devil-fruit-detail-badge"
-              >
-                <v-icon size="small" class="mr-1">mdi-fruit-pineapple</v-icon>
-                USUÁRIO DF
-              </v-chip>
-            </div>
-          </div>
-          
-          <!-- INFORMAÇÕES BÁSICAS -->
-          <div class="member-detail-info flex-grow-1">
-            <div class="text-h4 mb-2 member-detail-name">
-              {{ member.name }}
-            </div>
-            
-            <div class="d-flex gap-2 mb-3 flex-wrap">
-              <v-chip :color="getTypeColor(member.type)" variant="elevated" size="large">
-                <v-icon left>{{ getTypeIconMdi(member.type) }}</v-icon>
-                <strong>{{ member.type }}</strong>
-              </v-chip>
-              <v-chip color="blue-darken-2" variant="elevated" size="large">
-                <v-icon left>mdi-star</v-icon>
-                <strong>Level {{ member.level }}</strong>
-              </v-chip>
-              <v-chip v-if="member.position" color="green-darken-2" variant="elevated" size="large">
-                <v-icon left>mdi-account-tie</v-icon>
-                <strong>{{ member.position }}</strong>
-              </v-chip>
-              <v-chip v-if="style" color="accent-darken-2" variant="elevated" size="large">
-                <v-icon left>mdi-sword</v-icon>
-                <strong>{{ style }}</strong>
-              </v-chip>
-            </div>
-            
-            <!-- BOUNTY DESTACADO -->
-            <div class="bounty-section">
-              <CharacterBountyDisplay 
-                :character="member" 
-                size="large" 
-                variant="elevated" 
-              />
-            </div>
-          </div>
-        </div>
+              <!-- WANTED POSTER -->
+              <v-col cols="12" md="6" class="text-center">
+                <div class="poster-container">
+                  <WantedPoster
+                    :character="member"
+                    size="small"
+                    :show-actions="false"
+                    :show-size-controls="false"
+                    class="hero-poster"
+                    @download-complete="onPosterDownload"
+                    @share-complete="onPosterShare"
+                  />
+                  
+                  <!-- POSTER OVERLAY BADGES -->
+                  <div class="poster-overlay-badges">
+                    <v-chip 
+                      v-if="isCaptain" 
+                      size="large"
+                      color="amber"
+                      variant="elevated"
+                      class="captain-hero-badge"
+                    >
+                      <v-icon size="large" class="mr-2">mdi-crown</v-icon>
+                      CAPITÃO DA TRIPULAÇÃO
+                    </v-chip>
+                    
+                    <v-chip 
+                      v-if="member.devilFruitId != 0" 
+                      size="large"
+                      color="teal-darken-2"
+                      variant="elevated"
+                      class="devil-fruit-hero-badge"
+                    >
+                      <v-icon size="large" class="mr-2">mdi-fruit-pineapple</v-icon>
+                      USUÁRIO DE AKUMA NO MI
+                    </v-chip>
+                  </div>
+                </div>
+              </v-col>
+              
+              <!-- MEMBER INFO -->
+              <v-col cols="12" md="5">
+                <div class="hero-info">
+                  <div class="hero-title mb-3">
+                    <h1 class="text-h3 font-weight-bold member-hero-name mb-2">
+                      {{ member.name }}
+                    </h1>
+                    <div class="hero-subtitle">
+                      <span class="text-h6 text-medium-emphasis">
+                        {{ member.position || 'Membro da Tripulação' }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <!-- BASIC INFO CHIPS -->
+                  <div class="hero-chips mb-4">
+                    <v-chip :color="getTypeColor(member.type)" variant="elevated" size="large" class="hero-chip">
+                      <v-icon left>{{ getTypeIconMdi(member.type) }}</v-icon>
+                      {{ member.type }}
+                    </v-chip>
+                    <v-chip color="orange-darken-2" variant="elevated" size="large" class="hero-chip">
+                      <v-icon left>mdi-star</v-icon>
+                      Level {{ member.level }}
+                    </v-chip>
+                    <v-chip v-if="style" color="purple-darken-2" variant="elevated" size="large" class="hero-chip">
+                      <v-icon left>mdi-sword</v-icon>
+                      {{ style }}
+                    </v-chip>
+                  </div>
+                  
+                  <!-- POWER & BOUNTY DISPLAY -->
+                  <div class="hero-stats">
+                    <v-card variant="outlined" color="purple-darken-1" class="power-display-card mb-3">
+                      <v-card-text class="text-center pa-3">
+                        <v-icon size="40" color="purple-darken-2">mdi-flash</v-icon>
+                        <div class="text-h4 mt-1 text-purple-darken-3 font-weight-bold">
+                          {{ calculatePower(member) }}
+                        </div>
+                        <div class="text-subtitle-1 text-purple-darken-2">Poder Total</div>
+                      </v-card-text>
+                    </v-card>
+                  </div>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
       </div>
 
-      <!-- ✅ PODER TOTAL DESTACADO -->
-      <v-card variant="elevated" color="deep-purple-darken-1" class="mb-4 power-total-card">
-        <v-card-text class="text-center pa-4">
-          <v-icon size="50" color="white">mdi-flash</v-icon>
-          <div class="text-h3 mt-2 text-white font-weight-bold">
-            {{ calculatePower(member) }}
-          </div>
-          <div class="text-h6 text-white">Poder Total</div>
-          
-          <!-- RANK DE PODER -->
-          <v-chip 
-            :color="getPowerRankColor(currentPowerRank)"
-            size="large"
-            variant="elevated"
-            class="mt-3 power-rank-chip"
-          >
-            <v-icon left>mdi-crown</v-icon>
-            <strong>{{ currentPowerRank }}</strong>
-          </v-chip>
-        </v-card-text>
-      </v-card>
-
       <!-- ✅ AKUMA NO MI DETALHADA -->
-      <div v-if="member.devilFruitId != 0 && devilFruit" class="devil-fruit-detailed mb-4">
+      <div v-if="member.devilFruitId != 0 && devilFruit" class="devil-fruit-detailed mb-6">
         <v-card variant="elevated" color="teal-lighten-5" class="devil-fruit-card">
           <v-card-title class="bg-teal-darken-2 text-white">
-            <v-icon left color="white">mdi-fruit-pineapple</v-icon>
-            Akuma no Mi
+            <v-icon left color="white" size="28">mdi-fruit-pineapple</v-icon>
+            Akuma no Mi - {{ devilFruit.name }}
           </v-card-title>
           <v-card-text class="pa-4">
             <v-row>
               <v-col cols="12" md="4">
-                <div class="text-center">
-                  <v-icon size="60" color="teal-darken-2">mdi-fruit-pineapple</v-icon>
-                  <div class="text-h5 mt-2 text-teal-darken-3 font-weight-bold">
+                <div class="text-center devil-fruit-info">
+                  <div class="devil-fruit-icon-large mb-3">
+                    <v-icon size="80" color="teal-darken-2">mdi-fruit-pineapple</v-icon>
+                  </div>
+                  <div class="text-h5 text-teal-darken-3 font-weight-bold mb-2">
                     {{ devilFruit.name }}
                   </div>
-                  <v-chip color="teal-darken-2" variant="elevated" class="mt-2">
+                  <v-chip color="teal-darken-2" variant="elevated" size="large">
                     {{ devilFruit.type }}
                   </v-chip>
                 </div>
               </v-col>
               <v-col cols="12" md="4">
-                <v-card variant="outlined" color="teal-darken-1">
-                  <v-card-text class="text-center pa-3">
-                    <v-icon size="30" color="teal-darken-2">mdi-flash</v-icon>
-                    <div class="text-h4 mt-1 text-teal-darken-3">{{ member.stats.devilFruit }}</div>
-                    <div class="text-caption">Poder da Fruta</div>
+                <v-card variant="outlined" color="teal-darken-1" class="devil-fruit-stat-card">
+                  <v-card-text class="text-center pa-4">
+                    <v-icon size="40" color="teal-darken-2">mdi-flash</v-icon>
+                    <div class="text-h3 mt-2 text-teal-darken-3 font-weight-bold">{{ member.stats.devilFruit }}</div>
+                    <div class="text-subtitle-1 text-teal-darken-2">Poder da Fruta</div>
                   </v-card-text>
                 </v-card>
               </v-col>
               <v-col cols="12" md="4">
-                <v-card variant="outlined" :color="isAwakened ? 'amber-darken-1' : 'grey-lighten-2'">
-                  <v-card-text class="text-center pa-3">
-                    <v-icon size="30" :color="isAwakened ? 'amber-darken-3' : 'grey'">
+                <v-card variant="outlined" :color="isAwakened ? 'amber-darken-1' : 'grey-lighten-2'" class="awakening-card">
+                  <v-card-text class="text-center pa-4">
+                    <v-icon size="40" :color="isAwakened ? 'amber-darken-3' : 'grey'">
                       {{ isAwakened ? 'mdi-star' : 'mdi-star-outline' }}
                     </v-icon>
-                    <div class="text-h6 mt-1" :class="isAwakened ? 'text-amber-darken-4' : 'text-grey'">
+                    <div class="text-h5 mt-2 font-weight-bold" :class="isAwakened ? 'text-amber-darken-4' : 'text-grey'">
                       {{ isAwakened ? 'DESPERTADA' : 'NÃO DESPERTADA' }}
                     </div>
-                    <div class="text-grey">
-                      {{ isAwakened ? 'Poder Máximo!' : `Level ${devilFruit.awakeningOn} necessário` }}
+                    <div class="text-subtitle-2" :class="isAwakened ? 'text-amber-darken-3' : 'text-grey'">
+                      {{ isAwakened ? 'Poder Máximo Alcançado!' : `Level ${devilFruit.awakeningOn} necessário` }}
                     </div>
                   </v-card-text>
                 </v-card>
@@ -169,151 +156,195 @@
       </div>
 
       <!-- ✅ STATS PRINCIPAIS -->
-      <div class="stats-section mb-4">
-        <h3 class="text-h5 mb-3 text-primary">
-          <v-icon left color="primary">mdi-chart-line</v-icon>
-          Estatísticas Principais
-        </h3>
+      <div class="stats-section mb-6">
+        <h2 class="text-h5 mb-4 section-title">
+          <v-icon left color="primary" size="28">mdi-chart-line</v-icon>
+          Estatísticas de Combate
+        </h2>
         
         <v-row class="mb-4">
-          <v-col cols="12" md="6">
-            <v-card variant="outlined" color="red-darken-1" class="stat-card">
+          <v-col cols="12" md="4">
+            <v-card variant="outlined" color="red-darken-1" class="stat-card attack-card">
               <v-card-text class="text-center pa-4">
-                <v-icon size="40" color="red-darken-2">mdi-sword</v-icon>
-                <div class="text-h4 mt-2 text-red-darken-3 font-weight-bold">{{ member.stats.attack }}</div>
-                <div class="text-body-1 text-red-darken-2">Attack</div>
+                <v-icon size="50" color="red-darken-2">mdi-sword</v-icon>
+                <div class="text-h3 mt-3 text-red-darken-3 font-weight-bold">{{ member.stats.attack }}</div>
+                <div class="text-h6 text-red-darken-2">Ataque</div>
               </v-card-text>
             </v-card>
           </v-col>
-          <v-col cols="12" md="6">
-            <v-card variant="outlined" color="blue-darken-1" class="stat-card">
+          <v-col cols="12" md="4">
+            <v-card variant="outlined" color="blue-darken-1" class="stat-card defense-card">
               <v-card-text class="text-center pa-4">
-                <v-icon size="40" color="blue-darken-2">mdi-shield</v-icon>
-                <div class="text-h4 mt-2 text-blue-darken-3 font-weight-bold">{{ member.stats.defense }}</div>
-                <div class="text-body-1 text-blue-darken-2">Defense</div>
+                <v-icon size="50" color="blue-darken-2">mdi-shield</v-icon>
+                <div class="text-h3 mt-3 text-blue-darken-3 font-weight-bold">{{ member.stats.defense }}</div>
+                <div class="text-h6 text-blue-darken-2">Defesa</div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="4">
+            <v-card variant="outlined" color="green-darken-1" class="stat-card speed-card">
+              <v-card-text class="text-center pa-4">
+                <v-icon size="50" color="green-darken-2">mdi-run-fast</v-icon>
+                <div class="text-h3 mt-3 text-green-darken-3 font-weight-bold">{{ member.stats.speed }}</div>
+                <div class="text-h6 text-green-darken-2">Velocidade</div>
               </v-card-text>
             </v-card>
           </v-col>
         </v-row>
       </div>
 
-      <!-- ✅ STATS SECUNDÁRIOS -->
-      <div class="secondary-stats mb-4">
-        <h3 class="text-h6 mb-3 text-secondary">
-          <v-icon left color="secondary">mdi-speedometer</v-icon>
-          Estatísticas Secundárias
-        </h3>
+      <!-- ✅ HAKI STATS -->
+      <div class="haki-section mb-6" v-if="hasHakiStats">
+        <h2 class="text-h5 mb-4 section-title">
+          <v-icon left color="orange-darken-2" size="28">mdi-meditation</v-icon>
+          Habilidades Haki
+        </h2>
         
-        <v-row class="mb-4">
-          <v-col cols="4">
-            <v-card variant="outlined" color="green-darken-1" class="stat-card-small">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="30" color="green-darken-2">mdi-run-fast</v-icon>
-                <div class="text-h5 mt-1 text-green-darken-3 font-weight-bold">{{ member.stats.speed }}</div>
-                <div class="text-caption">Speed</div>
+        <v-row>
+          <v-col cols="12" md="4" v-if="member.stats.armHaki > 0">
+            <v-card variant="outlined" color="orange-darken-1" class="haki-card armament-haki">
+              <v-card-text class="text-center pa-4">
+                <v-icon size="45" color="orange-darken-2">mdi-arm-flex</v-icon>
+                <div class="text-h4 mt-2 text-orange-darken-3 font-weight-bold">{{ member.stats.armHaki }}</div>
+                <div class="text-subtitle-1 text-orange-darken-2">Busoshoku Haki</div>
+                <div class="text-caption text-orange-darken-1">Haki do Armamento</div>
               </v-card-text>
             </v-card>
           </v-col>
-          <v-col cols="4">
-            <v-card variant="outlined" color="orange-darken-1" class="stat-card-small">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="30" color="orange-darken-2">mdi-arm-flex</v-icon>
-                <div class="text-h5 mt-1 text-orange-darken-3 font-weight-bold">{{ member.stats.armHaki }}</div>
-                <div class="text-caption">Busoshoku Haki</div>
+          <v-col cols="12" md="4" v-if="member.stats.obsHaki > 0">
+            <v-card variant="outlined" color="purple-darken-1" class="haki-card observation-haki">
+              <v-card-text class="text-center pa-4">
+                <v-icon size="45" color="purple-darken-2">mdi-eye</v-icon>
+                <div class="text-h4 mt-2 text-purple-darken-3 font-weight-bold">{{ member.stats.obsHaki }}</div>
+                <div class="text-subtitle-1 text-purple-darken-2">Kenbunshoku Haki</div>
+                <div class="text-caption text-purple-darken-1">Haki da Observação</div>
               </v-card-text>
             </v-card>
           </v-col>
-          <v-col cols="4">
-            <v-card variant="outlined" color="purple-darken-1" class="stat-card-small">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="30" color="purple-darken-2">mdi-eye</v-icon>
-                <div class="text-h5 mt-1 text-purple-darken-3 font-weight-bold">{{ member.stats.obsHaki }}</div>
-                <div class="text-caption">Kenbunshoku Haki</div>
+          <v-col cols="12" md="4" v-if="member.stats.kingHaki > 0">
+            <v-card variant="outlined" color="amber-darken-1" class="haki-card conqueror-haki">
+              <v-card-text class="text-center pa-4">
+                <v-icon size="45" color="amber-darken-3">mdi-crown</v-icon>
+                <div class="text-h4 mt-2 text-amber-darken-4 font-weight-bold">{{ member.stats.kingHaki }}</div>
+                <div class="text-subtitle-1 text-amber-darken-3">Haoshoku Haki</div>
+                <div class="text-caption text-amber-darken-2">Haki do Rei</div>
               </v-card-text>
             </v-card>
           </v-col>
         </v-row>
       </div>
       
-      <!-- ✅ HAOSHOKU HAKI E LOYALTY/KINDNESS -->
-      <v-row class="mb-4">
-        <v-col cols="6">
-          <v-card variant="outlined" color="amber-darken-1" class="stat-card">
-            <v-card-text class="text-center pa-4">
-              <v-icon size="35" color="amber-darken-3">mdi-crown</v-icon>
-              <div class="text-h5 mt-2 text-amber-darken-4 font-weight-bold">{{ member.stats.kingHaki }}</div>
-              <div class="text-body-1">Haoshoku Haki</div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-        <v-col cols="6">
-          <!-- LOYALTY para membros -->
-          <v-card v-if="!isCaptain && member.loyalty !== undefined" variant="outlined" :color="getLoyaltyCardColor(member.loyalty)" class="stat-card">
-            <v-card-text class="text-center pa-4">
-              <v-icon size="35" :color="getLoyaltyIconColor(member.loyalty)">{{ getLoyaltyIcon(member.loyalty) }}</v-icon>
-              <div class="text-h5 mt-2 font-weight-bold" :class="getLoyaltyTextColor(member.loyalty)">{{ member.loyalty.toFixed(1) }}</div>
-              <div class="text-body-1">Lealdade</div>
-              
-              <!-- BARRA DE LEALDADE -->
-              <v-progress-linear
-                :model-value="Math.abs(member.loyalty)"
-                :color="getLoyaltyIconColor(member.loyalty).replace('darken-2', 'darken-1')"
-                height="8"
-                class="mt-2"
-                max="100"
-                rounded
-              ></v-progress-linear>
-            </v-card-text>
-          </v-card>
-          
-          <!-- KINDNESS para capitão -->
-          <v-card v-else variant="outlined" :color="getKindnessCardColor(member.kindness)" class="stat-card">
-            <v-card-text class="text-center pa-4">
-              <v-icon size="35" :color="getKindnessIconColor(member.kindness)">
-                {{ getKindnessIcon(member.kindness) }}
-              </v-icon>
-              <div class="text-h5 mt-2 font-weight-bold" :class="getKindnessTextColor(member.kindness)">{{ member.kindness }}</div>
-              <div class="text-body-1">Bondade</div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
+      <!-- ✅ LOYALTY/KINDNESS SECTION -->
+      <div class="personality-section mb-6">
+        <h2 class="text-h5 mb-4 section-title">
+          <v-icon left color="pink-darken-2" size="28">mdi-heart</v-icon>
+          {{ isCaptain ? 'Personalidade' : 'Lealdade' }}
+        </h2>
+        
+        <v-row>
+          <v-col cols="12">
+            <!-- LOYALTY para membros -->
+            <v-card v-if="!isCaptain && member.loyalty !== undefined" variant="outlined" :color="getLoyaltyCardColor(member.loyalty)" class="loyalty-card">
+              <v-card-text class="pa-4">
+                <div class="d-flex align-center mb-3">
+                  <v-icon size="40" :color="getLoyaltyIconColor(member.loyalty)" class="mr-3">{{ getLoyaltyIcon(member.loyalty) }}</v-icon>
+                  <div class="flex-grow-1">
+                    <div class="text-h4 font-weight-bold" :class="getLoyaltyTextColor(member.loyalty)">
+                      {{ member.loyalty.toFixed(1) }}
+                    </div>
+                    <div class="text-subtitle-1">Nível de Lealdade</div>
+                  </div>
+                  <div class="loyalty-status">
+                    <v-chip :color="getLoyaltyIconColor(member.loyalty)" variant="elevated" size="large">
+                      {{ getLoyaltyStatus(member.loyalty) }}
+                    </v-chip>
+                  </div>
+                </div>
+                
+                <v-progress-linear
+                  :model-value="Math.abs(member.loyalty)"
+                  :color="getLoyaltyIconColor(member.loyalty)"
+                  height="12"
+                  class="mb-3 loyalty-progress"
+                  max="100"
+                  rounded
+                />
+                
+                <div class="loyalty-description">
+                  <p class="text-body-1 text-center">{{ getLoyaltyDescription(member.loyalty) }}</p>
+                </div>
+              </v-card-text>
+            </v-card>
+            
+            <!-- KINDNESS para capitão -->
+            <v-card v-else variant="outlined" :color="getKindnessCardColor(member.kindness)" class="kindness-card">
+              <v-card-text class="pa-4">
+                <div class="d-flex align-center mb-3">
+                  <v-icon size="40" :color="getKindnessIconColor(member.kindness)" class="mr-3">
+                    {{ getKindnessIcon(member.kindness) }}
+                  </v-icon>
+                  <div class="flex-grow-1">
+                    <div class="text-h4 font-weight-bold" :class="getKindnessTextColor(member.kindness)">
+                      {{ member.kindness }}
+                    </div>
+                    <div class="text-subtitle-1">Nível de Bondade</div>
+                  </div>
+                  <div class="kindness-status">
+                    <v-chip :color="getKindnessIconColor(member.kindness)" variant="elevated" size="large">
+                      {{ getKindnessStatus(member.kindness) }}
+                    </v-chip>
+                  </div>
+                </div>
+                
+                <div class="kindness-description">
+                  <p class="text-body-1 text-center">{{ getKindnessDescription(member.kindness) }}</p>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
+      </div>
 
       <!-- ✅ EXPERIÊNCIA DETALHADA -->
-      <div class="experience-section mb-4">
+      <div class="experience-section mb-6">
         <v-card variant="elevated" color="blue-lighten-5" class="experience-card">
           <v-card-title class="bg-blue-darken-2 text-white">
-            <v-icon left color="white">mdi-trending-up</v-icon>
+            <v-icon left color="white" size="28">mdi-trending-up</v-icon>
             Progressão de Experiência
           </v-card-title>
           <v-card-text class="pa-4">
-            <div class="d-flex justify-space-between align-center mb-3">
-              <div class="text-h6 text-blue-darken-3">
-                <strong>{{ member.experience.toLocaleString() }} XP</strong>
-              </div>
-              <div class="text-h6 text-blue-darken-3">
-                <strong>{{ expForNextLevel.toLocaleString() }} XP</strong>
-              </div>
-            </div>
-            
-            <v-progress-linear
-              :model-value="experiencePercentage"
-              color="blue-darken-2"
-              height="20"
-              rounded
-              class="mb-3"
-            >
-              <template v-slot:default>
-                <strong class="text-white">{{ Math.round(experiencePercentage) }}%</strong>
-              </template>
-            </v-progress-linear>
-            
-            <div class="text-center">
-              <v-chip color="blue-darken-2" variant="elevated">
-                <v-icon left>mdi-target</v-icon>
-                <strong>{{ (expForNextLevel - member.experience).toLocaleString() }} XP restantes</strong>
-              </v-chip>
-            </div>
+            <v-row align="center">
+              <v-col cols="12" md="8">
+                <div class="experience-info mb-3">
+                  <div class="d-flex justify-space-between align-center mb-2">
+                    <div class="text-h6 text-blue-darken-3">
+                      <strong>{{ member.experience.toLocaleString() }} XP</strong>
+                    </div>
+                    <div class="text-h6 text-blue-darken-3">
+                      <strong>{{ expForNextLevel.toLocaleString() }} XP</strong>
+                    </div>
+                  </div>
+                  
+                  <v-progress-linear
+                    :model-value="experiencePercentage"
+                    color="blue-darken-2"
+                    height="20"
+                    rounded
+                    class="mb-3"
+                  >
+                    <template v-slot:default>
+                      <strong class="text-white">{{ Math.round(experiencePercentage) }}%</strong>
+                    </template>
+                  </v-progress-linear>
+                </div>
+              </v-col>
+              <v-col cols="12" md="4" class="text-center">
+                <v-chip color="blue-darken-2" variant="elevated" size="large" class="exp-remaining-chip">
+                  <v-icon left>mdi-target</v-icon>
+                  {{ (expForNextLevel - member.experience).toLocaleString() }} XP restantes
+                </v-chip>
+              </v-col>
+            </v-row>
           </v-card-text>
         </v-card>
       </div>
@@ -378,7 +409,7 @@ import { PowerCalculationSystem } from '@/utils/powerCalculationSystem'
 import RemoveMemberConfirmationModal from '@/components/RemoveMemberConfirmationModal.vue'
 import type { Character, DevilFruit } from '@/utils/database'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
-import CharacterAvatar from '@/components/CharacterAvatar.vue'
+import WantedPoster from '@/components/WantedPoster.vue'
 
 interface Props {
   member: Character
@@ -399,6 +430,12 @@ const showRemoveConfirmation = ref(false)
 const isRemoving = ref(false)
 
 // ✅ COMPUTED
+const hasHakiStats = computed(() => {
+  return props.member.stats.armHaki > 0 || 
+         props.member.stats.obsHaki > 0 || 
+         props.member.stats.kingHaki > 0
+})
+
 const experiencePercentage = computed(() => {
   const expForNext = GameLogic.nextLevelUp(props.member)
   return (props.member.experience / expForNext) * 100
@@ -417,13 +454,21 @@ const currentPowerRank = computed(() => {
   return PowerCalculationSystem.getPowerRank(power)
 })
 
-// ✅ AVATAR EVENTS
-const onAvatarRegenerated = (svgData: string) => {
-  console.log('✅ Avatar regenerado no modal de detalhes')
+// ✅ POSTER EVENTS
+const onPosterDownload = (success: boolean) => {
+  if (success) {
+    console.log('✅ Poster baixado com sucesso!')
+  } else {
+    console.log('❌ Erro ao baixar poster')
+  }
 }
 
-const onAvatarError = (error: Error) => {
-  console.error('❌ Erro no avatar do modal:', error)
+const onPosterShare = (success: boolean) => {
+  if (success) {
+    console.log('✅ Poster compartilhado com sucesso!')
+  } else {
+    console.log('❌ Erro ao compartilhar poster')
+  }
 }
 
 // ✅ REMOVE MEMBER METHODS
@@ -438,16 +483,9 @@ const closeRemoveConfirmation = () => {
 const handleRemoveConfirmation = async () => {
   try {
     isRemoving.value = true
-    
-    // Emitir evento para o componente pai
     emit('removeMember', props.member.id!)
-    
-    // Fechar modal de confirmação
     closeRemoveConfirmation()
-    
-    // Fechar modal de detalhes
     emit('close')
-    
   } catch (error) {
     console.error('❌ Erro ao remover membro:', error)
   } finally {
@@ -482,16 +520,6 @@ const getTypeColor = (type: string): string => {
     case 'Government': return 'orange-darken-2'
     case 'BountyHunter': return 'green-darken-2'
     default: return 'grey-darken-2'
-  }
-}
-
-const getTypeIcon = (type: string): string => {
-  switch (type) {
-    case 'Pirate': return '🏴‍☠️'
-    case 'Marine': return '⚓'
-    case 'Government': return '🏛️'
-    case 'BountyHunter': return '💰'
-    default: return '❓'
   }
 }
 
@@ -545,6 +573,26 @@ const getLoyaltyIcon = (loyalty: number): string => {
   return 'mdi-skull'
 }
 
+const getLoyaltyStatus = (loyalty: number): string => {
+  if (loyalty >= 75) return 'EXTREMAMENTE LEAL'
+  if (loyalty >= 50) return 'MUITO LEAL'
+  if (loyalty >= 25) return 'LEAL'
+  if (loyalty >= 0) return 'NEUTRO'
+  if (loyalty >= -25) return 'DESCONTENTE'
+  if (loyalty >= -50) return 'HOSTIL'
+  return 'REBELDE'
+}
+
+const getLoyaltyDescription = (loyalty: number): string => {
+  if (loyalty >= 75) return 'Este membro é extremamente leal ao capitão e faria qualquer coisa pela tripulação.'
+  if (loyalty >= 50) return 'Um membro muito confiável que sempre apoia as decisões do capitão.'
+  if (loyalty >= 25) return 'Membro leal que geralmente segue as ordens sem questionar.'
+  if (loyalty >= 0) return 'Neutro em relação ao capitão, mas ainda parte da tripulação.'
+  if (loyalty >= -25) return 'Começando a questionar a liderança do capitão.'
+  if (loyalty >= -50) return 'Claramente descontente com a direção da tripulação.'
+  return 'Perigosamente próximo de se rebelar contra o capitão.'
+}
+
 const getKindnessCardColor = (kindness: number): string => {
   if (kindness >= 50) return 'green-darken-1'
   if (kindness >= 0) return 'blue-darken-1'
@@ -572,147 +620,249 @@ const getKindnessIcon = (kindness: number): string => {
   if (kindness >= -50) return 'mdi-sword'
   return 'mdi-skull'
 }
+
+const getKindnessStatus = (kindness: number): string => {
+  if (kindness >= 50) return 'BONDOSO'
+  if (kindness >= 0) return 'EQUILIBRADO'
+  if (kindness >= -50) return 'RIGOROSO'
+  return 'CRUEL'
+}
+
+const getKindnessDescription = (kindness: number): string => {
+  if (kindness >= 50) return 'Um capitão bondoso e compassivo que se preocupa genuinamente com sua tripulação.'
+  if (kindness >= 0) return 'Equilibrado entre bondade e firmeza, tomando decisões justas.'
+  if (kindness >= -50) return 'Um capitão rigoroso mas justo, que mantém a disciplina na tripulação.'
+  return 'Um capitão cruel e impiedoso que governa através do medo.'
+}
 </script>
 
 <style scoped>
 .member-details-modal {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
 }
 
-/* ✅ ESTILOS DO AVATAR */
-.avatar-section {
+/* ✅ POSTER HERO SECTION */
+.poster-hero-section {
+  margin-bottom: 32px;
+}
+
+.poster-hero-card {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
+  border: 2px solid rgba(25, 118, 210, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.captain-poster-card {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.15) 100%);
+  border: 3px solid rgba(255, 215, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
+}
+
+.poster-container {
   position: relative;
-  flex-shrink: 0;
+  display: inline-block;
 }
 
-.member-detail-avatar {
+.hero-poster {
+  filter: drop-shadow(0 12px 35px rgba(0, 0, 0, 0.3));
   transition: all 0.3s ease;
-  border: 4px solid rgba(25, 118, 210, 0.2);
 }
 
-.captain-detail-avatar {
-  border: 4px solid #FFD700;
-  box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
-  animation: captainAvatarGlow 3s ease-in-out infinite alternate;
+.hero-poster:hover {
+  transform: scale(1.02) rotate(1deg);
+  filter: drop-shadow(0 16px 45px rgba(0, 0, 0, 0.4));
 }
 
-@keyframes captainAvatarGlow {
-  0% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.5); }
-  100% { box-shadow: 0 0 35px rgba(255, 215, 0, 0.8); }
-}
-
-.detail-avatar-badges {
+.poster-overlay-badges {
   position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: -15px;
+  left: -15px;
+  right: -15px;
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+}
+
+.captain-hero-badge {
+  background: linear-gradient(45deg, #FFD700, #FFA000) !important;
+  color: #8B4513 !important;
+  font-weight: bold !important;
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
+}
+
+.devil-fruit-hero-badge {
+  background: linear-gradient(45deg, #4DB6AC, #00695C) !important;
+  color: white !important;
+  font-weight: bold !important;
+  box-shadow: 0 6px 20px rgba(77, 182, 172, 0.4) !important;
+}
+
+.power-rank-hero-badge {
+  font-weight: bold !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ✅ HERO INFO */
+.hero-info {
+  padding: 16px;
+}
+
+.member-hero-name {
+  color: #1565C0;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  line-height: 1.1;
+}
+
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
-.captain-detail-badge {
-  background: linear-gradient(45deg, #FFD700, #FFA000) !important;
-  color: #000 !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4) !important;
+.hero-chip {
+  font-weight: bold !important;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
 }
 
-.devil-fruit-detail-badge {
-  background: linear-gradient(45deg, #4DB6AC, #00695C) !important;
-  color: white !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 12px rgba(77, 182, 172, 0.4) !important;
-}
-
-/* ✅ HEADER */
-.character-header {
-  border-bottom: 3px solid rgba(25, 118, 210, 0.2);
-  padding-bottom: 20px;
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-.member-detail-info {
-  min-width: 0;
-}
-
-.member-detail-name {
-  font-weight: 800;
-  color: #1565C0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 16px;
-}
-
-.bounty-section {
-  margin-top: 12px;
-}
-
-/* ✅ CARDS DE STATS */
-.stat-card {
+.power-display-card {
+  border: 2px solid rgba(156, 39, 176, 0.3);
   transition: all 0.3s ease;
-  border-width: 2px;
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.stat-card-small {
-  transition: all 0.3s ease;
-  border-width: 2px;
-}
-
-.stat-card-small:hover {
+.power-display-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.3);
 }
 
-/* ✅ PODER TOTAL */
-.power-total-card {
-  background: linear-gradient(135deg, #673AB7 0%, #9C27B0 100%) !important;
-  border: 3px solid rgba(255,255,255,0.2);
-  box-shadow: 0 8px 32px rgba(156, 39, 176, 0.3) !important;
+.bounty-display {
+  display: flex;
+  justify-content: center;
 }
 
-.power-rank-chip {
-  background: linear-gradient(45deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)) !important;
-  color: #673AB7 !important;
-  font-weight: 800 !important;
-  font-size: 1.1rem !important;
-  height: 36px !important;
+/* ✅ SECTION TITLES */
+.section-title {
+  color: #1565C0;
+  border-bottom: 3px solid rgba(25, 118, 210, 0.3);
+  padding-bottom: 8px;
+  margin-bottom: 24px;
 }
 
-/* ✅ DEVIL FRUIT */
+/* ✅ DEVIL FRUIT SECTION */
 .devil-fruit-card {
   border: 3px solid #4DB6AC;
   box-shadow: 0 8px 25px rgba(77, 182, 172, 0.2);
-}
-
-.devil-fruit-detailed {
   animation: devilFruitDetailPulse 4s ease-in-out infinite;
 }
 
 @keyframes devilFruitDetailPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.01); }
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 8px 25px rgba(77, 182, 172, 0.2);
+  }
+  50% { 
+    transform: scale(1.005);
+    box-shadow: 0 12px 35px rgba(77, 182, 172, 0.3);
+  }
 }
 
-/* ✅ EXPERIÊNCIA */
+.devil-fruit-icon-large {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: rgba(77, 182, 172, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.devil-fruit-stat-card, .awakening-card {
+  transition: all 0.3s ease;
+  border-width: 2px;
+}
+
+.devil-fruit-stat-card:hover, .awakening-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* ✅ STATS CARDS */
+.stat-card {
+  transition: all 0.3s ease;
+  border-width: 3px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.stat-card:hover::before {
+  left: 100%;
+}
+
+.attack-card { border-color: #c62828; }
+.defense-card { border-color: #1565c0; }
+.speed-card { border-color: #2e7d32; }
+
+/* ✅ HAKI CARDS */
+.haki-card {
+  transition: all 0.3s ease;
+  border-width: 2px;
+  position: relative;
+}
+
+.haki-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.armament-haki { border-color: #ef6c00; }
+.observation-haki { border-color: #6a1b9a; }
+.conqueror-haki { border-color: #ff8f00; }
+
+/* ✅ LOYALTY/KINDNESS CARDS */
+.loyalty-card, .kindness-card {
+  border-width: 3px;
+  transition: all 0.3s ease;
+}
+
+.loyalty-card:hover, .kindness-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.loyalty-progress {
+  border-radius: 6px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ✅ EXPERIENCE CARD */
 .experience-card {
   border: 3px solid #1976D2;
   box-shadow: 0 8px 25px rgba(25, 118, 210, 0.2);
 }
 
-/* ✅ SEÇÕES */
-.stats-section h3,
-.secondary-stats h3 {
-  border-bottom: 2px solid currentColor;
-  padding-bottom: 8px;
-  margin-bottom: 16px;
+.exp-remaining-chip {
+  font-weight: bold !important;
+  font-size: 1rem !important;
+  padding: 8px 16px !important;
 }
 
 /* ✅ DEBUG */
@@ -729,8 +879,60 @@ const getKindnessIcon = (kindness: number): string => {
 
 /* ✅ CHIPS */
 .v-chip {
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}
+
+/* ✅ RESPONSIVE */
+@media (max-width: 768px) {
+  .poster-hero-card .v-row {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .hero-info {
+    margin-top: 16px;
+  }
+  
+  .poster-overlay-badges {
+    position: static;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 16px;
+  }
+  
+  .hero-chips {
+    justify-content: center;
+  }
+  
+  .member-hero-name {
+    font-size: 2rem;
+  }
+}
+
+/* ✅ ANIMAÇÕES */
+@keyframes modalEntry {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.member-details-modal {
+  animation: modalEntry 0.6s ease-out;
+}
+
+@keyframes statCardPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.stat-card:hover {
+  animation: statCardPulse 2s ease-in-out infinite;
 }
 
 /* ✅ CORES CUSTOMIZADAS */
@@ -739,46 +941,9 @@ const getKindnessIcon = (kindness: number): string => {
 .text-green-darken-3 { color: #2e7d32 !important; }
 .text-orange-darken-3 { color: #ef6c00 !important; }
 .text-purple-darken-3 { color: #6a1b9a !important; }
-.text-deep-purple-darken-3 { color: #4527a0 !important; }
 .text-amber-darken-4 { color: #ff8f00 !important; }
 .text-teal-darken-3 { color: #00695c !important; }
-
-/* ✅ RESPONSIVE */
-@media (max-width: 768px) {
-  .character-header .d-flex {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .avatar-section {
-    margin-bottom: 16px;
-  }
-  
-  .member-detail-info {
-    width: 100%;
-  }
-  
-  .detail-avatar-badges {
-    position: static;
-    transform: none;
-    justify-content: center;
-    margin-top: 12px;
-  }
-}
-
-/* ✅ ANIMAÇÕES */
-@keyframes modalEntry {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.member-details-modal {
-  animation: modalEntry 0.5s ease-out;
-}
+.text-light-green-darken-3 { color: #388e3c !important; }
+.text-blue-grey-darken-3 { color: #455a64 !important; }
+.text-deep-orange-darken-3 { color: #d84315 !important; }
 </style>

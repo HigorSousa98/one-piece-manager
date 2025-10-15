@@ -1,9 +1,7 @@
 <template>
-  <v-card
+  <div
     class="character-rank-card"
     :class="{ 'player-card': character.isPlayer, 'special-card': specialBadge }"
-    elevation="4"
-    hover
     @click="$emit('click', character)"
   >
     <!-- Rank Badge -->
@@ -42,43 +40,31 @@
       </v-chip>
     </div>
 
-    <!-- Character Avatar -->
-    <div class="avatar-container">
-      <AvataaarsAvatar
+    <!-- Wanted Poster -->
+    <div class="poster-container">
+      <WantedPoster
         :character="character"
-        size="80"
-        variant="circle"
-        :show-status-indicators="false"
+        size="small"
         :show-actions="false"
-        :clickable="false"
-        class="character-avatar"
+        :show-size-controls="false"
+        class="character-poster"
       />
-      
-      <!-- Type Icon -->
-      <div class="type-icon">
-        <v-icon
-          :color="getTypeColor(character.type)"
-          size="24"
-        >
-          {{ getTypeIcon(character.type) }}
-        </v-icon>
-      </div>
     </div>
 
-    <!-- Character Info -->
-    <v-card-text class="character-info pa-3">
-      <h4 class="character-name text-h6 font-weight-bold mb-1">
+    <!-- Character Info Overlay -->
+    <div class="character-info-overlay">
+      <h4 class="character-name text-subtitle-1 font-weight-bold mb-1">
         {{ character.name }}
       </h4>
       
-      <p class="crew-name text-body-2 text-medium-emphasis mb-2">
+      <p class="crew-name text-caption text-medium-emphasis mb-2">
         {{ character.crewName }}
       </p>
 
       <!-- Stats Row -->
       <div class="stats-row mb-2">
         <div class="stat-item">
-          <v-icon size="16" class="me-1">mdi-star</v-icon>
+          <v-icon size="14" class="me-1">mdi-star</v-icon>
           <span class="text-caption">Lv.{{ character.level }}</span>
         </div>
         <!-- Bounty Display Component -->
@@ -90,8 +76,8 @@
       </div>
 
       <!-- Location -->
-      <div class="location-info">
-        <v-icon size="14" class="me-1">mdi-map-marker</v-icon>
+      <div class="location-info mb-2">
+        <v-icon size="12" class="me-1">mdi-map-marker</v-icon>
         <span class="text-caption">{{ character.currentIslandName }}</span>
         <v-chip
           v-if="character.currentIslandDifficulty > 0"
@@ -105,28 +91,29 @@
       </div>
 
       <!-- Character Type -->
-      <div class="character-type mt-2">
+      <div class="character-type">
         <v-chip
           :color="getTypeColor(character.type)"
-          size="small"
+          size="x-small"
           variant="tonal"
+          prepend-icon="mdi-account"
         >
           {{ formatType(character.type) }}
         </v-chip>
       </div>
-    </v-card-text>
+    </div>
 
     <!-- Hover Effect Overlay -->
     <div class="hover-overlay">
       <v-icon size="32" color="white">mdi-eye</v-icon>
-      <p class="text-caption mt-1">View Details</p>
+      <p class="text-caption mt-1">Ver Detalhes</p>
     </div>
-  </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import type { RankingCharacter } from '@/utils/worldEncyclopedia'
-import AvataaarsAvatar from '@/components/AvataaarsAvatar.vue'
+import WantedPoster from '@/components/WantedPoster.vue'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 
 // Props
@@ -159,18 +146,6 @@ const getTypeColor = (type: string): string => {
   return colors[type] || 'grey'
 }
 
-
-
-const getTypeIcon = (type: string): string => {
-  const icons: Record<string, string> = {
-    Pirate: 'mdi-pirate',
-    Marine: 'mdi-anchor',
-    BountyHunter: 'mdi-target',
-    Government: 'mdi-bank'
-  }
-  return icons[type] || 'mdi-account'
-}
-
 const getRankColor = (rank: number): string => {
   if (rank === 1) return 'amber'
   if (rank === 2) return 'grey-lighten-1'
@@ -197,25 +172,36 @@ const formatType = (type: string): string => {
   position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(139, 69, 19, 0.3);
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .character-rank-card:hover {
-  transform: translateY(-8px);
+  transform: translateY(-8px) rotate(1deg);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(139, 69, 19, 0.6);
 }
 
 .character-rank-card.player-card {
-  border: 2px solid #4CAF50;
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+  border: 3px solid #4CAF50;
+  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4);
+}
+
+.character-rank-card.player-card:hover {
+  box-shadow: 0 12px 40px rgba(76, 175, 80, 0.6);
 }
 
 .character-rank-card.special-card {
-  border: 2px solid #FF9800;
-  box-shadow: 0 0 20px rgba(255, 152, 0, 0.3);
+  border: 3px solid #FF9800;
+  box-shadow: 0 0 25px rgba(255, 152, 0, 0.4);
+}
+
+.character-rank-card.special-card:hover {
+  box-shadow: 0 12px 40px rgba(255, 152, 0, 0.6);
 }
 
 /* Badges */
@@ -223,90 +209,82 @@ const formatType = (type: string): string => {
   position: absolute;
   top: 8px;
   left: 8px;
-  z-index: 2;
+  z-index: 10;
 }
 
 .special-badge {
   position: absolute;
   top: 8px;
   right: 8px;
-  z-index: 2;
+  z-index: 10;
 }
 
 .player-badge {
   position: absolute;
   top: 40px;
   right: 8px;
-  z-index: 2;
+  z-index: 10;
 }
 
 .rank-chip {
   font-weight: bold;
   font-size: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .special-chip {
   font-weight: bold;
   font-size: 0.7rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* Avatar */
-.avatar-container {
+/* Poster Container */
+.poster-container {
   position: relative;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 1rem 1rem 0.5rem;
 }
 
-.character-avatar {
+.character-poster {
+  transform: scale(0.85);
   transition: all 0.3s ease;
 }
 
-.character-rank-card:hover .character-avatar {
-  border-color: rgba(255, 255, 255, 0.6);
-  transform: scale(1.05);
+.character-rank-card:hover .character-poster {
+  transform: scale(0.9) rotate(-2deg);
 }
 
-/* ✅ AJUSTE PARA AVATAAARS AVATAR */
-.character-avatar :deep(.avataaars-avatar) {
-  transition: all 0.3s ease;
-}
-
-.character-rank-card:hover .character-avatar :deep(.avataaars-avatar) {
-  border-color: rgba(255, 255, 255, 0.6);
-  transform: scale(1.05);
-}
-
-.type-icon {
+/* Character Info Overlay */
+.character-info-overlay {
   position: absolute;
-  bottom: -5px;
-  right: 20px;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 50%;
-  padding: 4px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-/* Character Info */
-.character-info {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(
+    to top,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0.9) 70%,
+    transparent 100%
+  );
+  padding: 16px 12px 12px;
   text-align: center;
-  color: black;
+  backdrop-filter: blur(5px);
+  border-top: 1px solid rgba(139, 69, 19, 0.2);
 }
 
 .character-name {
-  color: black;
+  color: #2c1810;
   line-height: 1.2;
-  min-height: 2.4em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
 }
 
 .crew-name {
-  color: rgba(0, 0, 0, 0.7);
+  color: rgba(44, 24, 16, 0.7);
   font-style: italic;
-  min-height: 1.2em;
 }
 
 .stats-row {
@@ -314,34 +292,39 @@ const formatType = (type: string): string => {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
 .stat-item {
   display: flex;
   align-items: center;
-  color: rgba(0, 0, 0, 0.8);
-}
-
-/* ✅ AJUSTE PARA BOUNTY DISPLAY */
-.stats-row :deep(.character-bounty-chip) {
-  font-size: 0.7rem !important;
-  height: 20px !important;
-  padding: 0 6px !important;
+  color: rgba(44, 24, 16, 0.8);
+  background: rgba(255, 255, 255, 0.6);
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
 }
 
 .location-info {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(0, 0, 0, 0.7);
+  color: rgba(44, 24, 16, 0.7);
   flex-wrap: wrap;
   gap: 4px;
+  font-size: 0.75rem;
 }
 
 .character-type {
   display: flex;
   justify-content: center;
+}
+
+/* Bounty Display Adjustments */
+.stats-row :deep(.character-bounty-chip) {
+  font-size: 0.65rem !important;
+  height: 18px !important;
+  padding: 0 4px !important;
 }
 
 /* Hover Overlay */
@@ -351,34 +334,68 @@ const formatType = (type: string): string => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(139, 69, 19, 0.9);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity 0.3s ease;
-  color: black;
+  color: white;
+  backdrop-filter: blur(5px);
 }
 
 .character-rank-card:hover .hover-overlay {
   opacity: 1;
 }
 
+.hover-overlay .v-icon {
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+}
+
 /* Responsive */
 @media (max-width: 768px) {
-  .character-avatar {
-    width: 60px !important;
-    height: 60px !important;
+  .poster-container {
+    height: 240px;
+  }
+  
+  .character-poster {
+    transform: scale(0.75);
+  }
+  
+  .character-rank-card:hover .character-poster {
+    transform: scale(0.8) rotate(-1deg);
+  }
+  
+  .character-info-overlay {
+    padding: 12px 8px 8px;
   }
   
   .character-name {
-    font-size: 1rem;
+    font-size: 0.9rem;
   }
   
   .stats-row {
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
+}
+
+/* Animation for special effects */
+@keyframes wanted-glow {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(139, 69, 19, 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 30px rgba(139, 69, 19, 0.6);
+  }
+}
+
+.character-rank-card.special-card {
+  animation: wanted-glow 3s ease-in-out infinite;
+}
+
+.character-rank-card.player-card {
+  animation: wanted-glow 3s ease-in-out infinite;
 }
 </style>
