@@ -38,9 +38,11 @@ export const POWER_CONFIG = {
       Zoan: 1.1,
       Paramecia: 1.1
     },
-    zoanPhysicalBonus: 0.1,
-    awakeningMultiplier: 1.5,
-    awakeningThreshold: 0.8 // 80% do level necessário
+    zoanPhysicalBonus: 0.05,
+    parameciaAttackBonus: 0.05,
+    logiaSpeedBonus: 0.05,
+    awakeningMultiplier: 2.0,
+    awakeningThreshold: 1 // 80% do level necessário
   },
   
   // Sistema de Level
@@ -214,20 +216,26 @@ export class PowerCalculationSystem {
     let fruitPower = devilFruit * config.basePowerPerLevel
     
     // Multiplicador de raridade
-    const rarityMultiplier = 1.0 + (fruit.rarity * config.rarityMultiplier)
+    const rarityMultiplier = Math.pow((1 + fruit.rarity * config.rarityMultiplier),2)
     
     // Multiplicador por tipo
     const typeMultiplier = config.typeMultipliers[fruit.type] || 1.0
     
     // Bonus especial para Zoan
     if (fruit.type === 'Zoan') {
-      fruitPower += (attack + defense + speed) * (devilFruit * config.zoanPhysicalBonus)
+      fruitPower += (attack + defense + speed) / 2 * (devilFruit * config.zoanPhysicalBonus) * fruit.rarity
+    }
+    if (fruit.type === 'Paramecia') {
+      fruitPower += (attack) * (devilFruit * config.parameciaAttackBonus) * fruit.rarity
+    }
+    if (fruit.type === 'Logia') {
+      fruitPower += (speed) * (devilFruit * config.logiaSpeedBonus) * fruit.rarity
     }
     
     // Sistema de Despertar
     let awakeningMultiplier = 1.0
     if (fruit.awakeningOn && characterLevel >= fruit.awakeningOn * config.awakeningThreshold) {
-      awakeningMultiplier = config.awakeningMultiplier
+      awakeningMultiplier = config.awakeningMultiplier * (Math.pow(fruit.rarity, 2) + 1)
     }
     
     return fruitPower * rarityMultiplier * typeMultiplier * awakeningMultiplier

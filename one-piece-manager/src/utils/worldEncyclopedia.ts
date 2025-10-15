@@ -87,7 +87,7 @@ export class WorldEncyclopedia {
     playerCharacterId?: number
   ): Promise<RankingCharacter[]> {
     return captains.map(captain => {
-      const crew = crews.find(c => c.captainId === captain.id)
+      const crew = crews.find(c => c.id === captain.crewId)
       const island = islands.find(i => i.id === crew?.currentIsland)
 
       return {
@@ -210,12 +210,12 @@ export class WorldEncyclopedia {
     islands: Island[]
   ): Promise<RankingCharacter[]> {
     const supernovaCandidates = captains.filter(captain => {
-      return captain.type === 'Pirate' && captain.currentIslandDifficulty <= 15
+      return captain.type === 'Pirate' && captain.currentIslandDifficulty <= 15 && captain.currentIslandDifficulty > 0 
     })
 
     return supernovaCandidates
       .sort((a, b) => (b.bounty || 0) - (a.bounty || 0))
-      .slice(0, 10)
+      .slice(0, 15)
       .map((captain, index) => ({
         ...captain,
         rank: index + 1,

@@ -478,7 +478,7 @@
             <v-card-text class="pa-4">
               <RankingSection
                 :characters="rankings.supernovas"
-                :max-items="10"
+                :max-items="15"
                 special-badge="Candidato"
                 badge-color="orange"
                 @character-click="showCharacterDetails"

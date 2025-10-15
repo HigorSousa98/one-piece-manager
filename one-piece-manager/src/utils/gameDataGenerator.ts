@@ -422,7 +422,7 @@ export class GameDataGenerator {
       { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3,kingHaki: 1, name: 'Support' }  // Support
     ].find(st => st.name == styleCombat)
 
-    const quantPoints = Math.ceil(((level - 1) / 2) * (2 + level) * 0.5)
+    const quantPoints = Math.ceil(((level - 1) / 2) * (2 + level) * 0.8)
     const basePoints = quantPoints + 9 
     
     // Distribuir pontos baseado no estilo
@@ -673,10 +673,11 @@ export class GameDataGenerator {
     
     try {
       // Buscar todos os capitães e dados necessários
-      const [pirateCaptains, marineCaptains, bountyHuntersCaptains, allIslands, allCharacters, yonkous, shichibukais, admirals, gorouseis] = await Promise.all([
+      const [pirateCaptains, marineCaptains, bountyHuntersCaptains, govCaptains, allIslands, allCharacters, yonkous, shichibukais, admirals, gorouseis] = await Promise.all([
         db.characters.where('type').equals('Pirate').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
         db.characters.where('type').equals('Marine').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
         db.characters.where('type').equals('BountyHunter').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
+        db.characters.where('type').equals('Government').and(char => char.position === 'Captain' && char.isPlayer != 1).toArray(),
         db.islands.toArray(),
         db.characters.toArray(), // Buscar todos NPCs
         db.yonkous.toArray(),
@@ -706,13 +707,19 @@ export class GameDataGenerator {
           char.position !== 'Captain' && 
           char.isPlayer !== 1 &&
           !char.crewId
+        ),
+        Governments: allCharacters.filter(char => 
+          char.type === 'Government' && 
+          char.position !== 'Captain' && 
+          char.isPlayer !== 1 &&
+          !char.crewId
         )
       }
 
-      console.log(`👥 Membros disponíveis: ${availableMembers.Pirate.length} piratas, ${availableMembers.Marine.length} marines, ${availableMembers.BountyHunter.length} bounty hunters`)
+      console.log(`👥 Membros disponíveis: ${availableMembers.Pirate.length} piratas, ${availableMembers.Marine.length} marines, ${availableMembers.BountyHunter.length} bounty hunters, ${availableMembers.Governments.length} agentes do governo`)
 
       // Função para criar crew e associar membros
-      const createCrewWithMembers = async (captains: Character[], type: 'Pirate' | 'Marine' | 'BountyHunter') => {
+      const createCrewWithMembers = async (captains: Character[], type: 'Pirate' | 'Marine' | 'BountyHunter' | 'Government') => {
       const islandDecider = (captain: Character): number => {
         const yonkou = yonkous.find(char => char.captainId === captain.id)
         const shichibukai = shichibukais.find(char => char.captainId === captain.id)
@@ -740,10 +747,10 @@ export class GameDataGenerator {
       const createCrewData = (captain: Character): Omit<Crew, 'id'> => ({
         name: type === 'Marine' ? CrewNameGenerator.generateMarineBaseName() : type === 'Pirate' ? CrewNameGenerator.generatePirateCrewName() : CrewNameGenerator.generateBountyHunterOrgName(),
         captainId: captain.id!,
-        treasury: type === 'Marine' 
+        treasury: type === 'Marine' || type === 'Government'
           ? this.randomBetween(1000000, 50000000)
           : this.randomBetween(captain.bounty * 0.5, captain.bounty * 10),
-        reputation: type === 'Marine'
+        reputation: type === 'Marine' || type === 'Government'
           ? this.randomBetween(5000, 100000)
           : this.randomBetween(captain.bounty * 0.3, captain.bounty * 1.5),
         currentIsland: islandDecider(captain),
@@ -849,19 +856,21 @@ export class GameDataGenerator {
     }
 
       // Criar crews para cada tipo
-      const [pirateResult, marineResult, bountyHunterResult] = await Promise.all([
+      const [pirateResult, marineResult, bountyHunterResult, governmentResult] = await Promise.all([
         createCrewWithMembers(pirateCaptains, 'Pirate'),
         createCrewWithMembers(marineCaptains, 'Marine'),
-        createCrewWithMembers(bountyHuntersCaptains, 'BountyHunter')
+        createCrewWithMembers(bountyHuntersCaptains, 'BountyHunter'),
+        createCrewWithMembers(govCaptains, 'Government')
       ])
 
       const totalCrews = pirateResult.crewsCreated + marineResult.crewsCreated + bountyHunterResult.crewsCreated 
-      const totalMembers = pirateResult.membersAssigned + marineResult.membersAssigned + bountyHunterResult.membersAssigned 
+      const totalMembers = pirateResult.membersAssigned + marineResult.membersAssigned + bountyHunterResult.membersAssigned + governmentResult.membersAssigned
 
       console.log(`✅ ${totalCrews} tripulações/bases criadas com sucesso!`)
       console.log(`   - ${pirateResult.crewsCreated} tripulações piratas (${pirateResult.membersAssigned} membros)`)
       console.log(`   - ${bountyHunterResult.crewsCreated} organizações bounty hunter (${bountyHunterResult.membersAssigned} membros)`)
       console.log(`   - ${marineResult.crewsCreated} bases marines (${marineResult.membersAssigned} membros)`)
+      console.log(`   - ${governmentResult.crewsCreated} bases do governo (${governmentResult.membersAssigned} membros)`)
       console.log(`👥 Total de ${totalMembers} membros associados às tripulações`)
 
     } catch (error) {

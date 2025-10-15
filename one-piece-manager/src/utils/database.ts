@@ -164,7 +164,7 @@ export interface Crew {
   currentIsland: number
   docked: 0 | 1
   foundedAt: Date
-  type: 'Pirate' | 'Marine' | 'BountyHunter'
+  type: 'Pirate' | 'Marine' | 'BountyHunter' | 'Government'
 }
 
 export interface Territory {

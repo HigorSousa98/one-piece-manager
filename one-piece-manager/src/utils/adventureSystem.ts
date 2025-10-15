@@ -750,6 +750,9 @@ export class AdventureSystem {
           });
         }
       }
+
+      await this.changeTerritories();
+      await this.changeTopCharacters();
       
       console.log(`🌍 Simulação mundial concluída: ${results.totalEncounters} encontros, ${results.totalBattles} batalhas`);
       
@@ -765,6 +768,341 @@ export class AdventureSystem {
       };
     }
   }
+
+  static async changeTopCharacters(): Promise<{success: boolean}> {
+  try {
+    console.log('👑 Iniciando redistribuição dos personagens mais poderosos...')
+    
+    // ✅ 1. CARREGAR CONFIGURAÇÕES E DADOS BASE
+    const config = GenerationConfig.createEpic()
+    console.log('⚙️ Configurações carregadas:', config)
+    
+    const [allDF, allCrews, allIslands] = await Promise.all([
+      db.devilFruits.toArray(),
+      db.crews.toArray(),
+      db.islands.toArray()
+    ])
+    
+    // ✅ 2. CARREGAR CAPITÃES POR TIPO
+    const [pirates, marines, government] = await Promise.all([
+      db.characters.where('type').equals('Pirate').and(char => char.position === 'Captain').toArray(),
+      db.characters.where('type').equals('Marine').and(char => char.position === 'Captain').toArray(),
+      db.characters.where('type').equals('Government').and(char => char.position === 'Captain').toArray()
+    ])
+    
+    console.log(`📊 Capitães encontrados:`, {
+      pirates: pirates.length,
+      marines: marines.length,
+      government: government.length
+    })
+
+    // ✅ 3. VALIDAR SE HÁ PERSONAGENS SUFICIENTES
+    const requiredPirates = config.yonkouCount + config.schichibukai
+    const requiredMarines = config.admiralCount
+    const requiredGovernment = config.gorouseiCount + config.cypherPolCount
+    
+    if (pirates.length < requiredPirates) {
+      console.warn(`⚠️ Piratas insuficientes: ${pirates.length} < ${requiredPirates}`)
+    }
+    if (marines.length < requiredMarines) {
+      console.warn(`⚠️ Marines insuficientes: ${marines.length} < ${requiredMarines}`)
+    }
+    if (government.length < requiredGovernment) {
+      console.warn(`⚠️ Governo insuficiente: ${government.length} < ${requiredGovernment}`)
+    }
+
+    // ✅ 4. ORDENAR POR PODER (COM CACHE DE DEVIL FRUITS)
+    const dfMap = new Map(allDF.map(df => [df.id!, df]))
+    const crewMap = new Map(allCrews.map(crew => [crew.id!, crew]))
+    
+    const calculatePowerSafe = (character: Character): number => {
+      const devilFruit = character.devilFruitId ? dfMap.get(character.devilFruitId) : undefined
+      return GameLogic.calculatePower(character, devilFruit)
+    }
+    
+    const sortedPirates = pirates
+      .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
+    
+    const sortedMarines = marines
+      .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
+    
+    const sortedGovernment = government
+      .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
+
+    console.log('🔄 Personagens ordenados por poder')
+
+    // ✅ 5. LIMPAR TABELAS EXISTENTES
+    console.log('🧹 Limpando tabelas existentes...')
+    await Promise.all([
+      db.yonkous.clear(),
+      db.shichibukais.clear(),
+      db.admirals.clear(),
+      db.gorouseis.clear(),
+      db.cypherPols.clear()
+    ])
+
+    // ✅ 6. FUNÇÃO HELPER PARA OBTER BASE ISLAND SEGURA
+    const getBaseIsland = (character: Character): number => {
+      const crew = crewMap.get(character.crewId!)
+      if (!crew) {
+        console.warn(`⚠️ Crew não encontrado para character ${character.id}`)
+        return allIslands[0]?.id || 1 // Fallback para primeira ilha
+      }
+      return crew.currentIsland
+    }
+
+    // ✅ 7. CRIAR YONKOU (4 MAIS FORTES)
+    console.log(`👑 Criando ${config.yonkouCount} Yonkou...`)
+    const yonkouPromises = []
+    for (let i = 0; i < Math.min(config.yonkouCount, sortedPirates.length); i++) {
+      const pirate = sortedPirates[i]
+      console.log(`👑 Yonkou ${i + 1}: ${pirate.name} (Poder: ${calculatePowerSafe(pirate)})`)
+      
+      yonkouPromises.push(
+        db.yonkous.add({
+          captainId: pirate.id!,
+          baseIsland: getBaseIsland(pirate),
+          foundedAt: new Date()
+        })
+      )
+    }
+    await Promise.all(yonkouPromises)
+
+    // ✅ 8. CRIAR SHICHIBUKAI (PRÓXIMOS 7 MAIS FORTES)
+    console.log(`⚔️ Criando ${config.schichibukai} Shichibukai...`)
+    const shichibukaiPromises = []
+    const startIndex = config.yonkouCount
+    const endIndex = Math.min(startIndex + config.schichibukai, sortedPirates.length)
+    
+    for (let i = startIndex; i < endIndex; i++) {
+      const pirate = sortedPirates[i]
+      console.log(`⚔️ Shichibukai ${i - startIndex + 1}: ${pirate.name} (Poder: ${calculatePowerSafe(pirate)})`)
+      
+      shichibukaiPromises.push(
+        db.shichibukais.add({
+          captainId: pirate.id!,
+          baseIsland: getBaseIsland(pirate),
+          foundedAt: new Date()
+        })
+      )
+    }
+    await Promise.all(shichibukaiPromises)
+
+    // ✅ 9. CRIAR ADMIRAIS (3 MAIS FORTES MARINES)
+    console.log(`⚓ Criando ${config.admiralCount} Admirais...`)
+    const admiralPromises = []
+    for (let i = 0; i < Math.min(config.admiralCount, sortedMarines.length); i++) {
+      const marine = sortedMarines[i]
+      console.log(`⚓ Almirante ${i + 1}: ${marine.name} (Poder: ${calculatePowerSafe(marine)})`)
+      
+      admiralPromises.push(
+        db.admirals.add({
+          marineId: marine.id!,
+          baseIsland: getBaseIsland(marine),
+          foundedAt: new Date()
+        })
+      )
+    }
+    await Promise.all(admiralPromises)
+
+    // ✅ 10. CRIAR GOROUSEI (5 MAIS FORTES DO GOVERNO)
+    console.log(`🌟 Criando ${config.gorouseiCount} Gorousei...`)
+    const gorouseiPromises = []
+    for (let i = 0; i < Math.min(config.gorouseiCount, sortedGovernment.length); i++) {
+      const gov = sortedGovernment[i]
+      console.log(`�� Gorousei ${i + 1}: ${gov.name} (Poder: ${calculatePowerSafe(gov)})`)
+      
+      gorouseiPromises.push(
+        db.gorouseis.add({
+          govId: gov.id!,
+          currentIsland: getBaseIsland(gov),
+          foundedAt: new Date()
+        })
+      )
+    }
+    await Promise.all(gorouseiPromises)
+
+    // ✅ 11. CRIAR CYPHER POL (PRÓXIMOS 90 DO GOVERNO)
+    console.log(`🕵️ Criando ${config.cypherPolCount} Cypher Pol...`)
+    const cypherPolPromises = []
+    const cpStartIndex = config.gorouseiCount
+    const cpEndIndex = Math.min(cpStartIndex + config.cypherPolCount, sortedGovernment.length)
+    
+    // ✅ ORDENAR ILHAS POR DIFICULDADE PARA CYPHER POL
+    const sortedIslands = allIslands.sort((a, b) => a.difficulty - b.difficulty)
+    
+    for (let i = cpStartIndex; i < cpEndIndex; i++) {
+      const gov = sortedGovernment[i]
+      const randomIsland = sortedIslands[this.randomBetween(0, sortedIslands.length - 1)]
+      
+      console.log(`🕵️ Cypher Pol ${i - cpStartIndex + 1}: ${gov.name} -> Ilha ${randomIsland.name}`)
+      
+      cypherPolPromises.push(
+        db.cypherPols.add({
+          captainId: gov.id!,
+          reputation: this.randomBetween(1000, 10000),
+          currentIsland: randomIsland.id!,
+          foundedAt: new Date()
+        })
+      )
+    }
+    await Promise.all(cypherPolPromises)
+
+    // ✅ 12. ESTATÍSTICAS FINAIS
+    const [finalYonkou, finalShichibukai, finalAdmirals, finalGorousei, finalCypherPol] = await Promise.all([
+      db.yonkous.count(),
+      db.shichibukais.count(),
+      db.admirals.count(),
+      db.gorouseis.count(),
+      db.cypherPols.count()
+    ])
+
+    console.log(`✅ Redistribuição concluída:`, {
+      yonkou: finalYonkou,
+      shichibukai: finalShichibukai,
+      admirals: finalAdmirals,
+      gorousei: finalGorousei,
+      cypherPol: finalCypherPol
+    })
+
+    return { success: true }
+
+  } catch (error) {
+    console.error('❌ Erro ao redistribuir personagens mais poderosos:', error)
+    return { success: false }
+  }
+}
+
+  static async changeTerritories(): Promise<{success: boolean;}> {
+  try {
+    console.log('🏴‍☠️ Iniciando redistribuição de territórios...')
+    
+    // ✅ 1. CARREGAR DADOS NECESSÁRIOS
+    const [allCrews, allDevilFruits, allCharacters, allTerritories] = await Promise.all([
+      db.crews.where('docked').equals(1).toArray(),
+      db.devilFruits.toArray(),
+      db.characters.toArray(),
+      db.territories.toArray()
+    ])
+    
+    console.log(`📊 Dados carregados:`, {
+      crews: allCrews.length,
+      characters: allCharacters.length,
+      territories: allTerritories.length
+    })
+
+    // ✅ 2. OBTER PLAYER ATUAL
+    const characterStore = useCharacterStore()
+    const player = characterStore.playerCharacter
+    
+    if (!player || !player.crewId) {
+      console.error('❌ Player ou crewId não encontrado')
+      return { success: false }
+    }
+
+    // ✅ 3. FILTRAR TERRITÓRIOS OCUPADOS (crewId != 0)
+    const occupiedTerritories = allTerritories.filter(territory => territory.crewId !== 0)
+    console.log(`🏝️ Territórios ocupados: ${occupiedTerritories.length}`)
+
+    // ✅ 4. MAPA PARA ARMAZENAR O CREW MAIS FORTE POR ILHA
+    const mapStrongestCrewByIsland = new Map<number, Crew | null>()
+
+    // ✅ 5. INICIALIZAR MAPA COM ILHAS DOS TERRITÓRIOS OCUPADOS
+    occupiedTerritories.forEach(territory => {
+      mapStrongestCrewByIsland.set(territory.islandId, null)
+    })
+
+    console.log(`🗺️ Ilhas mapeadas: ${mapStrongestCrewByIsland.size}`)
+
+    // ✅ 6. ENCONTRAR O CREW MAIS FORTE EM CADA ILHA
+    allCrews.forEach(crew => {
+      // Verificar se a ilha do crew está no mapa E não é o crew do player
+      if (mapStrongestCrewByIsland.has(crew.currentIsland) && crew.id !== player.crewId) {
+        
+        const currentStrongestCrew = mapStrongestCrewByIsland.get(crew.currentIsland)
+        
+        if (currentStrongestCrew) {
+          // ✅ COMPARAR PODER DOS CREWS
+          const currentCrewMembers = allCharacters.filter(char => char.crewId === currentStrongestCrew.id)
+          const thisCrewMembers = allCharacters.filter(char => char.crewId === crew.id)
+          
+          const currentCrewPower = GameLogic.calculateCrewPower(currentCrewMembers, allDevilFruits)
+          const thisCrewPower = GameLogic.calculateCrewPower(thisCrewMembers, allDevilFruits)
+          
+          console.log(`⚔️ Comparando crews na ilha ${crew.currentIsland}:`, {
+            current: { id: currentStrongestCrew.id, power: currentCrewPower },
+            challenger: { id: crew.id, power: thisCrewPower }
+          })
+          
+          if (thisCrewPower > currentCrewPower) {
+            mapStrongestCrewByIsland.set(crew.currentIsland, crew)
+            console.log(`👑 Novo crew mais forte na ilha ${crew.currentIsland}: ${crew.id}`)
+          }
+        } else {
+          // ✅ PRIMEIRA VEZ QUE UM CREW É ENCONTRADO NESTA ILHA
+          mapStrongestCrewByIsland.set(crew.currentIsland, crew)
+          console.log(`🆕 Primeiro crew encontrado na ilha ${crew.currentIsland}: ${crew.id}`)
+        }
+      }
+    })
+
+    // ✅ 7. PREPARAR ATUALIZAÇÕES DOS TERRITÓRIOS
+    const territoryUpdates: Promise<number>[] = []
+    
+    for (const [islandId, strongestCrew] of mapStrongestCrewByIsland.entries()) {
+      if (strongestCrew) {
+        // ✅ ENCONTRAR O TERRITÓRIO CORRESPONDENTE À ILHA
+        const territory = occupiedTerritories.find(t => t.islandId === islandId)
+        
+        if (territory) {
+          console.log(`🔄 Atualizando território ${territory.id}: ilha ${islandId} -> crew ${strongestCrew.id}`)
+          
+          // ✅ ATUALIZAR O TERRITÓRIO COM O NOVO CREW
+          territoryUpdates.push(
+            db.territories.update(territory.id!, { crewId: strongestCrew.id })
+          )
+        } else {
+          console.warn(`⚠️ Território não encontrado para ilha ${islandId}`)
+        }
+      } else {
+        // ✅ NENHUM CREW ENCONTRADO NA ILHA - LIBERAR TERRITÓRIO
+        const territory = occupiedTerritories.find(t => t.islandId === islandId)
+        if (territory) {
+          console.log(`🆓 Liberando território ${territory.id}: ilha ${islandId}`)
+          territoryUpdates.push(
+            db.territories.update(territory.id!, { crewId: 0 })
+          )
+        }
+      }
+    }
+
+    // ✅ 8. EXECUTAR TODAS AS ATUALIZAÇÕES
+    if (territoryUpdates.length > 0) {
+      console.log(`💾 Executando ${territoryUpdates.length} atualizações...`)
+      await Promise.all(territoryUpdates)
+      console.log('✅ Todas as atualizações executadas com sucesso!')
+    } else {
+      console.log('ℹ️ Nenhuma atualização necessária')
+    }
+
+    // ✅ 9. ESTATÍSTICAS FINAIS
+    const finalTerritories = await db.territories.toArray()
+    const occupiedCount = finalTerritories.filter(t => t.crewId !== 0).length
+    const freeCount = finalTerritories.filter(t => t.crewId === 0).length
+    
+    console.log(`📈 Redistribuição concluída:`, {
+      territoriosOcupados: occupiedCount,
+      territoriosLivres: freeCount,
+      total: finalTerritories.length
+    })
+
+    return { success: true }
+
+  } catch (error) {
+    console.error('❌ Erro ao redistribuir crews nos territórios:', error)
+    return { success: false }
+  }
+}
   
   // 🎯 FUNÇÃO PARA INTEGRAR COM O SISTEMA DE BATALHA DO JOGADOR
   static async updateWorldAfterPlayerAction(): Promise<{
@@ -1612,11 +1950,25 @@ static async executeCrewMovement(decision: CrewMovementDecision): Promise<void> 
   }> {
     try {
       console.log('🎮 Player mudou de ilha - iniciando movimentação mundial...');
+
+      const worldResult = await this.simulateWorldEncounters();
+      var summary = `🌍 Mundo atualizado: ${worldResult.totalEncounters} encontros, ${worldResult.totalBattles} batalhas, ${worldResult.totalMovements} movimentos de crews`;
+      // Gerar eventos interessantes
+      const worldEvents: string[] = [];
+      
+      // Gerar eventos interessantes
+      worldResult.islandReports.forEach(report => {
+        if (report.battles > 0) {
+          worldEvents.push(`⚔️ ${report.battles} batalha(s) ocorreram na ${report.islandName}`);
+        }
+        if (report.movements > 0) {
+          worldEvents.push(`🚢 ${report.movements} crew(s) fugiram da ${report.islandName}`);
+        }
+      });
       
       const movementResult = await this.processWorldMovement();
       
-      // Gerar eventos interessantes
-      const worldEvents: string[] = [];
+      
       
       if (movementResult.dockedToggled > 0) {
         worldEvents.push(`⚓ ${movementResult.dockedToggled} crews mudaram status de ancoragem`);
@@ -1647,7 +1999,7 @@ static async executeCrewMovement(decision: CrewMovementDecision): Promise<void> 
         }
       });
 
-      const summary = `🌍 Mundo atualizado: ${movementResult.totalCrews} crews processados, ${movementResult.crewsMoved} movimentos realizados`;
+      summary += `; 🌍 Mundo atualizado: ${movementResult.totalCrews} crews processados, ${movementResult.crewsMoved} movimentos realizados`;
 
       console.log('✅ Movimentação mundial concluída:', summary);
 

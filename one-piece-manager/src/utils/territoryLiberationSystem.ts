@@ -216,6 +216,8 @@ export class TerritoryLiberationSystem {
       // Calcular recompensas baseadas no step
       const rewardDetails = await this.calculateLiberationRewards(task.step!, island.difficulty, isLastStep, crew.captainId, character)
 
+      const worldUpdate = await AdventureSystem.updateWorldAfterPlayerAction();
+
       let devilFruitDropped: DevilFruit | undefined
 
       if (battleResult.winner === character.id) {
