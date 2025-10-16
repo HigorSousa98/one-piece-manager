@@ -704,7 +704,7 @@ export class GameDataGenerator {
           char.isPlayer !== 1 &&
           !char.crewId
         ),
-        Governments: allCharacters.filter(char => 
+        Government: allCharacters.filter(char => 
           char.type === 'Government' && 
           char.position !== 'Captain' && 
           char.isPlayer !== 1 &&
@@ -712,7 +712,7 @@ export class GameDataGenerator {
         )
       }
 
-      console.log(`👥 Membros disponíveis: ${availableMembers.Pirate.length} piratas, ${availableMembers.Marine.length} marines, ${availableMembers.BountyHunter.length} bounty hunters, ${availableMembers.Governments.length} agentes do governo`)
+      console.log(`👥 Membros disponíveis: ${availableMembers.Pirate.length} piratas, ${availableMembers.Marine.length} marines, ${availableMembers.BountyHunter.length} bounty hunters, ${availableMembers.Government.length} agentes do governo`)
 
       // Função para criar crew e associar membros
       const createCrewWithMembers = async (captains: Character[], type: 'Pirate' | 'Marine' | 'BountyHunter' | 'Government') => {
