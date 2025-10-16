@@ -783,9 +783,6 @@ export class GameDataGenerator {
 
         if (captain.isPlayer !== 1) {
           // Buscar membros compatíveis
-          console.log('availableMembers', availableMembers)
-          console.log('type', type)
-          console.log('availableMembers[type]', availableMembers[type])
           const compatibleMembers = availableMembers[type].filter(member => 
             member.level <= captain.level && 
             member.id !== captain.id &&
