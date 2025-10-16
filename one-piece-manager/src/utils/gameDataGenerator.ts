@@ -422,7 +422,7 @@ export class GameDataGenerator {
       { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3,kingHaki: 1, name: 'Support' }  // Support
     ].find(st => st.name == styleCombat)
 
-    const quantPoints = Math.ceil(((level - 1) / 2) * (2 + level) * 0.8)
+    const quantPoints = Math.ceil(((level - 1) / 2) * (2 + level) * 1)
     const basePoints = quantPoints + 9 
     
     // Distribuir pontos baseado no estilo
@@ -590,7 +590,7 @@ export class GameDataGenerator {
     const allCharactersFiltered = allCharacters.filter(char => char.type != 'Civillian')
     
     // Calcular quantos personagens devem ter Devil Fruit
-    const charactersWithDF = Math.floor(allCharactersFiltered.length * this.config.devilFruitDistributionRate)
+    const charactersWithDF = Math.floor(allDevilFruits.length * this.config.devilFruitDistributionRate)
     
     // Selecionar personagens aleatoriamente
     const shuffledCharacters = this.shuffleArray([...allCharactersFiltered])

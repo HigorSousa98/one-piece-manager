@@ -43,7 +43,7 @@ export class GenerationConfig {
     totalGovernment: 300,
     totalBountyHunter: 500,
     totalCivillians: 2000,
-    devilFruitDistributionRate: 0.002, // 0.2%
+    devilFruitDistributionRate: 0.1, // 0.2%
     yonkouCount: 4,
     schichibukai: 7,
     admiralCount: 3,
@@ -121,11 +121,11 @@ export class GenerationConfig {
     // Configuração épica para mundo completo
     EPIC: {
       ...GenerationConfig.DEFAULT_CONFIG,
-      totalPirates: 8000,
-      totalMarines: 8000,
-      totalGovernment: 2000,
-      totalBountyHunter: 4000,
-      totalCivillians: 6000,
+      totalPirates: 12000,
+      totalMarines: 12000,
+      totalGovernment: 4000,
+      totalBountyHunter: 7000,
+      totalCivillians: 8000,
       totalIslands: 200,
       difficultyLevels: 30,
       islandsPerLevel: 4,
