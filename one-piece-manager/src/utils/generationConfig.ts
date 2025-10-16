@@ -132,7 +132,7 @@ export class GenerationConfig {
       avgCrewSize: 10,
       styleCombatCount: 100,
       shipFactor: 3,
-      lastCombats: 10,
+      lastCombats: 15,
       allowKingHakiFor: 0.9,
       dockedFactor: 0.8,
       devilFruitDropRate: 0.05,

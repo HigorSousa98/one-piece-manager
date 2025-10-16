@@ -14,18 +14,18 @@ export const POWER_CONFIG = {
   // Sistema de Haki
   haki: {
     armament: {
-      baseMultiplier: 2.5,
-      synergyRate: 0.1
+      baseMultiplier: 1.5,
+      synergyRate: 0.05
     },
     observation: {
-      baseMultiplier: 2.0,
-      synergyRate: 0.15
+      baseMultiplier: 1,
+      synergyRate: 0.03
     },
     conqueror: {
       baseBonus: 8,
       levelMultiplier: 0.2,
-      masterThreshold: 5,
-      masterBonus: 0.5
+      masterThreshold: 150,
+      masterBonus: 0.3
     }
   },
   
@@ -195,7 +195,7 @@ export class PowerCalculationSystem {
       hakiPower += kingHaki * config.baseBonus
       
       if (kingHaki >= config.masterThreshold) {
-        hakiPower += kingHaki * config.baseBonus * config.masterBonus
+        hakiPower *= (1 + config.masterBonus)
       }
     }
     
@@ -307,7 +307,7 @@ export class PowerCalculationSystem {
     let conqueror = 1.0
     if (kingHaki > 0) {
       const config = POWER_CONFIG.haki.conqueror
-      conqueror = 1.0 + (kingHaki * config.levelMultiplier)
+      conqueror = 1.0 + (kingHaki * config.levelMultiplier)/50
       
       if (kingHaki >= config.masterThreshold) {
         conqueror += config.masterBonus

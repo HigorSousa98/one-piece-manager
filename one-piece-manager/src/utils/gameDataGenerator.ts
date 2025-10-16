@@ -682,7 +682,7 @@ export class GameDataGenerator {
         db.gorouseis.toArray()
       ])
 
-      console.log(`🎯 Encontrados ${pirateCaptains.length} capitães piratas, ${marineCaptains.length} capitães marines, ${bountyHuntersCaptains.length} capitães bounty hunters`)
+      console.log(`🎯 Encontrados ${pirateCaptains.length} capitães piratas, ${marineCaptains.length} capitães marines, ${bountyHuntersCaptains.length} capitães bounty hunters, ${govCaptains.length} capitães de agentes do governo`)
 
       // Separar membros disponíveis por tipo (excluindo capitães e jogadores)
       const availableMembers = {
