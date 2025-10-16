@@ -490,7 +490,6 @@ export class GameDataGenerator {
         islandIndex = this.getHighestDifficultyIslandId()
       }
       usedIsland.push(islandIndex)
-      console.log('using', islandIndex)
       await db.yonkous.add({
         captainId: pirate.id!,
         baseIsland: allIslands[islandIndex].id,
@@ -510,7 +509,6 @@ export class GameDataGenerator {
         islandIndex = this.getMidHighDifficultyIslandId()
       }
       usedIsland.push(islandIndex)
-      console.log('using', islandIndex)
       await db.shichibukais.add({
         captainId: pirate.id!,
         baseIsland: allIslands[islandIndex].id,
@@ -531,7 +529,6 @@ export class GameDataGenerator {
         islandIndex = this.getHighDifficultyIslandId()
       }
       usedIsland.push(islandIndex)
-      console.log('using', islandIndex)
       const baseIslandId = allIslands[islandIndex].id
       
       await db.admirals.add({
@@ -560,7 +557,6 @@ export class GameDataGenerator {
         islandIndex = this.getHighDifficultyIslandId()
       }
       usedIsland.push(islandIndex)
-      console.log('using', islandIndex)
       await db.gorouseis.add({
         govId: gov.id!,
         currentIsland: allIslands[islandIndex].id,
@@ -787,6 +783,9 @@ export class GameDataGenerator {
 
         if (captain.isPlayer !== 1) {
           // Buscar membros compatíveis
+          console.log('availableMembers', availableMembers)
+          console.log('type', type)
+          console.log('availableMembers[type]', availableMembers[type])
           const compatibleMembers = availableMembers[type].filter(member => 
             member.level <= captain.level && 
             member.id !== captain.id &&
