@@ -674,7 +674,7 @@ onMounted(async () => {
 
 /* ✅ NOME COM ESTILOS DINÂMICOS APLICADOS VIA :style */
 .character-name {
-  font-family: 'Open Sans', sans-serif;
+  font-family: 'Rye', 'Playfair Display', serif;
   font-weight: bold;
   color: #4a381f;
   text-align: center;
@@ -788,7 +788,7 @@ onMounted(async () => {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Pirata+One&family=Open+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Pirata+One&family=Open+Sans:wght@300;400;500;600;700&display=swap&family=Rye&family=Playfair+Display:wght@400;700;900&display=swap');
 
 @keyframes float {
   0%, 100% { transform: translateY(0px) rotate(-1deg); }
