@@ -599,6 +599,7 @@
     <CharacterDetailsDialog
       v-model="characterDialog"
       :character="selectedCharacter"
+      :all-devil-fruits="rankings.allDevilFruits"
     />
   </div>
 </template>
@@ -612,7 +613,6 @@ import CharacterDetailsDialog from '@/components/CharacterDetailsDialog.vue'
 import AvataaarsAvatar from '@/components/AvataaarsAvatar.vue'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 import WantedPoster from '@/components/WantedPoster.vue'
-
 const characterStore = useCharacterStore()
 
 // Loading states

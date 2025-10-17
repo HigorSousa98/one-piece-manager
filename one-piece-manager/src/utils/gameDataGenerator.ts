@@ -156,9 +156,9 @@ export class GameDataGenerator {
         experience: 0,
         bounty: 0,
         stats: {
-          attack: combatStyle.attack,
-          defense: combatStyle.defense,
-          speed: combatStyle.speed,
+          attack: combatStyle.attack * 2,
+          defense: combatStyle.defense * 2,
+          speed: combatStyle.speed * 2,
           armHaki: 0,
           obsHaki: 0,
           kingHaki: 0,
