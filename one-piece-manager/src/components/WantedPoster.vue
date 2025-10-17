@@ -30,12 +30,22 @@
 
         <!-- Character Name -->
         <div class="name-area">
-          <h2 class="character-name">{{ character.name.toUpperCase().substring(character.name.length - 30,character.name.length) }}</h2>
+          <h2 
+            class="character-name"
+            :style="getNameStyle(character.name.toUpperCase())"
+          >
+            {{ character.name.toUpperCase()}}
+          </h2>
         </div>
 
         <!-- Bounty Amount -->
         <div class="bounty-area">
-          <div class="bounty-amount">{{ formatBounty(character) }}</div>
+          <div 
+            class="bounty-amount"
+            :style="getBountyStyle(formatBounty(character))"
+          >
+            {{ formatBounty(character) }}
+          </div>
         </div>
 
       </div>
@@ -123,6 +133,121 @@ const loading = ref(true)
 const downloading = ref(false)
 const selectedSize = ref(props.size)
 const posterRef = ref<HTMLElement>()
+
+// ✅ CONFIGURAÇÕES DE LARGURA MÁXIMA POR TAMANHO
+const maxWidthConfig = computed(() => {
+  const configs = {
+    small: { name: 240, bounty: 220 },    // 80% da largura do poster (300px)
+    medium: { name: 320, bounty: 300 },   // 80% da largura do poster (400px)
+    large: { name: 400, bounty: 380 },    // 80% da largura do poster (500px)
+    xl: { name: 480, bounty: 460 }        // 80% da largura do poster (600px)
+  }
+  return configs[selectedSize.value]
+})
+
+// ✅ FUNÇÃO PARA CALCULAR ESTILO DO NOME
+const getNameStyle = (name: string) => {
+  const charCount = name.length
+  const maxWidth = maxWidthConfig.value.name
+  
+  // Calcular letter-spacing baseado no comprimento
+  // Fórmula: quanto maior o texto, menor o espaçamento
+  const letterSpacing = Math.max(
+    0.5,  // Mínimo
+    Math.min(
+      15,   // Máximo
+      (maxWidth / charCount) * 0.28 - 1
+    )
+  )
+  
+  // Calcular font-size baseado no comprimento
+  // Fórmula: quanto maior o texto, menor a fonte
+  const baseFontSize = Math.max(
+    0.8,  // Mínimo
+    Math.min(
+      2.5,  // Máximo
+      (maxWidth / charCount) * 0.06 + 0.6
+    )
+  )
+  
+  // Ajustes baseados em caracteres especiais
+  let adjustedSpacing = letterSpacing
+  let adjustedFontSize = baseFontSize
+  
+  if (name.includes(' ')) {
+    adjustedSpacing *= 0.8  // Reduzir espaçamento se tem espaços
+  }
+  if (name.includes('.')) {
+    adjustedSpacing *= 0.9  // Reduzir espaçamento se tem pontos
+  }
+  
+  // Ajuste baseado no tamanho do poster
+  const sizeMultipliers = {
+    small: 0.7,
+    medium: 1,
+    large: 1.3,
+    xl: 1.6
+  }
+  
+  const sizeMultiplier = sizeMultipliers[selectedSize.value]
+  adjustedFontSize *= sizeMultiplier
+  
+  return {
+    fontSize: `${adjustedFontSize}rem`,
+    letterSpacing: `${adjustedSpacing}px`,
+    maxWidth: `${maxWidth}px`,
+    // Manter o scaleY original
+    transform: 'scaleY(2.5)',
+    transformOrigin: 'center bottom',
+    display: 'inline-block',
+    lineHeight: '0.9',
+    wordBreak: 'break-word',
+    hyphens: 'auto'
+  }
+}
+
+// ✅ FUNÇÃO PARA CALCULAR ESTILO DA BOUNTY
+const getBountyStyle = (bountyText: string) => {
+  const charCount = bountyText.length
+  const maxWidth = maxWidthConfig.value.bounty
+  
+  // Calcular letter-spacing para bounty
+  const letterSpacing = Math.max(
+    0.5,  // Mínimo
+    Math.min(
+      12,   // Máximo
+      (maxWidth / charCount) * 0.35 - 1
+    )
+  )
+  
+  // Calcular font-size para bounty
+  const baseFontSize = Math.max(
+    0.7,  // Mínimo
+    Math.min(
+      2.2,  // Máximo
+      (maxWidth / charCount) * 0.15 + 0.5
+    )
+  )
+  
+  // Ajuste baseado no tamanho do poster
+  const sizeMultipliers = {
+    small: 0.7,
+    medium: 1,
+    large: 1.3,
+    xl: 1.6
+  }
+  
+  const sizeMultiplier = sizeMultipliers[selectedSize.value]
+  const adjustedFontSize = baseFontSize * sizeMultiplier
+  
+  return {
+    fontSize: `${adjustedFontSize}rem`,
+    letterSpacing: `${letterSpacing}px`,
+    maxWidth: `${maxWidth}px`,
+    // Não alterar o transform se houver algum
+    wordBreak: 'break-word'
+  }
+}
 
 // Computed
 const containerClasses = computed(() => ({
@@ -219,16 +344,16 @@ const loadHtmlToImage = async () => {
 const formatBounty = (character: Character): string => {
     var bounty
     if (props.customBounty !== undefined) {
-        bounty = props.customBounty.toLocaleString('pt-BR', {
+        bounty = props.customBounty.toLocaleString('en-US', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
-        })
+        }) + ' - '
     }
     else if(character.type == 'Pirate' || character.type == 'BountyHunter'){
-        bounty = character.bounty.toLocaleString('pt-BR', {
+        bounty = character.bounty.toLocaleString('en-US', {
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
-        })
+        }) + ' - '
     }
     else if(character.type == 'Marine'){
         bounty = formatMarineRank(character.bounty)
@@ -489,100 +614,104 @@ onMounted(async () => {
   transform: translateX(-50%);
   text-align: center;
   z-index: 2;
-  width: 80%;
+  width: 90%; /* ✅ Aumentado para dar mais espaço */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ✅ AJUSTES DO NOME POR TAMANHO */
 .wanted-poster-small .name-area {
-  top: 74%;
+  top: 79%;
 }
 
 .wanted-poster-medium .name-area {
-  top: 74%;
+  top: 79%;
 }
 
 .wanted-poster-large .name-area {
-  top: 74%;
+  top: 79%;
 }
 
 .wanted-poster-xl .name-area {
-  top: 74%;
+  top: 79%;
 }
 
+/* ✅ NOME COM ESTILOS DINÂMICOS APLICADOS VIA :style */
 .character-name {
   font-family: 'Open Sans', sans-serif;
   font-weight: bold;
   color: #4a381f;
+  text-align: center;
   margin: 0;
-  letter-spacing: 1px;
-  line-height: 1.1;
-}
-
-/* ✅ TAMANHOS DE FONTE DINÂMICOS PARA O NOME */
-.wanted-poster-small .character-name {
-  font-size: clamp(12px, 3vw, 18px);
-}
-
-.wanted-poster-medium .character-name {
-  font-size: clamp(16px, 4vw, 24px);
-}
-
-.wanted-poster-large .character-name {
-  font-size: clamp(20px, 5vw, 30px);
-}
-
-.wanted-poster-xl .character-name {
-  font-size: clamp(24px, 6vw, 36px);
+  
+  /* ✅ Propriedades que serão sobrescritas dinamicamente */
+  /* Os valores abaixo são fallbacks caso o JS falhe */
+  font-size: 1.8rem;
+  letter-spacing: 2px;
+  transform: scaleY(2.5);
+  transform-origin: center bottom;
+  display: inline-block;
+  line-height: 0.9;
+  
+  /* ✅ Quebra inteligente de texto */
+  word-break: break-word;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  
+  /* ✅ Transição suave para mudanças */
+  transition: all 0.3s ease;
 }
 
 .bounty-area {
   position: absolute;
   top: 82.5%;
-  left: 50%;
+  left: 55%;
   transform: translateX(-50%);
   text-align: center;
   z-index: 2;
+  width: 90%; /* ✅ Aumentado para dar mais espaço */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ✅ AJUSTES DA BOUNTY POR TAMANHO */
 .wanted-poster-small .bounty-area {
-  top: 83.5%;
+  top: 82.5%;
 }
 
 .wanted-poster-medium .bounty-area {
-  top: 83.5%;
+  top: 82.5%;
 }
 
 .wanted-poster-large .bounty-area {
-  top: 83.5%;
+  top: 82.5%;
 }
 
 .wanted-poster-xl .bounty-area {
-  top: 83.5%;
+  top: 82.5%;
 }
 
+/* ✅ BOUNTY COM ESTILOS DINÂMICOS APLICADOS VIA :style */
 .bounty-amount {
   font-family: 'Pirata One', cursive;
   font-weight: bold;
   color: #4a381f;
+  text-align: center;
+  margin: 0;
+  
+  /* ✅ Propriedades que serão sobrescritas dinamicamente */
+  /* Os valores abaixo são fallbacks caso o JS falhe */
+  font-size: 1.5rem;
   letter-spacing: 2px;
-}
-
-/* ✅ TAMANHOS DE FONTE DINÂMICOS PARA A BOUNTY */
-.wanted-poster-small .bounty-amount {
-  font-size: clamp(14px, 4vw, 20px);
-}
-
-.wanted-poster-medium .bounty-amount {
-  font-size: clamp(18px, 5vw, 28px);
-}
-
-.wanted-poster-large .bounty-amount {
-  font-size: clamp(22px, 6vw, 34px);
-}
-
-.wanted-poster-xl .bounty-amount {
-  font-size: clamp(26px, 7vw, 40px);
+  
+  /* ✅ Quebra inteligente de texto */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  
+  /* ✅ Transição suave para mudanças */
+  transition: all 0.3s ease;
 }
 
 .loading-overlay {
@@ -643,10 +772,38 @@ onMounted(async () => {
   
   .name-area {
     top: 78% !important;
+    width: 95%; /* ✅ Mais espaço em mobile */
   }
   
   .bounty-area {
     top: 85% !important;
+    width: 95%; /* ✅ Mais espaço em mobile */
   }
+  
+  /* ✅ Ajustes específicos para mobile */
+  .character-name {
+    font-size: 1.2rem !important;
+    letter-spacing: 1px !important;
+  }
+  
+  .bounty-amount {
+    font-size: 1rem !important;
+    letter-spacing: 1px !important;
+  }
+}
+
+/* ✅ AJUSTES PARA TEXTOS MUITO LONGOS */
+.character-name[style*="font-size: 0.8rem"],
+.bounty-amount[style*="font-size: 0.7rem"] {
+  line-height: 1.1 !important;
+  word-spacing: -2px;
+}
+
+/* ✅ AJUSTES PARA TEXTOS MUITO CURTOS */
+.character-name[style*="font-size: 2.5rem"],
+.bounty-amount[style*="font-size: 2.2rem"] {
+  text-shadow: 
+    2px 2px 0px rgba(255, 255, 255, 0.8),
+    1px 1px 3px rgba(0, 0, 0, 0.7);
 }
 </style>

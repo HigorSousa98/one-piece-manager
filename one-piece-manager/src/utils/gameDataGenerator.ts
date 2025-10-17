@@ -422,9 +422,15 @@ export class GameDataGenerator {
       { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3,kingHaki: 1, name: 'Support' }  // Support
     ].find(st => st.name == styleCombat)
 
-    const quantPoints = Math.ceil(((level - 1) / 2) * (2 + level) * 1)
-    const basePoints = quantPoints + 9 
-    
+    var points = 0
+
+    for(var i = 2; i <= level; i++){
+      points += i
+    }
+
+    const quantPoints = points
+    const basePoints = (quantPoints + 9) * this.randomBetween(0.6,0.85)
+
     // Distribuir pontos baseado no estilo
     let totalStylePoints = 15
     if(potentialToHaveKngHaki > this.config.allowKingHakiFor && Math.random() < (1-potentialToHaveKngHaki)* (1 / this.config.allowKingHakiFor)){

@@ -686,7 +686,7 @@ export class TerritoryLiberationSystem {
 
   // ✅ MÉTODOS AUXILIARES
   public static calculateExperienceReward(step: number, maxSteps: number): number {
-    const baseExp = GameLogic.expNeeded(maxSteps * 3)
+    const baseExp = GameLogic.expNeeded(maxSteps * 3) / 2
     return (1 + maxSteps) * 100  + (step * baseExp / maxSteps) + (step === maxSteps ? baseExp / maxSteps : 0) // Bonus no último step
   }
 
