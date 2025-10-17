@@ -32,9 +32,9 @@
         <div class="name-area">
           <h2 
             class="character-name"
-            :style="getNameStyle(character.name.toUpperCase())"
+            :style="getNameStyle(getCleanName(character.name.toUpperCase()))"
           >
-            {{ character.name.toUpperCase()}}
+            {{ getCleanName(character.name.toUpperCase())}}
           </h2>
         </div>
 
@@ -152,33 +152,33 @@ const getNameStyle = (name: string) => {
   
   // Calcular letter-spacing baseado no comprimento
   // Fórmula: quanto maior o texto, menor o espaçamento
-  const letterSpacing = Math.max(
-    0.5,  // Mínimo
-    Math.min(
-      15,   // Máximo
-      (maxWidth / charCount) * 0.28 - 1
-    )
-  )
+  const letterSpacing = (maxWidth / charCount) * 0.28
+
   
   // Calcular font-size baseado no comprimento
   // Fórmula: quanto maior o texto, menor a fonte
-  const baseFontSize = Math.max(
-    0.8,  // Mínimo
-    Math.min(
-      2.5,  // Máximo
-      (maxWidth / charCount) * 0.06 + 0.6
-    )
-  )
+  const baseFontSize = (maxWidth / charCount) * 0.1
+
+  const height = Number(posterStyle.value.height.replace('px', ''))
+
+  const dynamicScaleY = (charCount / height / 0.1) * 13
   
   // Ajustes baseados em caracteres especiais
   let adjustedSpacing = letterSpacing
   let adjustedFontSize = baseFontSize
+  let adjustedScaleY = dynamicScaleY
   
   if (name.includes(' ')) {
-    adjustedSpacing *= 0.8  // Reduzir espaçamento se tem espaços
+    adjustedSpacing *= 0.8  // Reduzir espaçamento se tem espaços// Reduzir scaleY ligeiramente
   }
   if (name.includes('.')) {
-    adjustedSpacing *= 0.9  // Reduzir espaçamento se tem pontos
+    adjustedSpacing *= 0.9  // Reduzir espaçamento se tem pontos // Reduzir scaleY para pontos
+  }
+
+  // ✅ AJUSTE BASEADO NO NÚMERO DE LINHAS
+  const estimatedLines = Math.ceil((charCount * adjustedFontSize * 0.6) / maxWidth)
+  if (estimatedLines > 1) {
+    adjustedScaleY /= (estimatedLines * 1.1) // Reduzir scaleY para múltiplas linhas
   }
   
   // Ajuste baseado no tamanho do poster
@@ -190,14 +190,16 @@ const getNameStyle = (name: string) => {
   }
   
   const sizeMultiplier = sizeMultipliers[selectedSize.value]
+  // Garantir que o scaleY não seja menor que 1 nem maior que 3
   adjustedFontSize *= sizeMultiplier
+  adjustedScaleY *= sizeMultiplier
   
   return {
     fontSize: `${adjustedFontSize}rem`,
     letterSpacing: `${adjustedSpacing}px`,
     maxWidth: `${maxWidth}px`,
     // Manter o scaleY original
-    transform: 'scaleY(2.5)',
+    transform:`scaleY(${adjustedScaleY})`,
     transformOrigin: 'center bottom',
     display: 'inline-block',
     lineHeight: '0.9',
@@ -296,6 +298,39 @@ const photoAreaStyle = computed(() => {
     height: size.height
   }
 })
+
+// ✅ FUNÇÃO PARA REMOVER ALCUNHA
+const removeNickname = (fullName: string): string => {
+  if (!fullName || typeof fullName !== 'string') {
+    return fullName || ''
+  }
+  
+  let cleanName = fullName
+    .replace(/"[^"]*"/g, '')     // Remove "Alcunha"
+    .replace(/'[^']*'/g, '')     // Remove 'Alcunha'
+    .replace(/\([^)]*\)/g, '')   // Remove (Alcunha)
+    .replace(/\[[^\]]*\]/g, '')  // Remove [Alcunha]
+    .replace(/\s+/g, ' ')        // Remove espaços extras
+    .trim()                      // Remove espaços nas bordas
+  
+  // Se ficou muito curto, retorna o original
+  if (!cleanName || cleanName.length < 2) {
+    return fullName
+  }
+  
+  return cleanName
+}
+
+// ✅ FUNÇÃO PARA OBTER NOME LIMPO
+const getCleanName = (fullName: string): string => {
+  const originalName = fullName.toUpperCase()
+  const cleanName = removeNickname(originalName)
+  
+  // Aplicar substring se necessário (limitação de 30 caracteres)
+  const finalName = cleanName
+  
+  return finalName
+}
 
 // ✅ FUNÇÃO PARA CARREGAR HTML-TO-IMAGE
 const loadHtmlToImage = async () => {
@@ -622,19 +657,19 @@ onMounted(async () => {
 
 /* ✅ AJUSTES DO NOME POR TAMANHO */
 .wanted-poster-small .name-area {
-  top: 79%;
+  top: 80%;
 }
 
 .wanted-poster-medium .name-area {
-  top: 79%;
+  top: 800%;
 }
 
 .wanted-poster-large .name-area {
-  top: 79%;
+  top: 80%;
 }
 
 .wanted-poster-xl .name-area {
-  top: 79%;
+  top: 80%;
 }
 
 /* ✅ NOME COM ESTILOS DINÂMICOS APLICADOS VIA :style */
@@ -642,7 +677,7 @@ onMounted(async () => {
   font-family: 'Open Sans', sans-serif;
   font-weight: bold;
   color: #4a381f;
-  text-align: center;
+  text-align: bottom;
   margin: 0;
   
   /* ✅ Propriedades que serão sobrescritas dinamicamente */
