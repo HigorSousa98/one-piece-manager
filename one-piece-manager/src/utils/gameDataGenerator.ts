@@ -593,6 +593,7 @@ export class GameDataGenerator {
     
     // Calcular quantos personagens devem ter Devil Fruit
     const charactersWithDF = Math.floor(allDevilFruits.length * this.config.devilFruitDistributionRate)
+    const shuffledDF= this.shuffleArray([...allDevilFruits])
     
     // Selecionar personagens aleatoriamente
     const shuffledCharacters = this.shuffleArray([...allCharactersFiltered])
@@ -601,7 +602,7 @@ export class GameDataGenerator {
     // Distribuir Devil Fruits
     for (let i = 0; i < selectedCharacters.length; i++) {
       const character = selectedCharacters[i]
-      const devilFruit = allDevilFruits[i]
+      const devilFruit = shuffledDF[i]
       
       // Atualizar Devil Fruit owner
       await db.devilFruits.update(devilFruit.id!, { ownerId: character.id! })

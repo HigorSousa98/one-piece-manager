@@ -43,7 +43,7 @@ export class GenerationConfig {
     totalGovernment: 300,
     totalBountyHunter: 500,
     totalCivillians: 2000,
-    devilFruitDistributionRate: 0.1, // 0.2%
+    devilFruitDistributionRate: 0.2, 
     yonkouCount: 4,
     schichibukai: 7,
     admiralCount: 3,
@@ -61,7 +61,7 @@ export class GenerationConfig {
     lastCombats: 7,
     allowKingHakiFor: 0.7,
     dockedFactor: 0.7,
-    devilFruitDropRate: 0.05,
+    devilFruitDropRate: 0.1,
     civillianRecruitmentChance: 0.3,
     regularCrewHelp: 0.35,
     regularCrewSharedGain: 0.7,
@@ -90,7 +90,7 @@ export class GenerationConfig {
       lastCombats: 3,
       allowKingHakiFor: 0.5,
       dockedFactor: 0.5,
-      devilFruitDropRate: 0.05,
+      devilFruitDropRate: 0.1,
       civillianRecruitmentChance: 0.3,
     } as GenerationSettings,
 
@@ -111,7 +111,7 @@ export class GenerationConfig {
       lastCombats: 5,
       allowKingHakiFor: 0.6,
       dockedFactor: 0.6,
-      devilFruitDropRate: 0.05,
+      devilFruitDropRate: 0.1,
       civillianRecruitmentChance: 0.3,
     } as GenerationSettings,
 
@@ -135,7 +135,7 @@ export class GenerationConfig {
       lastCombats: 20,
       allowKingHakiFor: 0.9,
       dockedFactor: 0.8,
-      devilFruitDropRate: 0.05,
+      devilFruitDropRate: 0.1,
       civillianRecruitmentChance: 0.3,
     } as GenerationSettings
   }
