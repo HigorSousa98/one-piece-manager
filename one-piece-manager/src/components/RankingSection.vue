@@ -69,7 +69,6 @@ interface Props {
   badgeColor?: string
   showPagination?: boolean
   itemsPerPage?: number
-  allDevilFruits: DevilFruit[]
 }
 
 const props = withDefaults(defineProps<Props>(), {

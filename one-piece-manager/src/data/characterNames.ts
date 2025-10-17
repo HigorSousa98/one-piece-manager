@@ -536,25 +536,25 @@ export class NameGenerator {
         
       case 'Marine':
         if (Math.random() < 0.3) { // 80% chance de ter patente
-          title = `${this.getRandomElement(CHARACTER_NAMES.marineRanks)} `;
+          title = `"${this.getRandomElement(CHARACTER_NAMES.marineRanks)}" `;
         }
         break;
         
       case 'Government':
         if (Math.random() < 0.3) { // 60% chance de ter título
-          title = `${this.getRandomElement(CHARACTER_NAMES.governmentTitles)} `;
+          title = `"${this.getRandomElement(CHARACTER_NAMES.governmentTitles)}" `;
         }
         break;
         
       case 'BountyHunter':
         if (Math.random() < 0.3) { // 50% chance de ter título
-          title = `${this.getRandomElement(CHARACTER_NAMES.bountyHunterTitles)} `;
+          title = `"${this.getRandomElement(CHARACTER_NAMES.bountyHunterTitles)}" `;
         }
         break;
         
       case 'Civillian':
         if (Math.random() < 0.3) { // 40% chance de ter profissão
-          title = `${this.getRandomElement(CHARACTER_NAMES.civilianProfessions)} `;
+          title = `"${this.getRandomElement(CHARACTER_NAMES.civilianProfessions)}" `;
         }
         break;
     }
