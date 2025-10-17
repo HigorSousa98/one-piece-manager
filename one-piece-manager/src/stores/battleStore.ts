@@ -111,7 +111,7 @@ export const useBattleStore = defineStore('battle', {
       const damage = baseDamage + Math.floor(powerDifference * 0.05);
       
       // Calcular experiência ganha
-      let experienceGained = GameLogic.calculateExperienceGain(winner, loser) * (1 + extraExp);
+      let experienceGained = Math.ceil(GameLogic.calculateExperienceGain(winner, loser) * (1 + extraExp));
       
       // Calcular mudança de bounty (apenas para piratas)
       let bountyChange = GameLogic.calculateBountyGain(winner, loser) + extraReward;

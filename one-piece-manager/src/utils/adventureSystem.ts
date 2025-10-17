@@ -12,7 +12,7 @@ export interface AdventureEncounter {
   location: string;
   description: string;
   specialReward?: {
-    type: 'item' | 'bounty' | 'reputation' | 'experience';
+    type: 'bounty' | 'experience';
     value: number;
   };
 }
@@ -284,7 +284,7 @@ export class AdventureSystem {
     
     if (Math.random() > baseChance) return undefined;
     
-    const rewardTypes = ['bounty', 'reputation', 'experience'];
+    const rewardTypes = ['bounty', 'experience'];
     const rewardType = rewardTypes[Math.floor(Math.random() * rewardTypes.length)];
     
     const difficultyMultiplier = 1 + (island.difficulty * 0.1);
@@ -294,11 +294,6 @@ export class AdventureSystem {
         return {
           type: 'bounty',
           value: Math.floor(opponent.level * 50000 * difficultyMultiplier)
-        };
-      case 'reputation':
-        return {
-          type: 'reputation',
-          value: Math.floor((opponent.level / 10 + 1) * difficultyMultiplier)
         };
       case 'experience':
         return {

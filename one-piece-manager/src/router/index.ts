@@ -15,11 +15,6 @@ const router = createRouter({
       component: () => import('@/views/CrewManagement.vue')
     },
     {
-      path: '/battle',
-      name: 'battle',
-      component: () => import('@/views/BattleArena.vue')
-    },
-    {
       path: '/islands',
       name: 'islands',
       component: () => import('@/views/IslandExploration.vue')

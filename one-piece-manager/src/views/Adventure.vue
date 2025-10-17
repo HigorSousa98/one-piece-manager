@@ -1259,10 +1259,8 @@ const formatSpecialReward = (reward: any): string => {
   switch (reward.type) {
     case 'bounty':
       return formatBounty(reward.value)
-    case 'reputation':
-      return `${reward.value} pontos de reputação`
     case 'experience':
-      return `${reward.value} pontos de experiencia`
+      return `${reward.value * 100}% de experiencia`
     default:
       return `${reward.value}`
   }
