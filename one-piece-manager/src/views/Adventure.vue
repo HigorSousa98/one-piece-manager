@@ -1059,9 +1059,14 @@ const startBattle = async () => {
   battleStarted.value = true
   
   try {
+      
+    const specialBounty = currentEncounter.value.specialReward && currentEncounter.value.specialReward.type === 'bounty' ? currentEncounter.value.specialReward.value : 0
+    const specialExp = currentEncounter.value.specialReward && currentEncounter.value.specialReward.type === 'experience' ? currentEncounter.value.specialReward.value : 0
     const result = await battleStore.simulateBattle(
       playerCharacter.value,
-      currentEncounter.value.opponent
+      currentEncounter.value.opponent,
+      specialBounty,
+      specialExp
     )
     
     // Aplicar recompensa especial se venceu
@@ -1070,6 +1075,9 @@ const startBattle = async () => {
       
       if (specialReward.type === 'bounty') {
         result.bountyChange += specialReward.value
+      }
+      else if(specialReward.type === 'experience'){
+        result.experienceGained += specialReward.value
       }
     }
     

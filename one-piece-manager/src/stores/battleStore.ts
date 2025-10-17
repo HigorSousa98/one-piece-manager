@@ -29,7 +29,7 @@ export const useBattleStore = defineStore('battle', {
   }),
 
   actions: {
-    async simulateBattle(char1: Character, char2: Character): Promise<BattleResult> {
+    async simulateBattle(char1: Character, char2: Character, extraReward?: number | 0, extraExp?: number | 0): Promise<BattleResult> {
       this.isSimulating = true;
       
       try {
@@ -69,7 +69,7 @@ export const useBattleStore = defineStore('battle', {
         
         await new Promise(resolve => setTimeout(resolve, battleDuration));
         
-        const result = await this.generateBattleResult(char1, char2, char1Wins, attackerPower, defenderPower);
+        const result = await this.generateBattleResult(char1, char2, char1Wins, attackerPower, defenderPower, extraReward, extraExp);
         
         // Salva no banco local
         await this.saveBattleResult(result);
@@ -99,7 +99,7 @@ export const useBattleStore = defineStore('battle', {
         return Math.round(crewHelp)
     },
     
-    async generateBattleResult(char1: Character, char2: Character, char1Wins: boolean, char1Power: number, char2Power: number): Promise<BattleResult> {
+    async generateBattleResult(char1: Character, char2: Character, char1Wins: boolean, char1Power: number, char2Power: number, extraReward?:number | 0, extraExp?: number | 0): Promise<BattleResult> {
       const winner = char1Wins ? char1 : char2;
       const loser = char1Wins ? char2 : char1;
       const winnerPower = char1Wins ? char1Power : char2Power;
@@ -111,10 +111,10 @@ export const useBattleStore = defineStore('battle', {
       const damage = baseDamage + Math.floor(powerDifference * 0.05);
       
       // Calcular experiência ganha
-      const experienceGained = GameLogic.calculateExperienceGain(winner, loser);
+      let experienceGained = GameLogic.calculateExperienceGain(winner, loser) * (1 + extraExp);
       
       // Calcular mudança de bounty (apenas para piratas)
-      let bountyChange = GameLogic.calculateBountyGain(winner, loser);
+      let bountyChange = GameLogic.calculateBountyGain(winner, loser) + extraReward;
       
       
       // Gerar log da batalha
