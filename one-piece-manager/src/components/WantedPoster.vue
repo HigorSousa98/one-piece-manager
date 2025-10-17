@@ -161,7 +161,7 @@ const getNameStyle = (name: string) => {
 
   const height = Number(posterStyle.value.height.replace('px', ''))
 
-  const dynamicScaleY = (charCount / height / 0.08) * 13
+  const dynamicScaleY = (charCount / height / 0.085) * 13
   
   // Ajustes baseados em caracteres especiais
   let adjustedSpacing = letterSpacing
@@ -203,7 +203,8 @@ const getNameStyle = (name: string) => {
     lineHeight: dynamicLineHeight, 
     display: 'inline-block',
     wordBreak: 'break-word',
-    hyphens: 'auto'
+    hyphens: 'auto',
+    whiteSpace: 'nowrap'   
   }
 }
 
@@ -656,19 +657,19 @@ onMounted(async () => {
 
 /* ✅ AJUSTES DO NOME POR TAMANHO */
 .wanted-poster-small .name-area {
-  top: 77.5%;
+  top: 77%;
 }
 
 .wanted-poster-medium .name-area {
-  top: 77.5%;
+  top: 77%;
 }
 
 .wanted-poster-large .name-area {
-  top: 77.5%;
+  top: 77%;
 }
 
 .wanted-poster-xl .name-area {
-  top: 77.5%;
+  top: 77%;
 }
 
 /* ✅ NOME COM ESTILOS DINÂMICOS APLICADOS VIA :style */
