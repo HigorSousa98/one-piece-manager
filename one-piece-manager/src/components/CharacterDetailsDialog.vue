@@ -243,6 +243,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useEventListener } from '@vueuse/core'
 import type { RankingCharacter } from '@/utils/worldEncyclopedia'
 import WantedPoster from '@/components/WantedPoster.vue'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
@@ -254,6 +255,12 @@ interface Props {
   character: RankingCharacter | null
   allDevilFruits: DevilFruit[]
 }
+
+useEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeDialog()
+  }
+})
 
 const props = defineProps<Props>()
 
