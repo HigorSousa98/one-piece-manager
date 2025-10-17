@@ -161,19 +161,14 @@ const getNameStyle = (name: string) => {
 
   const height = Number(posterStyle.value.height.replace('px', ''))
 
-  const dynamicScaleY = (charCount / height / 0.1) * 13
+  const dynamicScaleY = (charCount / height / 0.08) * 13
   
   // Ajustes baseados em caracteres especiais
   let adjustedSpacing = letterSpacing
   let adjustedFontSize = baseFontSize
   let adjustedScaleY = dynamicScaleY
   
-  if (name.includes(' ')) {
-    adjustedSpacing *= 0.8  // Reduzir espaçamento se tem espaços// Reduzir scaleY ligeiramente
-  }
-  if (name.includes('.')) {
-    adjustedSpacing *= 0.9  // Reduzir espaçamento se tem pontos // Reduzir scaleY para pontos
-  }
+
 
   // ✅ AJUSTE BASEADO NO NÚMERO DE LINHAS
   const estimatedLines = Math.ceil((charCount * adjustedFontSize * 0.6) / maxWidth)
@@ -192,7 +187,11 @@ const getNameStyle = (name: string) => {
   const sizeMultiplier = sizeMultipliers[selectedSize.value]
   // Garantir que o scaleY não seja menor que 1 nem maior que 3
   adjustedFontSize *= sizeMultiplier
+  
   adjustedScaleY *= sizeMultiplier
+
+  const dynamicLineHeight = 0
+
   
   return {
     fontSize: `${adjustedFontSize}rem`,
@@ -201,8 +200,8 @@ const getNameStyle = (name: string) => {
     // Manter o scaleY original
     transform:`scaleY(${adjustedScaleY})`,
     transformOrigin: 'center bottom',
+    lineHeight: dynamicLineHeight, 
     display: 'inline-block',
-    lineHeight: '0.9',
     wordBreak: 'break-word',
     hyphens: 'auto'
   }
@@ -657,19 +656,19 @@ onMounted(async () => {
 
 /* ✅ AJUSTES DO NOME POR TAMANHO */
 .wanted-poster-small .name-area {
-  top: 80%;
+  top: 77.5%;
 }
 
 .wanted-poster-medium .name-area {
-  top: 800%;
+  top: 77.5%;
 }
 
 .wanted-poster-large .name-area {
-  top: 80%;
+  top: 77.5%;
 }
 
 .wanted-poster-xl .name-area {
-  top: 80%;
+  top: 77.5%;
 }
 
 /* ✅ NOME COM ESTILOS DINÂMICOS APLICADOS VIA :style */
@@ -677,7 +676,7 @@ onMounted(async () => {
   font-family: 'Open Sans', sans-serif;
   font-weight: bold;
   color: #4a381f;
-  text-align: bottom;
+  text-align: center;
   margin: 0;
   
   /* ✅ Propriedades que serão sobrescritas dinamicamente */
@@ -687,7 +686,7 @@ onMounted(async () => {
   transform: scaleY(2.5);
   transform-origin: center bottom;
   display: inline-block;
-  line-height: 0.9;
+  line-height: 0;
   
   /* ✅ Quebra inteligente de texto */
   word-break: break-word;
