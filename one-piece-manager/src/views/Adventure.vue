@@ -437,17 +437,12 @@
               <v-row class="mb-4">
                 <v-col cols="12" class="text-center">
                   <div class="recruitment-candidate">
-                    <CharacterAvatar 
+                    <WantedPoster
                       :character="lastBattleResult.loser"
-                      size="lg"
-                      variant="circle"
+                      size="small"
                       :show-actions="false"
-                      :show-status-indicators="true"
-                      :show-level="true"
-                      :show-power-rank="false"
-                      :cache-enabled="true"
-                      :clickable="false"
-                      class="candidate-avatar"
+                      :show-size-controls="false"
+                      class="main-poster"
                     />
                     <div class="text-h6 mt-2">{{ lastBattleResult.loser.name }}</div>
                     <v-chip :color="getTypeColor(lastBattleResult.loser.type)" variant="elevated" class="mt-1">
@@ -1266,6 +1261,8 @@ const formatSpecialReward = (reward: any): string => {
       return formatBounty(reward.value)
     case 'reputation':
       return `${reward.value} pontos de reputação`
+    case 'experience':
+      return `${reward.value} pontos de experiencia`
     default:
       return `${reward.value}`
   }

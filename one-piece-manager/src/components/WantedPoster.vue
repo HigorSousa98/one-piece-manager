@@ -627,19 +627,19 @@ onMounted(async () => {
 
 /* ✅ AJUSTES ESPECÍFICOS POR TAMANHO */
 .wanted-poster-small .photo-area {
-  top: 21%;
+  top: 21.2%;
 }
 
 .wanted-poster-medium .photo-area {
-  top: 21%;
+  top: 21.2%;
 }
 
 .wanted-poster-large .photo-area {
-  top: 21%;
+  top: 21.2%;
 }
 
 .wanted-poster-xl .photo-area {
-  top: 21%;
+  top: 21.2%;
 }
 
 .name-area {

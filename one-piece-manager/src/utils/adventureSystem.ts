@@ -280,7 +280,7 @@ export class AdventureSystem {
   // 8. 🎁 GERAR RECOMPENSAS ESPECIAIS (ATUALIZADO)
   private static generateSpecialReward(player: Character, opponent: Character, island: Island): any {
     // Chance baseada na dificuldade da ilha
-    const baseChance = 0.1 + (island.difficulty * 0.02); // 10% + 2% por dificuldade
+    const baseChance = 0.2 + (island.difficulty * 0.02); // 20% + 2% por dificuldade
     
     if (Math.random() > baseChance) return undefined;
     
