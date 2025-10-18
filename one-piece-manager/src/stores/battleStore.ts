@@ -29,7 +29,7 @@ export const useBattleStore = defineStore('battle', {
   }),
 
   actions: {
-    async simulateBattle(char1: Character, char2: Character, extraReward?: number | 0, extraExp?: number | 0): Promise<BattleResult> {
+    async simulateBattle(char1: Character, char2: Character, extraReward?: number, extraExp?: number): Promise<BattleResult> {
       this.isSimulating = true;
       
       try {
@@ -63,11 +63,6 @@ export const useBattleStore = defineStore('battle', {
         const finalWinChance = Math.max(0.05, Math.min(0.95, winChance + luck));
         
         const char1Wins = Math.random() < finalWinChance;
-        
-        // Simula duração da batalha (1-5 segundos)
-        const battleDuration = 1000 ;
-        
-        await new Promise(resolve => setTimeout(resolve, battleDuration));
         
         const result = await this.generateBattleResult(char1, char2, char1Wins, attackerPower, defenderPower, extraReward, extraExp);
         

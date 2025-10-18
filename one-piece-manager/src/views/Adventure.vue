@@ -1064,18 +1064,6 @@ const startBattle = async () => {
       specialExp
     )
     
-    // Aplicar recompensa especial se venceu
-    if (result.winner.id === playerCharacter.value.id && currentEncounter.value.specialReward) {
-      const specialReward = currentEncounter.value.specialReward
-      
-      if (specialReward.type === 'bounty') {
-        result.bountyChange += specialReward.value
-      }
-      else if(specialReward.type === 'experience'){
-        result.experienceGained += specialReward.value
-      }
-    }
-    
     lastBattleResult.value = result
     
     // 🎯 VERIFICAR POSSIBILIDADE DE RECRUTAMENTO

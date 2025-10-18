@@ -293,12 +293,12 @@ export class AdventureSystem {
       case 'bounty':
         return {
           type: 'bounty',
-          value: Math.floor(opponent.level * 50000 * difficultyMultiplier)
+          value: Math.ceil(opponent.level * 50000 * difficultyMultiplier)
         };
       case 'experience':
         return {
           type: 'experience',
-          value: Math.floor(Math.random() * difficultyMultiplier)
+          value: (Math.random() * difficultyMultiplier).toFixed(2)
         };
       default:
         return undefined;
