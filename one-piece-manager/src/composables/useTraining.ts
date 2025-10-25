@@ -70,7 +70,7 @@ export function useTraining(crewId: number, characterId: number) {
     }
   }
   
-  const startTraining = async (intensity: 1 | 5 | 10): Promise<boolean> => {
+  const startTraining = async (intensity: 1 | 5 | 10 | 30): Promise<boolean> => {
     try {
       console.log(`🏋️ Iniciando treino com intensidade ${intensity}x...`)
       

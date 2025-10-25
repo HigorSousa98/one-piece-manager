@@ -22,9 +22,6 @@ export class AvataaarsOnePieceSystem {
       // Usar ID do personagem como seed para consistência
       const seed = character.id || 1
       
-      // Calcular poder total para expressões
-      const totalPower = character.stats.attack + character.stats.defense + character.stats.speed
-      
       const config: AvataaarsConfig = {
         // Características físicas baseadas em atributos
         skinColor: this.getSkinColorFromKindness(character.kindness || 0),

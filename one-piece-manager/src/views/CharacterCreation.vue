@@ -132,10 +132,10 @@ const characterData = ref({
 })
 
 const characterTypes = [
-  { title: '🏴‍☠️ Pirata', value: 'Pirate' },
-  { title: '⚓ Marine', value: 'Marine' },
-  { title: '💰 Caçador de Recompensas', value: 'BountyHunter' },
-  { title: '🏛️ Governo Mundial', value: 'Government' }
+  { title: 'Pirata', value: 'Pirate' },
+  { title: 'Marine', value: 'Marine' },
+  { title: 'Caçador de Recompensas', value: 'BountyHunter' },
+  { title: 'Governo Mundial', value: 'Government' }
 ]
 
 const combatStyles = ref<string[]>([])

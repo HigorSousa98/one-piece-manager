@@ -110,6 +110,8 @@ export interface Character {
     attack: number
     defense: number
     speed: number
+    skill: number
+    intelligence: number
     armHaki: number
     obsHaki: number
     kingHaki: number
@@ -151,6 +153,8 @@ export interface StyleCombat {
   attack: number
   defense: number
   speed: number
+  skill: number
+  intelligence: number
   armHaki: number
   obsHaki: number
 }
@@ -270,7 +274,7 @@ export interface Task {
   experienceReward?: number;
   bountyReward?: number;
   targetId?: number; // ID do civil ajudado (se aplicável) ou  Id do ship ou id da island
-  difficulty: 'easy' | 'medium' | 'hard';
+  difficulty: 'easy' | 'medium' | 'hard' | 'very hard';
   completedAt?: number;
   createdAt: Date;
   isCompleted: boolean;

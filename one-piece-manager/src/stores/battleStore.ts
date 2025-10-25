@@ -106,10 +106,10 @@ export const useBattleStore = defineStore('battle', {
       const damage = baseDamage + Math.floor(powerDifference * 0.05);
       
       // Calcular experiência ganha
-      let experienceGained = Math.ceil(GameLogic.calculateExperienceGain(winner, loser) * (1 + extraExp));
+      let experienceGained = Math.ceil(GameLogic.calculateExperienceGain(winner, loser) * (1 + Number(extraExp)));
       
       // Calcular mudança de bounty (apenas para piratas)
-      let bountyChange = GameLogic.calculateBountyGain(winner, loser) + extraReward;
+      let bountyChange = GameLogic.calculateBountyGain(winner, loser) + Number(extraReward);
       
       
       // Gerar log da batalha
@@ -401,6 +401,8 @@ export const useBattleStore = defineStore('battle', {
           attack: 0,
           defense: 0,
           speed: 0,
+          intelligence: 0,
+          skill: 0,
           armHaki: 0,
           obsHaki: 0,
           kingHaki: 0,
@@ -421,6 +423,8 @@ export const useBattleStore = defineStore('battle', {
           attack: currentStats.attack + (distributedPoints.attack || 0),
           defense: currentStats.defense + (distributedPoints.defense || 0),
           speed: currentStats.speed + (distributedPoints.speed || 0),
+          intelligence: currentStats.intelligence + (distributedPoints.intelligence || 0),
+          skill: currentStats.skill + (distributedPoints.skill || 0),
           armHaki: currentStats.armHaki + (distributedPoints.armHaki || 0),
           obsHaki: currentStats.obsHaki + (distributedPoints.obsHaki || 0),
           kingHaki: currentStats.kingHaki + (distributedPoints.kingHaki || 0),
@@ -474,7 +478,7 @@ export const useBattleStore = defineStore('battle', {
         const eligible: string[] = [];
         
         // Stats básicos sempre elegíveis
-        eligible.push('attack', 'defense', 'speed');
+        eligible.push('attack', 'defense', 'speed', 'intelligence', 'skill');
         
         // Haki só elegível se já tiver ou se for de alto level
         if (character.stats.armHaki > 0 || character.level >= 50) {

@@ -7,6 +7,7 @@ import { CrewNameGenerator } from '@/data/crewNames'
 import { ShipNameGenerator } from '@/data/shipNameGenerator'
 import DEVIL_FRUITS from '@/data/devilFruits'
 import ISLANDS from '@/data/islands'
+import STYLES from '@/data/styleCombats'
 
 export class GameDataGenerator {
   private config: GenerationConfig
@@ -159,6 +160,8 @@ export class GameDataGenerator {
           attack: combatStyle.attack * 2,
           defense: combatStyle.defense * 2,
           speed: combatStyle.speed * 2,
+          intelligence: combatStyle.intelligence * 2,
+          skill: combatStyle.skill * 2,
           armHaki: 0,
           obsHaki: 0,
           kingHaki: 0,
@@ -169,7 +172,7 @@ export class GameDataGenerator {
         crewId: crewId,
         position: "Captain",
         isPlayer: 1,
-        kindness: 50 + Math.ceil(Math.random() * 20),
+        kindness: 50 + Math.ceil(Math.random() * 30),
         potentialToHaveKngHaki: Math.random(),
         defendingBase: 0, 
         loyalty: 100, 
@@ -196,23 +199,39 @@ export class GameDataGenerator {
       }
     }
   private async generateStyleCombats(): Promise<void> {
-    const styleCombats: Omit<StyleCombat, 'id'>[] = [
-      { name: 'Fighter', attack: 4, defense: 2, speed: 3, armHaki: 3, obsHaki: 2 },
-      { name: 'Swordsman', attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 2 },
-      { name: 'Sniper', attack: 2, defense: 2, speed: 5, armHaki: 1, obsHaki: 4 },
-      { name: 'Support', attack: 2, defense: 5, speed: 3, armHaki: 2, obsHaki: 2 }
-    ]
+    const styleCombats: Omit<StyleCombat, 'id'>[] = []
+    
+    STYLES.forEach((style, index) => {
+      styleCombats.push({
+        name: style.name,
+        attack: style.attack,
+        defense: style.defense,
+        speed: style.speed,
+        skill: style.skill,
+        intelligence: style.intelligence,
+        armHaki: style.armHaki,
+        obsHaki: style.obsHaki
+      })
+    })
 
     await db.styleCombats.bulkAdd(styleCombats)
   }
 
-  public async mockStyleCombact() : Promise<StyleCombat[]> {
-    const styleCombats: Omit<StyleCombat, 'id'>[] = [
-      { name: 'Fighter', attack: 4, defense: 2, speed: 3, armHaki: 3, obsHaki: 2 },
-      { name: 'Swordsman', attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 2 },
-      { name: 'Sniper', attack: 2, defense: 2, speed: 5, armHaki: 1, obsHaki: 4 },
-      { name: 'Support', attack: 2, defense: 5, speed: 3, armHaki: 2, obsHaki: 2 }
-    ]
+  public mockStyleCombact() : StyleCombat[] {
+    const styleCombats: Omit<StyleCombat, 'id'>[] = []
+    
+    STYLES.forEach((style, index) => {
+      styleCombats.push({
+        name: style.name,
+        attack: style.attack,
+        defense: style.defense,
+        speed: style.speed,
+        skill: style.skill,
+        intelligence: style.intelligence,
+        armHaki: style.armHaki,
+        obsHaki: style.obsHaki
+      })
+    })
     return styleCombats
   }
 
@@ -259,7 +278,7 @@ export class GameDataGenerator {
     
     for (let i = 0; i < this.config.totalPirates; i++) {
       const level = this.randomBetween(1, 100)
-      const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const styleCombatId = allStyleCombat[this.randomBetween(0, allStyleCombat.length - 1)].id || 0
 
       const potentialToHaveKngHaki = Math.random(); 
 
@@ -292,7 +311,7 @@ export class GameDataGenerator {
     
     for (let i = 0; i < this.config.totalBountyHunter; i++) {
       const level = this.randomBetween(1, 100)
-      const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const styleCombatId = allStyleCombat[this.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random(); 
       
       bountyHunters.push({
@@ -324,7 +343,7 @@ export class GameDataGenerator {
     
     for (let i = 0; i < this.config.totalMarines; i++) {
       const level = this.randomBetween(1, 100)
-      const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const styleCombatId = allStyleCombat[this.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random(); 
       
       marines.push({
@@ -356,7 +375,7 @@ export class GameDataGenerator {
     
     for (let i = 0; i < this.config.totalGovernment; i++) {
       const level = this.randomBetween(1, 100)
-      const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const styleCombatId = allStyleCombat[this.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random(); 
       
       government.push({
@@ -388,7 +407,7 @@ export class GameDataGenerator {
     
     for (let i = 0; i < this.config.totalCivillians; i++) {
       const level = this.randomBetween(1, 100)
-      const styleCombatId = allStyleCombat[this.randomBetween(0, 3)].id || 0
+      const styleCombatId = allStyleCombat[this.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random(); 
       civillian.push({
         name: NameGenerator.generateRandomName('Civillian'),
@@ -415,12 +434,18 @@ export class GameDataGenerator {
 
   private generateStats(level: number, styleCombat: string, potentialToHaveKngHaki: number): Character['stats'] {
     // Buscar o estilo de combate (assumindo IDs 1-4)
-    const styleMultipliers = [
-      { attack: 4, defense: 2, speed: 3, armHaki: 4, obsHaki: 2,kingHaki: 1, name: 'Fighter' }, // Fighter
-      { attack: 3, defense: 2, speed: 4, armHaki: 3, obsHaki: 3,kingHaki: 1, name: 'Swordsman' }, // Swordsman
-      { attack: 2, defense: 2, speed: 5, armHaki: 2, obsHaki: 4,kingHaki: 1, name: 'Sniper' }, // Sniper
-      { attack: 2, defense: 5, speed: 3, armHaki: 3, obsHaki: 3,kingHaki: 1, name: 'Support' }  // Support
-    ].find(st => st.name == styleCombat)
+    const styleMultipliers = this.mockStyleCombact().find(st => st.name == styleCombat)
+    let statsPoints = 0
+    let hakiPoints = 0
+
+    for(let stat in styleMultipliers){
+      if(['armHaki', 'obsHaki'].includes(stat)){
+        hakiPoints += styleMultipliers[stat]
+      }
+      else if(stat != 'name'){
+        statsPoints += styleMultipliers[stat]
+      }
+    }
 
     var points = 0
 
@@ -428,24 +453,26 @@ export class GameDataGenerator {
       points += i
     }
 
-    const quantPoints = points
-    const basePoints = (quantPoints + 9) * this.randomBetween(0.6,0.85)
+    const quantPoints = points + Math.ceil(level * 1.5)
+    const basePoints = (quantPoints + statsPoints)
 
     // Distribuir pontos baseado no estilo
-    let totalStylePoints = 15
+    let totalStylePoints = statsPoints + hakiPoints
     if(potentialToHaveKngHaki > this.config.allowKingHakiFor && Math.random() < (1-potentialToHaveKngHaki)* (1 / this.config.allowKingHakiFor)){
       totalStylePoints += 1
     }
 
-    if(level < 50) totalStylePoints = 9
+    if(level < 50) totalStylePoints = statsPoints
     
     return {
       attack: Math.ceil((basePoints * styleMultipliers.attack) / totalStylePoints),
       defense: Math.ceil((basePoints * styleMultipliers.defense) / totalStylePoints),
       speed: Math.ceil((basePoints * styleMultipliers.speed) / totalStylePoints),
+      intelligence: Math.ceil((basePoints * styleMultipliers.intelligence) / totalStylePoints),
+      skill: Math.ceil((basePoints * styleMultipliers.skill) / totalStylePoints),
       armHaki: level >= 50 ? Math.ceil((basePoints * styleMultipliers.armHaki) / totalStylePoints) : 0,
       obsHaki: level >= 50 ? Math.ceil((basePoints * styleMultipliers.obsHaki) / totalStylePoints) : 0,
-      kingHaki: level >= 50 && totalStylePoints > 15 ? Math.ceil((basePoints * styleMultipliers.kingHaki) / totalStylePoints) : 0,
+      kingHaki: level >= 50 && totalStylePoints > (statsPoints + hakiPoints) ? Math.ceil((basePoints * 1) / totalStylePoints) : 0,
       devilFruit: 0 // Será calculado depois se tiver Devil Fruit
     }
   }
@@ -454,29 +481,29 @@ export class GameDataGenerator {
     let baseBounty = 0;
 
     if (level >= 95) {
-        baseBounty = this.randomBetween(3000000000, 5500000000); // 3B - 5.5B
+        baseBounty = this.randomBetween(2000000000, 5500000000); // 3B - 5.5B
     } else if (level >= 90) {
-        baseBounty = this.randomBetween(1000000000, 3000000000); // 1B - 3B
+        baseBounty = this.randomBetween(1000000000, 2000000000); // 1B - 3B
     } else if (level >= 70) {
-        baseBounty = this.randomBetween(500000000, 1200000000); // 500M - 1.2B
+        baseBounty = this.randomBetween(400000000, 1200000000); // 500M - 1.2B
     } else if (level >= 50) {
-        baseBounty = this.randomBetween(300000000, 700000000); // 300M - 700M
+        baseBounty = this.randomBetween(250000000, 400000000); // 300M - 700M
     } else if (level >= 40) {
-        baseBounty = this.randomBetween(150000000, 400000000); // 150M - 400M
+        baseBounty = this.randomBetween(140000000, 250000000); // 150M - 400M
     } else if (level >= 30) {
-        baseBounty = this.randomBetween(80000000, 200000000); // 80M - 200M
+        baseBounty = this.randomBetween(70000000, 175000000); // 80M - 200M
     } else if (level >= 15) {
-        baseBounty = this.randomBetween(40000000, 100000000); // 40M - 100M
+        baseBounty = this.randomBetween(30000000, 80000000); // 40M - 100M
     } else if (level >= 10) {
-        baseBounty = this.randomBetween(20000000, 50000000); // 20M - 50M
+        baseBounty = this.randomBetween(15000000, 30000000); // 20M - 50M
     } else if (level >= 5) {
-        baseBounty = this.randomBetween(10000000, 30000000); // 10M - 30M
+        baseBounty = this.randomBetween(10000000, 20000000); // 10M - 30M
     } else if (level >= 4) {
-        baseBounty = this.randomBetween(5000000, 15000000); // 5M - 15M
+        baseBounty = this.randomBetween(5000000, 12000000); // 5M - 15M
     } else if (level >= 2) {
-        baseBounty = this.randomBetween(1000000, 8000000); // 1M - 8M
+        baseBounty = this.randomBetween(1000000, 6000000); // 1M - 8M
     } else {
-        baseBounty = this.randomBetween(100000, 2000000); // 100K - 2M
+        baseBounty = this.randomBetween(10000, 2000000); // 10K - 2M
     }
     
     return Math.floor(baseBounty)

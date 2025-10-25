@@ -163,30 +163,48 @@
         </h2>
         
         <v-row class="mb-4">
-          <v-col cols="12" md="4">
-            <v-card variant="outlined" color="red-darken-1" class="stat-card attack-card">
-              <v-card-text class="text-center pa-4">
-                <v-icon size="50" color="red-darken-2">mdi-sword</v-icon>
-                <div class="text-h3 mt-3 text-red-darken-3 font-weight-bold">{{ member.stats.attack }}</div>
-                <div class="text-h6 text-red-darken-2">Ataque</div>
+          <v-col cols="12" md="3">
+            <v-card variant="outlined" color="red-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="35" color="red-darken-2">mdi-sword</v-icon>
+                <div class="text-h5 mt-2 text-red-darken-3 font-weight-bold">{{ member.stats.attack }}</div>
+                <div class="text-subtitle-2 text-red-darken-2">Ataque</div>
               </v-card-text>
             </v-card>
           </v-col>
-          <v-col cols="12" md="4">
-            <v-card variant="outlined" color="blue-darken-1" class="stat-card defense-card">
-              <v-card-text class="text-center pa-4">
-                <v-icon size="50" color="blue-darken-2">mdi-shield</v-icon>
-                <div class="text-h3 mt-3 text-blue-darken-3 font-weight-bold">{{ member.stats.defense }}</div>
-                <div class="text-h6 text-blue-darken-2">Defesa</div>
+          <v-col cols="12" md="3">
+            <v-card variant="outlined" color="blue-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="35" color="blue-darken-2">mdi-shield</v-icon>
+                <div class="text-h5 mt-2 text-blue-darken-3 font-weight-bold">{{ member.stats.defense }}</div>
+                <div class="text-subtitle-2 text-blue-darken-2">Defesa</div>
               </v-card-text>
             </v-card>
           </v-col>
-          <v-col cols="12" md="4">
-            <v-card variant="outlined" color="green-darken-1" class="stat-card speed-card">
-              <v-card-text class="text-center pa-4">
-                <v-icon size="50" color="green-darken-2">mdi-run-fast</v-icon>
-                <div class="text-h3 mt-3 text-green-darken-3 font-weight-bold">{{ member.stats.speed }}</div>
-                <div class="text-h6 text-green-darken-2">Velocidade</div>
+          <v-col cols="12" md="2">
+            <v-card variant="outlined" color="green-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="35" color="green-darken-2">mdi-run-fast</v-icon>
+                <div class="text-h5 mt-2 text-green-darken-3 font-weight-bold">{{ member.stats.speed }}</div>
+                <div class="text-subtitle-2 text-green-darken-2">Velocidade</div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-card variant="outlined" color="blue-grey-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="35" color="blue-grey-darken-2">mdi-brain</v-icon>
+                <div class="text-h5 mt-2 text-blue-grey-darken-3 font-weight-bold">{{ member.stats.intelligence }}</div>
+                <div class="text-subtitle-2 text-blue-grey-darken-2">Inteligência</div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-card variant="outlined" color="purple-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="35" color="purple-darken-2">mdi-feather</v-icon>
+                <div class="text-h5 mt-2 text-purple-darken-3 font-weight-bold">{{ member.stats.skill }}</div>
+                <div class="text-subtitle-2 text-purple-darken-2">Habilidade</div>
               </v-card-text>
             </v-card>
           </v-col>

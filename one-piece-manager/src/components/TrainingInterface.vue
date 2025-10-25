@@ -106,7 +106,7 @@
             v-for="intensity in intensityOptions" 
             :key="intensity.value"
             cols="12" 
-            md="4"
+            md="3"
           >
             <v-card 
               variant="outlined" 
@@ -307,7 +307,7 @@ const {
 } = useTraining(props.crewId, props.characterId)
 
 // ✅ REACTIVE DATA
-const selectedIntensity = ref<1 | 5 | 10 | null>(null)
+const selectedIntensity = ref<1 | 5 | 10 | 30 | null>(null)
 const showCancelDialog = ref(false)
 const isStarting = ref(false)
 const isCanceling = ref(false)
@@ -334,11 +334,18 @@ const intensityOptions = computed(() => [
     duration: '10 minutos',
     icon: 'mdi-fire',
     color: 'red'
+  },
+  {
+    value: 30 as const,
+    name: 'Muito Intenso',
+    duration: '30 minutos',
+    icon: 'mdi-fire',
+    color: 'dark-red'
   }
 ])
 
 // ✅ METHODS
-const selectIntensity = (intensity: 1 | 5 | 10) => {
+const selectIntensity = (intensity: 1 | 5 | 10 | 30) => {
   selectedIntensity.value = intensity
 }
 
@@ -395,11 +402,12 @@ const confirmCancelTraining = async () => {
 }
 
 // ✅ HELPER FUNCTIONS
-const getIntensityDisplayName = (intensity: 1 | 5 | 10): string => {
+const getIntensityDisplayName = (intensity: 1 | 5 | 10 | 30): string => {
   switch (intensity) {
     case 1: return 'Leve'
     case 5: return 'Moderado'
     case 10: return 'Intenso'
+    case 30: return 'Muito Intenso'
     default: return 'Desconhecido'
   }
 }

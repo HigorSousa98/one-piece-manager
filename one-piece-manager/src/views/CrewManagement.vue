@@ -334,6 +334,7 @@
                   cols="12" 
                   lg="6" 
                   xl="4"
+                  xs="12"
                 >
                   <CrewMemberCard 
                     :member="member" 

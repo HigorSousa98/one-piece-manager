@@ -55,6 +55,8 @@
                 </v-card>
               </v-col>
             </v-row>
+
+            
             
             <!-- CREW OCUPANTE -->
             <div v-if="!liberationProgress.isLiberated && liberationProgress.occupyingCrew" class="mb-4">
@@ -65,92 +67,107 @@
                   </v-icon>
                   {{ getCrewTypeLabel(liberationProgress.occupyingCrew.type) }} Ocupante
                 </v-card-title>
-                
-                <v-card-text class="pa-4">
-                  <div class="d-flex align-center mb-3">
-                    <v-avatar 
-                      size="60" 
-                      :color="getCrewAvatarColor(liberationProgress.occupyingCrew.type)" 
-                      class="mr-4"
-                    >
-                      <span class="text-h5">{{ getCrewEmoji(liberationProgress.occupyingCrew.type) }}</span>
-                    </v-avatar>
-                    
-                    <div class="flex-grow-1">
-                      <div class="text-h6 mb-1" :class="getCrewNameClass(liberationProgress.occupyingCrew.type)">
-                        {{ liberationProgress.occupyingCrew.name }}
+                <v-row align="center">
+                  <v-col cols="12" md="5" class="text-center">
+                    <WantedPoster
+                        :character="liberationProgress.occupyingCaptain"
+                        size="small"
+                        :show-actions="false"
+                        :show-size-controls="false"
+                        class="dashboard-poster"
+                      />
+                  </v-col>
+                  <v-col cols="12" md="7">
+                    <v-card-text class="pa-4">
+                      <div class="d-flex align-center mb-3">
+                        <v-avatar 
+                          size="60" 
+                          :color="getCrewAvatarColor(liberationProgress.occupyingCrew.type)" 
+                          class="mr-4"
+                        >
+                          <span class="text-h5">{{ getCrewEmoji(liberationProgress.occupyingCrew.type) }}</span>
+                        </v-avatar>
+                        
+                        <div class="flex-grow-1">
+                          <div class="text-h6 mb-1" :class="getCrewNameClass(liberationProgress.occupyingCrew.type)">
+                            {{ liberationProgress.occupyingCrew.name }}
+                          </div>
+                          
+                          <div class="crew-details">
+                            <v-chip 
+                              :color="getCrewChipColor(liberationProgress.occupyingCrew.type)" 
+                              size="small" 
+                              variant="tonal"
+                              class="mr-2 mb-1"
+                            >
+                              <v-icon left size="small">{{ getCrewTypeIcon(liberationProgress.occupyingCrew.type) }}</v-icon>
+                              {{ liberationProgress.occupyingCrew.type }}
+                            </v-chip>
+                            
+                            <v-chip 
+                              color="amber-darken-2" 
+                              size="small" 
+                              variant="tonal"
+                              class="mr-2 mb-1"
+                            >
+                              <v-icon left size="small">mdi-star</v-icon>
+                              {{ formatReputation(liberationProgress.occupyingCrew.reputation) }}
+                            </v-chip>
+                            
+                            <v-chip 
+                              color="green-darken-2" 
+                              size="small" 
+                              variant="tonal"
+                              class="mb-1"
+                            >
+                              <v-icon left size="small">mdi-treasure-chest</v-icon>
+                              {{ formatTreasury(liberationProgress.occupyingCrew.treasury) }}
+                            </v-chip>
+                          </div>
+                        </div>
                       </div>
                       
-                      <div class="crew-details">
-                        <v-chip 
-                          :color="getCrewChipColor(liberationProgress.occupyingCrew.type)" 
-                          size="small" 
-                          variant="tonal"
-                          class="mr-2 mb-1"
-                        >
-                          <v-icon left size="small">{{ getCrewTypeIcon(liberationProgress.occupyingCrew.type) }}</v-icon>
-                          {{ liberationProgress.occupyingCrew.type }}
-                        </v-chip>
+                      <!-- BARRA DE PODER/AMEAÇA -->
+                      <div class="threat-level mb-3">
+                        <div class="d-flex justify-space-between mb-2">
+                          <span class="text-body-2 text-black"><strong>Nível de Ameaça</strong></span>
+                          <span class="text-body-2">{{ getThreatLevel(liberationProgress.occupyingCrew) }}</span>
+                        </div>
                         
-                        <v-chip 
-                          color="amber-darken-2" 
-                          size="small" 
-                          variant="tonal"
-                          class="mr-2 mb-1"
-                        >
-                          <v-icon left size="small">mdi-star</v-icon>
-                          {{ formatReputation(liberationProgress.occupyingCrew.reputation) }}
-                        </v-chip>
-                        
-                        <v-chip 
-                          color="green-darken-2" 
-                          size="small" 
-                          variant="tonal"
+                        <v-progress-linear
+                          :model-value="getThreatPercentage(liberationProgress.occupyingCrew)"
+                          :color="getThreatColor(liberationProgress.occupyingCrew)"
+                          height="12"
+                          rounded
                           class="mb-1"
                         >
-                          <v-icon left size="small">mdi-treasure-chest</v-icon>
-                          {{ formatTreasury(liberationProgress.occupyingCrew.treasury) }}
-                        </v-chip>
+                          <template v-slot:default>
+                            <strong class="text-white text-caption">
+                              {{ getThreatLevel(liberationProgress.occupyingCrew) }}
+                            </strong>
+                          </template>
+                        </v-progress-linear>
                       </div>
-                    </div>
-                  </div>
-                  
-                  <!-- BARRA DE PODER/AMEAÇA -->
-                  <div class="threat-level mb-3">
-                    <div class="d-flex justify-space-between mb-2">
-                      <span class="text-body-2 text-black"><strong>Nível de Ameaça</strong></span>
-                      <span class="text-body-2">{{ getThreatLevel(liberationProgress.occupyingCrew) }}</span>
-                    </div>
-                    
-                    <v-progress-linear
-                      :model-value="getThreatPercentage(liberationProgress.occupyingCrew)"
-                      :color="getThreatColor(liberationProgress.occupyingCrew)"
-                      height="12"
-                      rounded
-                      class="mb-1"
-                    >
-                      <template v-slot:default>
-                        <strong class="text-white text-caption">
-                          {{ getThreatLevel(liberationProgress.occupyingCrew) }}
-                        </strong>
-                      </template>
-                    </v-progress-linear>
-                  </div>
-                  
-                  <!-- DESCRIÇÃO DINÂMICA -->
-                  <v-alert 
-                    :type="getCrewAlertType(liberationProgress.occupyingCrew.type)" 
-                    variant="tonal" 
-                    class="mb-0"
-                  >
-                    <div class="text-body-2">
-                      <strong>{{ getCrewDescription(liberationProgress.occupyingCrew) }}</strong>
-                    </div>
-                    <div class="text-caption mt-1">
-                      {{ getCrewWarning(liberationProgress.occupyingCrew) }}
-                    </div>
-                  </v-alert>
-                </v-card-text>
+                      
+                      <!-- DESCRIÇÃO DINÂMICA -->
+                      <v-alert 
+                        :type="getCrewAlertType(liberationProgress.occupyingCrew.type)" 
+                        variant="tonal" 
+                        class="mb-0"
+                      >
+                        <div class="text-body-2">
+                          <strong>{{ getCrewDescription(liberationProgress.occupyingCrew) }}</strong>
+                        </div>
+                        <div class="text-caption mt-1">
+                          {{ getCrewWarning(liberationProgress.occupyingCrew) }}
+                        </div>
+                      </v-alert>
+                    </v-card-text>
+                  </v-col>
+                </v-row>
+                
+                
+                
               </v-card>
             </div>
             
@@ -726,6 +743,7 @@ import type { Island, Task, Character, Crew } from '@/utils/database'
 import { useTimeRemaining } from '@/composables/useTimeRemaining'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GenerationConfig } from '@/utils/generationConfig'
+import WantedPoster from './WantedPoster.vue'
 
 // ✅ PROPS
 interface Props {
@@ -743,7 +761,8 @@ interface LiberationProgressState {
   completedSteps: number
   isLiberated: boolean
   canStart: boolean
-  occupyingCrew: Crew | null
+  occupyingCrew: Crew | null,
+  occupyingCaptain: Character | null
 }
 
 // ✅ ESTADOS
@@ -769,7 +788,8 @@ const liberationProgress = ref<LiberationProgressState>({
   completedSteps: 0,
   isLiberated: false,
   canStart: false,
-  occupyingCrew: null
+  occupyingCrew: null,
+  occupyingCaptain: null
 })
 
 const activeTask = ref<Task | null>(null)
@@ -869,7 +889,8 @@ const loadLiberationData = async () => {
       completedSteps: progress.completedSteps,
       isLiberated: progress.isLiberated,
       canStart: progress.canStart,
-      occupyingCrew: progress.occupyingCrew || null
+      occupyingCrew: progress.occupyingCrew || null,
+      occupyingCaptain: progress.occupyingCaptain || null
     }
     
     playerHasDevilFruit.value = props.playerCharacter.devilFruitId !== 0

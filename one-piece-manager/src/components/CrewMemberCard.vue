@@ -98,33 +98,46 @@
           Estatísticas de Combate
         </h4>
         
-        <v-row class="stats-grid">
-          <v-col cols="4">
-            <div class="stat-card attack-stat">
-              <v-icon size="18" color="red-darken-2">mdi-sword</v-icon>
-              <div class="stat-content">
-                <div class="stat-value">{{ member.stats.attack }}</div>
-                <div class="stat-label">ATK</div>
-              </div>
-            </div>
+        <v-row class="mb-4">
+          <v-col cols="12" md="3" no-gutters class="row-section">
+            <v-card variant="outlined" color="red-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="24" color="red-darken-2">mdi-sword</v-icon>
+                <div class="text-h6 mt-2 text-red-darken-3 font-weight-bold">{{ member.stats.attack }}</div>
+              </v-card-text>
+            </v-card>
           </v-col>
-          <v-col cols="4">
-            <div class="stat-card defense-stat">
-              <v-icon size="18" color="blue-darken-2">mdi-shield</v-icon>
-              <div class="stat-content">
-                <div class="stat-value">{{ member.stats.defense }}</div>
-                <div class="stat-label">DEF</div>
-              </div>
-            </div>
+          <v-col cols="12" md="3" no-gutters class="row-section">
+            <v-card variant="outlined" color="blue-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="24" color="blue-darken-2">mdi-shield</v-icon>
+                <div class="text-h6 mt-2 text-blue-darken-3 font-weight-bold">{{ member.stats.defense }}</div>
+              </v-card-text>
+            </v-card>
           </v-col>
-          <v-col cols="4">
-            <div class="stat-card speed-stat">
-              <v-icon size="18" color="green-darken-2">mdi-run-fast</v-icon>
-              <div class="stat-content">
-                <div class="stat-value">{{ member.stats.speed }}</div>
-                <div class="stat-label">SPD</div>
-              </div>
-            </div>
+          <v-col cols="12" md="2" no-gutters class="row-section">
+            <v-card variant="outlined" color="green-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="24" color="green-darken-2">mdi-run-fast</v-icon>
+                <div class="text-h6 mt-2 text-green-darken-3 font-weight-bold">{{ member.stats.speed }}</div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="2" no-gutters class="row-section">
+            <v-card variant="outlined" color="blue-grey-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="24" color="blue-grey-darken-2">mdi-brain</v-icon>
+                <div class="text-h6 mt-2 text-blue-grey-darken-3 font-weight-bold">{{ member.stats.intelligence }}</div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="2" no-gutters class="row-section">
+            <v-card variant="outlined" color="purple-darken-1" class="stat-card">
+              <v-card-text class="text-center pa-3">
+                <v-icon size="24" color="purple-darken-2">mdi-feather</v-icon>
+                <div class="text-h6 mt-2 text-purple-darken-3 font-weight-bold">{{ member.stats.skill }}</div>
+              </v-card-text>
+            </v-card>
           </v-col>
         </v-row>
         
@@ -527,9 +540,13 @@ const getKindnessDescription = (kindness: number): string => {
 /* STATS SECTION */
 .stats-section {
   background: rgba(0, 0, 0, 0.02);
-  padding: 12px;
+  padding: 6px;
   border-radius: 12px;
   border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.row-section{
+  padding: 6px !important;
 }
 
 .stats-title {
@@ -545,8 +562,7 @@ const getKindnessDescription = (kindness: number): string => {
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 2px;
   background: rgba(255, 255, 255, 0.8);
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.1);

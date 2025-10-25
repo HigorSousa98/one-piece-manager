@@ -579,7 +579,7 @@
               🌟 CANDIDATOS A SUPERNOVA
             </v-card-title>
             <v-card-subtitle class="text-orange-darken-2">
-              Piratas em ascensão no Paraíso (Ilhas dificuldade ≤ 15)
+              Piratas em ascensão no Paraíso (Ilhas dificuldade ≤ 14)
             </v-card-subtitle>
             <v-card-text class="pa-4">
               <RankingSection

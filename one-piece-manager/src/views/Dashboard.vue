@@ -290,8 +290,8 @@
                 </h3>
                 
                 <v-row class="mb-4">
-                  <v-col cols="12" md="4">
-                    <v-card variant="outlined" color="red-darken-1" class="stat-card attack-card">
+                  <v-col cols="12" md="3">
+                    <v-card variant="outlined" color="red-darken-1" class="stat-card">
                       <v-card-text class="text-center pa-3">
                         <v-icon size="35" color="red-darken-2">mdi-sword</v-icon>
                         <div class="text-h5 mt-2 text-red-darken-3 font-weight-bold">{{ playerCharacter.stats.attack }}</div>
@@ -299,8 +299,8 @@
                       </v-card-text>
                     </v-card>
                   </v-col>
-                  <v-col cols="12" md="4">
-                    <v-card variant="outlined" color="blue-darken-1" class="stat-card defense-card">
+                  <v-col cols="12" md="3">
+                    <v-card variant="outlined" color="blue-darken-1" class="stat-card">
                       <v-card-text class="text-center pa-3">
                         <v-icon size="35" color="blue-darken-2">mdi-shield</v-icon>
                         <div class="text-h5 mt-2 text-blue-darken-3 font-weight-bold">{{ playerCharacter.stats.defense }}</div>
@@ -308,12 +308,30 @@
                       </v-card-text>
                     </v-card>
                   </v-col>
-                  <v-col cols="12" md="4">
-                    <v-card variant="outlined" color="green-darken-1" class="stat-card speed-card">
+                  <v-col cols="12" md="2">
+                    <v-card variant="outlined" color="green-darken-1" class="stat-card">
                       <v-card-text class="text-center pa-3">
                         <v-icon size="35" color="green-darken-2">mdi-run-fast</v-icon>
                         <div class="text-h5 mt-2 text-green-darken-3 font-weight-bold">{{ playerCharacter.stats.speed }}</div>
                         <div class="text-subtitle-2 text-green-darken-2">Velocidade</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="12" md="2">
+                    <v-card variant="outlined" color="blue-grey-darken-1" class="stat-card">
+                      <v-card-text class="text-center pa-3">
+                        <v-icon size="35" color="blue-grey-darken-2">mdi-brain</v-icon>
+                        <div class="text-h5 mt-2 text-blue-grey-darken-3 font-weight-bold">{{ playerCharacter.stats.intelligence }}</div>
+                        <div class="text-subtitle-2 text-blue-grey-darken-2">Inteligência</div>
+                      </v-card-text>
+                    </v-card>
+                  </v-col>
+                  <v-col cols="12" md="2">
+                    <v-card variant="outlined" color="purple-darken-1" class="stat-card">
+                      <v-card-text class="text-center pa-3">
+                        <v-icon size="35" color="purple-darken-2">mdi-feather</v-icon>
+                        <div class="text-h5 mt-2 text-purple-darken-3 font-weight-bold">{{ playerCharacter.stats.skill }}</div>
+                        <div class="text-subtitle-2 text-purple-darken-2">Habilidade</div>
                       </v-card-text>
                     </v-card>
                   </v-col>
@@ -1562,6 +1580,8 @@ onMounted(async () => {
 .attack-card { border-color: #c62828; }
 .defense-card { border-color: #1565c0; }
 .speed-card { border-color: #2e7d32; }
+.intelligence-card { border-color: #7d652e; }
+.skill-card { border-color: #542e7d; }
 
 /* ✅ HAKI CARDS */
 .haki-card {

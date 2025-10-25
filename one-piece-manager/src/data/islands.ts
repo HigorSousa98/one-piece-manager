@@ -17,12 +17,12 @@ export const ISLANDS: IslandData[] = [
     { names: ['Whisky Peak', 'Little Garden', 'Drum Island', 'Alabasta'], difficulty: 6 },
     { names: ['Jaya', 'Skypiea', 'Long Ring Long Land', 'Water 7'], difficulty: 7 },
     { names: ['Enies Lobby', 'Thriller Bark', 'Sabaody Archipelago', 'Amazon Lily'], difficulty: 8 },
-    { names: ['Impel Down', 'Marineford', 'Post-War Arc', 'Return to Sabaody'], difficulty: 9 },
-    { names: ['Kuraigana Island', 'Weatheria', 'Kamabakka Kingdom', 'Torino Kingdom'], difficulty: 10 },
-    { names: ['Bowin Islands', 'Namakura Island', 'Peachy Island', 'Momoiro Island'], difficulty: 11 },
-    { names: ['Baltigo', 'Foolshout Island', 'Minion Island', 'Swallow Island'], difficulty: 12 },
-    { names: ['St. Poplar', 'Centaurea', 'Rakesh', 'Kenzan Island'], difficulty: 13 },
-    { names: ['Cactus Island', 'Kyuka Island', 'Nanimonai Island', 'Banaro Island'], difficulty: 14 },
+    { names: ['Kuraigana Island', 'Weatheria', 'Kamabakka Kingdom', 'Torino Kingdom'], difficulty: 9 },
+    { names: ['Bowin Islands', 'Namakura Island', 'Peachy Island', 'Momoiro Island'], difficulty: 10 },
+    { names: ['Baltigo', 'Foolshout Island', 'Minion Island', 'Swallow Island'], difficulty: 11 },
+    { names: ['St. Poplar', 'Centaurea', 'Rakesh', 'Kenzan Island'], difficulty: 12 },
+    { names: ['Cactus Island', 'Kyuka Island', 'Nanimonai Island', 'Banaro Island'], difficulty: 13 },
+    { names: ['Impel Down', 'Marineford', 'Post-War Arc', 'Return to Sabaody'], difficulty: 14 },
     { names: ['Sabaody Park', 'Grove 1', 'Grove 13', 'Grove 46'], difficulty: 15 },
 
     // Nível 16-25 (New World)

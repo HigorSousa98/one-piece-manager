@@ -2,6 +2,7 @@
 import { Character, StyleCombat, DevilFruit, Crew } from '@/utils/database'
 import {GenerationConfig, GenerationSettings} from '@/utils/generationConfig'
 import {PowerCalculationSystem} from '@/utils/powerCalculationSystem'
+import STYLES from '@/data/styleCombats';
 
 export class GameLogic {
   static calculateExperienceGain(winner: Character, loser: Character): number {
@@ -389,11 +390,23 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
 
   static increaseStats(character: Character, newLevel: number, style: StyleCombat, fruit: DevilFruit | null = null): Partial<Character['stats']> {
     const totalPoints = newLevel
+    const styleMultipliers = this.mockStyleCombact().find(st => st.name == style.name)
+    let statsPoints = 0
+    let hakiPoints = 0
+
+    for(let stat in styleMultipliers){
+      if(['armHaki', 'obsHaki'].includes(stat)){
+        hakiPoints += styleMultipliers[stat]
+      }
+      else if(stat != 'name'){
+        statsPoints += styleMultipliers[stat]
+      }
+    }
     
-    var statsAvailable = 9
+    var statsAvailable = statsPoints
     var unlockHaki = false
     if(newLevel >= 50){
-        statsAvailable += 6
+        statsAvailable += hakiPoints
         if(character.potentialToHaveKngHaki > GenerationConfig.createEpic().allowKingHakiFor){
           if((Math.random() > (1 - character.potentialToHaveKngHaki) * (1 / GenerationConfig.createEpic().allowKingHakiFor) && character.stats.kingHaki == 0) || character.stats.kingHaki > 0){
             if(character.stats.kingHaki == 0){
@@ -415,6 +428,8 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
     stats.attack = character.stats.attack + Math.ceil(style.attack * factor)
     stats.defense = character.stats.defense + Math.ceil(style.defense * factor)
     stats.speed = character.stats.speed + Math.ceil(style.speed * factor)
+    stats.intelligence = character.stats.intelligence + Math.ceil(style.intelligence * factor)
+    stats.skill = character.stats.skill + Math.ceil(style.skill * factor)
     if(newLevel >= 50){
         stats.armHaki = character.stats.armHaki + Math.ceil(style.armHaki * factor)
         stats.obsHaki = character.stats.obsHaki + Math.ceil(style.obsHaki * factor)
@@ -427,6 +442,23 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
     }
     
     return stats;
+  }
+  static mockStyleCombact(): StyleCombat[] {
+    const styleCombats: Omit<StyleCombat, 'id'>[] = []
+    
+    STYLES.forEach((style, index) => {
+      styleCombats.push({
+        name: style.name,
+        attack: style.attack,
+        defense: style.defense,
+        speed: style.speed,
+        skill: style.skill,
+        intelligence: style.intelligence,
+        armHaki: style.armHaki,
+        obsHaki: style.obsHaki
+      })
+    })
+    return styleCombats
   }
   static calculateCrewPower(members: Character[], allFruits: DevilFruit[]): number{
     return members.reduce((total, member) => {

@@ -127,7 +127,7 @@ export class TrainingSystem {
   }
   
   // ✅ CALCULAR EXPERIÊNCIA DO TREINO
-  static async calculateTrainingExperience(crewId: number, intensity: 1 | 5 | 10): Promise<number> {
+  static async calculateTrainingExperience(crewId: number, intensity: 1 | 5 | 10 | 30): Promise<number> {
     try {
       // Buscar todos os membros da tripulação (incluindo capitão)
       const crewMembers = await db.characters
@@ -178,7 +178,7 @@ export class TrainingSystem {
   static async startTraining(
     crewId: number, 
     characterId: number, 
-    intensity: 1 | 5 | 10
+    intensity: 1 | 5 | 10 | 30
   ): Promise<Task | null> {
     try {
       // Verificar se pode treinar
@@ -210,7 +210,7 @@ export class TrainingSystem {
         bountyReward: 0, 
         duration: intensity as number,
         helpType: '',
-        difficulty: this.getIntensityName(intensity) as 'easy' | 'medium' | 'hard',
+        difficulty: this.getIntensityName(intensity) as 'easy' | 'medium' | 'hard' | 'very hard',
         createdAt: now,
         location: island?.name || ''
       }
@@ -335,21 +335,23 @@ export class TrainingSystem {
   }
   
   // ✅ OBTER NOME DA INTENSIDADE
-  static getIntensityName(intensity: 1 | 5 | 10): string {
+  static getIntensityName(intensity: 1 | 5 | 10 | 30): string {
     switch (intensity) {
       case 1: return 'easy'
       case 5: return 'medium'
       case 10: return 'hard'
+      case 30: return 'very hard'
       default: return 'easy'
     }
   }
   
   // ✅ OBTER COR DA INTENSIDADE
-  static getIntensityColor(intensity: 1 | 5 | 10): string {
+  static getIntensityColor(intensity: 1 | 5 | 10 | 30): string {
     switch (intensity) {
       case 1: return 'green'
       case 5: return 'orange'
       case 10: return 'red'
+      case 30: return 'dark-red'
       default: return 'grey'
     }
   }
@@ -362,7 +364,7 @@ export class TrainingSystem {
   }
   
   // ✅ OBTER DURAÇÃO EM MINUTOS
-  static getIntensityDuration(intensity: 1 | 5 | 10): number {
+  static getIntensityDuration(intensity: 1 | 5 | 10 | 30): number {
     return intensity // Retorna diretamente a intensidade em minutos
   }
 

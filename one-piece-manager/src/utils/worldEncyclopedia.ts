@@ -54,6 +54,7 @@ export class WorldEncyclopedia {
 
       // Enriquecer dados dos capitães
       const enrichedCaptains = await this.enrichCaptainData(captains, crews, islands, playerCharacterId)
+      const enrichedCharacters = await this.enrichCaptainData(characters, crews, islands, playerCharacterId)
 
       // Gerar rankings específicos
       const rankings: WorldRankings = {
@@ -61,12 +62,12 @@ export class WorldEncyclopedia {
         shichibukai: await this.getShichibukaiRanking(enrichedCaptains, shichibukais),
         admirals: await this.getAdmiralRanking(enrichedCaptains, admirals),
         gorousei: await this.getGorouseiRanking(enrichedCaptains, gorouseis),
-        pirates: this.getCategoryRanking(enrichedCaptains, 'Pirate'),
-        marines: this.getCategoryRanking(enrichedCaptains, 'Marine'),
-        bountyHunters: this.getCategoryRanking(enrichedCaptains, 'BountyHunter'),
-        government: this.getCategoryRanking(enrichedCaptains, 'Government'),
+        pirates: this.getCategoryRanking(enrichedCharacters, 'Pirate'),
+        marines: this.getCategoryRanking(enrichedCharacters, 'Marine'),
+        bountyHunters: this.getCategoryRanking(enrichedCharacters, 'BountyHunter'),
+        government: this.getCategoryRanking(enrichedCharacters, 'Government'),
         supernovas: await this.getSupernovasRanking(enrichedCaptains, crews, islands),
-        playerInfo: playerCharacterId ? this.getPlayerRankingInfo(enrichedCaptains, playerCharacterId) : null,
+        playerInfo: playerCharacterId ? this.getPlayerRankingInfo(enrichedCharacters, playerCharacterId) : null,
         allDevilFruits: await db.devilFruits.toArray()
       }
 
@@ -210,7 +211,7 @@ export class WorldEncyclopedia {
     islands: Island[]
   ): Promise<RankingCharacter[]> {
     const supernovaCandidates = captains.filter(captain => {
-      return captain.type === 'Pirate' && captain.currentIslandDifficulty <= 15 && captain.currentIslandDifficulty > 0 
+      return captain.type === 'Pirate' && captain.currentIslandDifficulty <= 14 && captain.currentIslandDifficulty > 0 
     })
 
     return supernovaCandidates

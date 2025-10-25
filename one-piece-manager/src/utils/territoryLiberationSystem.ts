@@ -593,6 +593,7 @@ export class TerritoryLiberationSystem {
     isLiberated: boolean
     canStart: boolean
     occupyingCrew?: Crew
+    occupyingCaptain?: Character
   }> {
     try {
       const island = await db.islands.get(islandId)
@@ -610,8 +611,12 @@ export class TerritoryLiberationSystem {
       const isLiberated = !territory || territory.crewId === 0
 
       let occupyingCrew: Crew | undefined
+      let occupyingCaptain: Character | undefined
       if (territory && territory.crewId) {
         occupyingCrew = await db.crews.get(territory.crewId) || undefined
+        if(occupyingCrew){
+          occupyingCaptain = await db.characters.get(occupyingCrew.captainId)
+        }
       }
 
       const completedTasks = await db.tasks
@@ -643,7 +648,8 @@ export class TerritoryLiberationSystem {
         completedSteps,
         isLiberated,
         canStart,
-        occupyingCrew
+        occupyingCrew, 
+        occupyingCaptain
       }
 
     } catch (error) {

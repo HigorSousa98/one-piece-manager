@@ -136,8 +136,11 @@
                     <v-chip :color="getTypeColor(playerCharacter?.type || '')" size="small" variant="elevated" class="mr-2">
                       <strong>{{ playerCharacter?.type }}</strong>
                     </v-chip>
-                    <v-chip color="blue-darken-2" size="small" variant="elevated">
+                    <v-chip color="blue-darken-2" size="small" variant="elevated" class="mr-2">
                       <strong>Level {{ playerCharacter?.level }}</strong>
+                    </v-chip>
+                    <v-chip color="purple-darken-2" size="small" variant="elevated">
+                      <strong>{{ opponentStyle(playerCharacter?.styleCombatId) }}</strong>
                     </v-chip>
                   </div>
                   <div class="text-body-2">
@@ -174,6 +177,32 @@
                 <v-icon left>mdi-sail-boat</v-icon>
                 {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA' }}
               </v-btn>
+              <v-spacer />
+              <!--<v-btn
+                color="primary"
+                size="x-large"
+                :disabled="hasActiveTasks || loadingAdventure"
+                @click="startAdventureX(10)"
+                :loading="loadingAdventure"
+                variant="elevated"
+                class="adventure-start-btn"
+              >
+                <v-icon left>mdi-sail-boat</v-icon>
+                {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA 10X' }}
+              </v-btn>
+              <v-spacer />
+              <v-btn
+                color="primary"
+                size="x-large"
+                :disabled="hasActiveTasks || loadingAdventure"
+                @click="startAdventureX(50)"
+                :loading="loadingAdventure"
+                variant="elevated"
+                class="adventure-start-btn"
+              >
+                <v-icon left>mdi-sail-boat</v-icon>
+                {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA 50X' }}
+              </v-btn>-->
               
               <div v-if="hasActiveTasks" class="mt-2">
                 <v-chip color="warning" variant="elevated">
@@ -230,11 +259,14 @@
                               <div v-if="playerCharacter.position == 'Captain'">Capitão do bando {{ crew(playerCharacter.crewId)?.name }}</div> 
                               <div v-else>Membro do bando {{ crew(playerCharacter.crewId)?.name }}</div>
                             </div>
-                            <v-chip :color="getTypeColor(playerCharacter?.type || '')" size="small" variant="elevated" class="mt-1">
+                            <v-chip :color="getTypeColor(playerCharacter?.type || '')" size="small" variant="elevated" class="mt-1 mr-2">
                               {{ playerCharacter?.type }}
                             </v-chip>
-                            <v-chip :color="getTypeColor(playerCharacter.type)" size="small" variant="elevated" class="mt-1">
+                            <v-chip :color="getTypeColor(playerCharacter.type)" size="small" variant="elevated" class="mt-1 mr-2">
                               Level {{ playerCharacter.level }}
+                            </v-chip>
+                            <v-chip :color="getTypeColor(playerCharacter.type)" size="small" variant="elevated" class="mt-1">
+                              {{ opponentStyle(playerCharacter?.styleCombatId) }}
                             </v-chip>
                             <div class="text-body-2 mt-2">
                               <strong>Poder: {{ calculatePower(playerCharacter!) }}</strong>
@@ -277,11 +309,14 @@
                               <div v-if="currentEncounter.opponent.position == 'Captain'">Capitão do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div> 
                               <div v-else>Membro do bando {{ crew(currentEncounter.opponent.crewId)?.name }}</div>
                             </div>
-                            <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1">
+                            <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1 mr-2">
                               {{ currentEncounter.opponent.type }}
                             </v-chip>
-                            <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1">
+                            <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1 mr-2">
                               Level {{ currentEncounter.opponent.level }}
+                            </v-chip>
+                            <v-chip :color="getTypeColor(currentEncounter.opponent.type)" size="small" variant="elevated" class="mt-1">
+                              {{ opponentStyle(currentEncounter.opponent.styleCombatId) }}
                             </v-chip>
                             <div class="text-body-2 mt-2">
                               <strong>Poder: {{ calculatePower(currentEncounter.opponent) }}</strong>
@@ -1018,6 +1053,13 @@ watchEffect(async () => {
     winChance.value = 0
   }
 })
+
+const startAdventureX = async (times: number) => {
+  for(var i =1; i<=times; i++){
+    await startAdventure();
+    await startBattle();
+  }
+}
 
 const startAdventure = async () => {
   if (!playerCharacter.value || hasActiveTasks.value) {

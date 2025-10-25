@@ -208,6 +208,26 @@
                   <div class="stat-value">{{ character.stats?.defense || 0 }}</div>
                 </div>
               </div>
+
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <v-icon color="dark-blue">mdi-brain</v-icon>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Inteligência</div>
+                  <div class="stat-value">{{ character.stats?.intelligence || 0 }}</div>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <v-icon color="purple">mdi-feather</v-icon>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Habilidade</div>
+                  <div class="stat-value">{{ character.stats?.skill || 0 }}</div>
+                </div>
+              </div>
               
               <div class="stat-item">
                 <div class="stat-icon">

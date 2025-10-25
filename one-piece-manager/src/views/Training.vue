@@ -523,7 +523,8 @@ const getTypeIcon = (type: string): string => {
 const getIntensityColor = (intensity: number): string => {
   if (intensity <= 1) return 'green'
   if (intensity <= 5) return 'orange'
-  return 'red'
+  if (intensity <= 10) return 'red'
+  return 'dark-red'
 }
 
 const getTrainingIntensity = (training: Task): number => {
@@ -533,7 +534,8 @@ const getTrainingIntensity = (training: Task): number => {
   
   if (durationMinutes <= 1) return 1
   if (durationMinutes <= 5) return 5
-  return 10
+  if (durationMinutes <= 10) return 10
+  return 30
 }
 
 const styleCombat = (combat: number): string => {

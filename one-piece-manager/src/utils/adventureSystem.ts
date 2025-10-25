@@ -662,50 +662,6 @@ export class AdventureSystem {
     }
   }
   
-  // 📈 APLICAR BONUS DE STATS ALEATÓRIO
-  private static applyRandomStatBonus(character: Character): void {
-    const pointsToDistribute = 3; // 3 pontos por level
-
-    if(character.level >= 50){
-      for (let i = 0; i < pointsToDistribute; i++) {
-        const statToIncrease = Math.random();
-        
-        if (statToIncrease < 0.2) {
-          character.stats.attack += 1;
-        } else if (statToIncrease < 0.4) {
-          character.stats.defense += 1;
-        } else if (statToIncrease < 0.6) {
-          character.stats.speed += 1;
-        } else if (statToIncrease < 0.79) {
-          character.stats.armHaki += 1;
-        } else if (statToIncrease < 0.98) {
-          character.stats.obsHaki += 1;
-        } else if(character.potentialToHaveKngHaki > 0.8){
-          // 2% chance de ganhar Conqueror's Haki
-          if (character.stats.kingHaki === 0 && character.level >= 50) {
-            character.stats.kingHaki = 1;
-          } else {
-            character.stats.kingHaki += 1;
-          }
-        }
-        else{
-          character.stats.armHaki += 1;
-        }
-      }
-    }else{
-      for (let i = 0; i < pointsToDistribute; i++) {
-        const statToIncrease = Math.random();
-        if (statToIncrease < 0.33) {
-          character.stats.attack += 1;
-        } else if (statToIncrease < 0.67) {
-          character.stats.defense += 1;
-        } else {
-          character.stats.speed += 1;
-        }
-      }
-    }
-  }
-  
   // 🌍 SIMULAR MUNDO INTEIRO (TODAS AS ILHAS)
   static async simulateWorldEncounters(): Promise<{
     totalEncounters: number;

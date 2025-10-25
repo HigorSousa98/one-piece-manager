@@ -3,6 +3,7 @@ import { db } from './database'
 import { AdventureSystem } from './adventureSystem'
 import type { Task, Character, Crew, Island, Ship } from './database'
 import { useCharacterStore } from '@/stores/characterStore'
+import { GameLogic } from './gameLogic'
 
 export class NavigationSystem {
   
@@ -222,6 +223,7 @@ export class NavigationSystem {
 static async findEnemyCrew(originIslandId: number, destinationIslandId: number, crewId: number): Promise<Crew | null> {
   try {
     // Buscar crews que estão em alto mar (docked = 0) nas ilhas de origem ou destino
+    const devilFruits = await db.devilFruits.toArray()
     const enemyCrews = await db.crews
       .where('docked')
       .equals(0)
@@ -272,17 +274,14 @@ static async findEnemyCrew(originIslandId: number, destinationIslandId: number, 
     
     // Calcular poder do player crew
     const playerMembers = await db.characters.where('crewId').equals(playerCrew.id!).toArray()
-    const playerPower = playerMembers.reduce((total, member) => {
-      return total + (member.stats.attack + member.stats.defense + member.stats.speed)
-    }, 0)
+
+    const playerPower = GameLogic.calculateCrewPower(playerMembers, devilFruits)
     
     // Calcular poder dos crews inimigos e ordenar por proximidade
     const enemiesWithPower = await Promise.all(
       compatibleCrews.map(async (crew) => {
         const members = await db.characters.where('crewId').equals(crew.id!).toArray()
-        const power = members.reduce((total, member) => {
-          return total + (member.stats.attack + member.stats.defense + member.stats.speed)
-        }, 0)
+        const power = GameLogic.calculateCrewPower(members, devilFruits)
         
         const captain = await db.characters.get(crew.captainId)
         
