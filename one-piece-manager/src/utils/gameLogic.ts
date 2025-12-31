@@ -286,7 +286,7 @@ export class GameLogic {
   // 12. �� LIMITADORES E BALANCEAMENTO
   
   // Limite máximo baseado no level do vencedor
-  const maxBountyGain = winner.level * 50000; // 50k por level máximo
+  const maxBountyGain = winner.level * 30000; // 50k por level máximo
   
   // Limite mínimo
   const minBountyGain = Math.max(10000, winner.level * 1000); // 1K por level mínimo
@@ -317,6 +317,61 @@ static calculateBountyReduction(marine: Character, defeatedPirate: Character): n
   static nextLevelUp(character: Character): number {
     const expRequired = Math.floor(100 * Math.pow(character.level + 1, 1.5) + (character.level * 50));
     return expRequired;
+  }
+
+  static healthPointsCharacter(level: number): number {
+    const hpChar = level + 5
+    return hpChar;
+  }
+
+  static diceUsed(percentageOfPower: number): number {
+    // ✅ CLAMP para garantir que está entre 0 e 1
+    const power = Math.max(0, Math.min(1, percentageOfPower))
+    
+    if (power >= 0.85) {
+      return 20  // Dominância absoluta (85%+)
+    }
+    else if (power >= 0.70) {
+      return 16  // Muito superior (70-84%)
+    }
+    else if (power >= 0.60) {
+      return 12  // Superior (60-69%)
+    }
+    else if (power >= 0.50) {
+      return 10  // Ligeiramente superior (50-59%)
+    }
+    else if (power >= 0.40) {
+      return 8   // Ligeiramente inferior (40-49%)
+    }
+    else if (power >= 0.25) {
+      return 6   // Inferior (25-39%)
+    }
+    else if (power >= 0.15) {
+      return 4   // Muito inferior (15-24%)
+    }
+    else {
+      return 3   // Completamente dominado (0-14%)
+    }
+  }
+
+  static rollDice(dice: number): number {
+    let shouldRoll = true
+    let result = 0;
+    while(shouldRoll){
+      let rollResult = this.randomBetween(1, dice);
+      result += rollResult;
+      if(rollResult == dice){
+        shouldRoll = true
+      }
+      else{
+        shouldRoll = false
+      }
+    }
+    return result
+  }
+
+  private static randomBetween(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min
   }
 
   static expNeeded(level: number): number {

@@ -24,7 +24,48 @@
       <!-- Menu Items -->
       <v-list dense nav>
         <v-list-item
-          v-for="item in menuItems"
+          v-for="item in regularMenuItems"
+          :key="item.title"
+          :to="item.route"
+          link
+          color="white"
+        >
+          <template v-slot:prepend>
+            <v-icon>{{ item.icon }}</v-icon>
+          </template>
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
+        </v-list-item>
+
+        <!-- Boss Fight - Aparece apenas quando há bosses detectados -->
+        <v-list-item
+          v-if="showBossFightMenu"
+          :to="'/boss-fight'"
+          link
+          color="white"
+          class="boss-fight-menu-item"
+        >
+          <template v-slot:prepend>
+            <v-icon color="error">mdi-skull</v-icon>
+          </template>
+          <v-list-item-title>Boss Fight</v-list-item-title>
+          <template v-slot:append>
+            <v-chip
+              color="error"
+              size="small"
+              variant="elevated"
+              class="boss-count-chip"
+            >
+              {{ detectedBossesCount }}
+            </v-chip>
+          </template>
+        </v-list-item>
+
+        <!-- Divider se houver boss fight -->
+        <v-divider v-if="showBossFightMenu" class="my-2"></v-divider>
+
+        <!-- Resto dos menu items -->
+        <v-list-item
+          v-for="item in bottomMenuItems"
           :key="item.title"
           :to="item.route"
           link
@@ -68,6 +109,26 @@
 
       <v-spacer></v-spacer>
 
+      <!-- Boss Fight Alert no Header -->
+      <v-btn
+        v-if="showBossFightMenu"
+        icon
+        color="error"
+        variant="outlined"
+        @click="$router.push('/boss-fight')"
+        class="boss-fight-header-btn mr-2"
+        size="small"
+      >
+        <v-icon>mdi-skull</v-icon>
+        <v-badge
+          :content="detectedBossesCount"
+          color="error"
+          floating
+          offset-x="8"
+          offset-y="8"
+        />
+      </v-btn>
+
       <!-- Status do Jogo -->
       <v-chip 
         v-if="gameStore.isInitialized"
@@ -81,11 +142,11 @@
 
       <!-- Bounty Display -->
       <CharacterBountyDisplay 
-      v-if="gameLoaded"
-                  :character="playerCharacter" 
-                  size="default" 
-                  variant="elevated" 
-                />
+        v-if="gameLoaded"
+        :character="playerCharacter" 
+        size="default" 
+        variant="elevated" 
+      />
 
       <!-- Loading Indicator -->
       <v-progress-circular
@@ -133,14 +194,43 @@
         </v-btn>
       </template>
     </v-snackbar>
+
+    <!-- Boss Fight Notification Toast -->
+    <v-snackbar
+      v-model="bossNotification.show"
+      color="error"
+      timeout="5000"
+      location="top right"
+      variant="elevated"
+    >
+      <v-icon start>mdi-skull</v-icon>
+      {{ bossNotification.text }}
+      <template v-slot:actions>
+        <v-btn
+          color="white"
+          variant="text"
+          @click="$router.push('/boss-fight')"
+        >
+          Desafiar
+        </v-btn>
+        <v-btn
+          color="white"
+          variant="text"
+          @click="bossNotification.show = false"
+        >
+          Fechar
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-app>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive } from 'vue'
+import { ref, onMounted, computed, reactive, watch } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GameLogic } from '@/utils/gameLogic' 
+import { BossDetectionSystem } from '@/utils/bossDetectionSystem'
 import CharacterBountyDisplay from './components/CharacterBountyDisplay.vue'
 
 const drawer = ref(true)
@@ -148,7 +238,12 @@ const gameStore = useGameStore()
 const characterStore = useCharacterStore()
 const gameLoaded = ref(false)
 
+// ✅ BOSS FIGHT STATE
+const detectedBossesCount = ref(0)
+const lastCheckedIsland = ref<number | null>(null)
+
 const playerCharacter = computed(() => characterStore.playerCharacter)
+const playerCrew = computed(() => characterStore.playerCrew)
 
 const snackbar = reactive({
   show: false,
@@ -157,12 +252,34 @@ const snackbar = reactive({
   timeout: 3000
 })
 
+// ✅ BOSS NOTIFICATION
+const bossNotification = reactive({
+  show: false,
+  text: ''
+})
+
 const expForNextLevel = computed(() => {
   if (!playerCharacter.value) return 0
   return GameLogic.nextLevelUp(playerCharacter.value)
 })
 
-const menuItems = [
+// ✅ COMPUTED PARA MOSTRAR BOSS FIGHT
+const showBossFightMenu = computed(() => detectedBossesCount.value > 0)
+
+// ✅ COMPUTED PARA ILHA ATUAL
+const currentIslandId = computed(() => {
+  // Ajuste conforme sua implementação
+  // Pode ser do gameStore, characterStore ou crew
+  if (playerCharacter.value?.crewId) {
+    // Assumindo que você tem essa informação em algum lugar
+    // Substitua pela lógica correta do seu projeto
+    return playerCrew.value?.currentIsland || 1
+  }
+  return null
+})
+
+// ✅ SEPARAR MENU ITEMS
+const regularMenuItems = [
   { 
     title: 'Dashboard', 
     icon: 'mdi-view-dashboard', 
@@ -177,11 +294,13 @@ const menuItems = [
     title: 'Liberação de ilhas', 
     icon: 'mdi-sword-cross', 
     route: '/territory-liberation' 
-  },{ 
+  },
+  { 
     title: 'Navegação', 
     icon: 'mdi-compass', 
     route: '/navigation' 
-  },{ 
+  },
+  { 
     title: 'Explorar Ilhas', 
     icon: 'mdi-island', 
     route: '/islands' 
@@ -190,9 +309,10 @@ const menuItems = [
     title: 'Tripulação', 
     icon: 'mdi-account-group', 
     route: '/crew' 
-  },
-  
-  
+  }
+]
+
+const bottomMenuItems = [
   { 
     title: 'Treinar', 
     icon: 'mdi-dumbbell', 
@@ -203,13 +323,38 @@ const menuItems = [
     icon: 'mdi-earth', 
     route: '/encyclopedia' 
   },
-  
   { 
     title: 'Histórico', 
     icon: 'mdi-history', 
     route: '/history' 
   }
 ]
+
+// ✅ DETECTAR BOSSES NA ILHA ATUAL
+const detectBossesOnCurrentIsland = async () => {
+  if (!currentIslandId.value || !gameLoaded.value) return
+  
+  // Evitar detecção repetida na mesma ilha
+  if (lastCheckedIsland.value === currentIslandId.value) return
+  
+  try {
+    const bosses = await BossDetectionSystem.detectBossesOnIsland(currentIslandId.value)
+    const previousCount = detectedBossesCount.value
+    detectedBossesCount.value = bosses.length
+    lastCheckedIsland.value = currentIslandId.value
+    
+    // ✅ MOSTRAR NOTIFICAÇÃO SE ENCONTROU NOVOS BOSSES
+    if (bosses.length > 0 && previousCount === 0) {
+      const bossTypes = [...new Set(bosses.map(b => b.type))].join(', ')
+      bossNotification.text = `${bosses.length} algoz(es) detectado(s): ${bossTypes}!`
+      bossNotification.show = true
+    }
+    
+  } catch (error) {
+    console.error('Erro ao detectar bosses:', error)
+    detectedBossesCount.value = 0
+  }
+}
 
 const formatBounty = (bounty: number): string => {
   if (bounty >= 1000000000) {
@@ -228,6 +373,14 @@ const showNotification = (text: string, color: string = 'success') => {
   snackbar.show = true
 }
 
+// ✅ WATCHER PARA MUDANÇA DE ILHA
+watch(currentIslandId, async (newIslandId) => {
+  if (newIslandId && newIslandId !== lastCheckedIsland.value) {
+    detectedBossesCount.value = 0 // Reset count
+    await detectBossesOnCurrentIsland()
+  }
+}, { immediate: false })
+
 onMounted(async () => {
   try {
     // Inicializar o jogo primeiro
@@ -242,6 +395,12 @@ onMounted(async () => {
     if (playerCharacter.value) {
       showNotification(`Bem-vindo de volta, ${playerCharacter.value.name}!`)
       gameLoaded.value = true
+      
+      // ✅ DETECTAR BOSSES APÓS CARREGAR O JOGO
+      setTimeout(detectBossesOnCurrentIsland, 2000)
+      
+      // ✅ VERIFICAR PERIODICAMENTE POR NOVOS BOSSES
+      setInterval(detectBossesOnCurrentIsland, 60000) // A cada 1 minuto
     } else {
       showNotification('Clique em "Criar Personagem" para começar!', 'info')
     }
@@ -264,5 +423,58 @@ onMounted(async () => {
 .v-main {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
+}
+
+/* ✅ ESTILOS PARA BOSS FIGHT */
+.boss-fight-menu-item {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(238, 90, 36, 0.15));
+  border-left: 4px solid #ff6b6b;
+  margin: 4px 8px;
+  border-radius: 8px;
+  position: relative;
+}
+
+.boss-fight-menu-item:hover {
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.25), rgba(238, 90, 36, 0.25));
+}
+
+.boss-fight-menu-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+  animation: shimmer 2s infinite;
+}
+
+.boss-count-chip {
+  animation: pulse 2s infinite;
+  font-weight: bold;
+}
+
+.boss-fight-header-btn {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.8), 0 0 30px rgba(255, 107, 107, 0.6);
+  }
 }
 </style>

@@ -382,7 +382,7 @@ export class GameDataGenerator {
         name: NameGenerator.generateRandomName('Government'),
         level,
         experience: 0,
-        bounty: 0,
+        bounty: this.calculateBounty(level, 'Government'),
         type: 'Government',
         stats: this.generateStats(level, allStyleCombat.find(st => st.id == styleCombatId).name, potentialToHaveKngHaki),
         styleCombatId,
@@ -495,13 +495,13 @@ export class GameDataGenerator {
     } else if (level >= 15) {
         baseBounty = this.randomBetween(30000000, 80000000); // 40M - 100M
     } else if (level >= 10) {
-        baseBounty = this.randomBetween(15000000, 30000000); // 20M - 50M
+        baseBounty = this.randomBetween(10000000, 30000000); // 20M - 50M
     } else if (level >= 5) {
-        baseBounty = this.randomBetween(10000000, 20000000); // 10M - 30M
+        baseBounty = this.randomBetween(4000000, 12000000); // 10M - 30M
     } else if (level >= 4) {
-        baseBounty = this.randomBetween(5000000, 12000000); // 5M - 15M
+        baseBounty = this.randomBetween(800000, 5000000); // 5M - 15M
     } else if (level >= 2) {
-        baseBounty = this.randomBetween(1000000, 6000000); // 1M - 8M
+        baseBounty = this.randomBetween(100000, 1000000); // 1M - 8M
     } else {
         baseBounty = this.randomBetween(10000, 2000000); // 10K - 2M
     }
@@ -535,8 +535,8 @@ export class GameDataGenerator {
     }
 
     // Shichibukai (próximos 7 mais fortes)
-    for (let i = this.config.yonkouCount; i < this.config.yonkouCount + this.config.schichibukai; i++) {
-      const pirate = sortedPirates[i]
+    for (let i = 0; i < this.config.schichibukai; i++) {
+      const pirate = sortedPirates.filter(item => item.level <= this.config.shichibukaiMaxLevel)[i]
       var islandIndex = this.getMidHighDifficultyIslandId()
       while(usedIsland.includes(islandIndex)){
         islandIndex = this.getMidHighDifficultyIslandId()
@@ -1230,7 +1230,7 @@ export class GameDataGenerator {
   }
 
   private getMidHighDifficultyIslandId(): number {
-    return this.getIslandByDifficultyRange(20, 29)
+    return this.getIslandByDifficultyRange(15, 25)
   }
 
   private getHighestDifficultyIslandId(): number {

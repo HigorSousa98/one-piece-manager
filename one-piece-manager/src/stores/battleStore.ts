@@ -13,7 +13,6 @@ interface BattleResult {
   loser: Character;
   challenger: Character;
   opponent: Character;
-  damage: number;
   experienceGained: number;
   bountyChange: number;
   battleLog: string[];
@@ -29,7 +28,7 @@ export const useBattleStore = defineStore('battle', {
   }),
 
   actions: {
-    async simulateBattle(char1: Character, char2: Character, extraReward?: number, extraExp?: number): Promise<BattleResult> {
+    async simulateBattle(char1: Character, char2: Character, extraReward?: number, extraExp?: number, withoutHelp?: boolean): Promise<BattleResult> {
       this.isSimulating = true;
       
       try {
@@ -45,26 +44,63 @@ export const useBattleStore = defineStore('battle', {
         const attackerPower = GameLogic.calculatePower(char1, char1DevilFruit);
         const defenderPower = GameLogic.calculatePower(char2, char2DevilFruit);
 
-        const attackerCrewHelp = await this.calculateCrewHelp(char1, null)
-        const defenderCrewHelp = await this.calculateCrewHelp(char2, char1)
+        const attackerCrewHelp = withoutHelp ? 0 : await this.calculateCrewHelp(char1, null)
+        const defenderCrewHelp = withoutHelp ? 0 : await this.calculateCrewHelp(char2, char1)
 
         // Aplicar vantagem de tipo
         const typeAdvantage = GameLogic.getTypeAdvantage(char1, char2);
         // Aplicar vantagem de Style Combat
         const styleAdvantage = GameLogic.getsStyleAdvantage(char1StyleCombat, char2StyleCombat);
         const finalAttackerPower = attackerPower * typeAdvantage * styleAdvantage + attackerCrewHelp;
-        
+
         // Calcular probabilidade de vitória
         const totalPower = finalAttackerPower + defenderPower + defenderCrewHelp;
         const winChance = finalAttackerPower / totalPower ;
+
+        const log: string[] = [];
+      
+        log.push(`🥊 Batalha iniciada entre ${char1.name} e ${char2.name}!`);
+
+        const attackerDice = GameLogic.diceUsed(winChance)
+        const defenderDice = GameLogic.diceUsed(1 - winChance)
+
+        let attackerHp = GameLogic.healthPointsCharacter(char1.level)
+        let defenderHp = GameLogic.healthPointsCharacter(char2.level)
+
+        let fighting = true
+
+        while(fighting){
+          const attackerRoll = GameLogic.rollDice(attackerDice)
+          defenderHp -= attackerRoll
+          if(attackerRoll > attackerDice){
+            log.push(`${char1.name} ataca causando ${attackerRoll} de dano! Um ataque crítico!`)
+          }
+          else{
+            log.push(`${char1.name} ataca causando ${attackerRoll} de dano!`)
+          }
+          if(defenderHp <= 0){
+            fighting = false
+            log.push(`${char2.name} foi derrotado!`)
+          }
+          else{
+            const defenderRoll = GameLogic.rollDice(defenderDice)
+            attackerHp -= defenderRoll
+            if(defenderRoll > defenderDice){
+              log.push(`${char2.name} ataca causando ${defenderRoll} de dano! Um ataque crítico!`)
+            }
+            else{
+              log.push(`${char2.name} ataca causando ${defenderRoll} de dano!`)
+            }
+            if(attackerHp <= 0){
+              fighting = false
+              log.push(`${char1.name} foi derrotado!`)
+            }
+          }
+        }
+
+        const char1Wins = defenderHp <= 0 ? true : false
         
-        // Adicionar elemento de sorte (10% de variação)
-        const luck = (Math.random() * 0.1) - 0.05; // -10% a +10%
-        const finalWinChance = Math.max(0.05, Math.min(0.95, winChance + luck));
-        
-        const char1Wins = Math.random() < finalWinChance;
-        
-        const result = await this.generateBattleResult(char1, char2, char1Wins, attackerPower, defenderPower, extraReward, extraExp);
+        const result = await this.generateBattleResult(char1, char2, char1Wins, attackerPower, defenderPower, extraReward, extraExp,log);
         
         // Salva no banco local
         await this.saveBattleResult(result);
@@ -86,24 +122,22 @@ export const useBattleStore = defineStore('battle', {
 
     async calculateCrewHelp(char: Character, opponent: Character | null): Promise<number>{
         let crewHelp = 0
-        const crewMember = char.crewId && (char.type != 'Marine' || !opponent || opponent.level / char.level > 2) ? await db.characters.where('crewId').equals(char.crewId).and(member => member.id != char.id).toArray() : null
+        const crewMember = char.crewId && (!opponent || opponent.level / char.level > 2) ? await db.characters.where('crewId').equals(char.crewId).and(member => member.id != char.id).toArray() : null
         crewMember?.forEach(async member => {
-          const memberDevilFruit = member.devilFruitId ? await db.devilFruits.get(member.devilFruitId) : null;
-          crewHelp += GameLogic.calculatePower(member, memberDevilFruit) * GenerationConfig.createEpic().regularCrewHelp; // 10-30% de ajuda
+          if(member.level / char.level > 2){
+            const memberDevilFruit = member.devilFruitId ? await db.devilFruits.get(member.devilFruitId) : null;
+            crewHelp += GameLogic.calculatePower(member, memberDevilFruit) * GenerationConfig.createEpic().regularCrewHelp; // 10-30% de ajuda
+          }
+          
         })
         return Math.round(crewHelp)
     },
     
-    async generateBattleResult(char1: Character, char2: Character, char1Wins: boolean, char1Power: number, char2Power: number, extraReward?:number | 0, extraExp?: number | 0): Promise<BattleResult> {
+    async generateBattleResult(char1: Character, char2: Character, char1Wins: boolean, char1Power: number, char2Power: number, extraReward?:number | 0, extraExp?: number | 0, log?: string[]): Promise<BattleResult> {
       const winner = char1Wins ? char1 : char2;
       const loser = char1Wins ? char2 : char1;
       const winnerPower = char1Wins ? char1Power : char2Power;
       const loserPower = char1Wins ? char2Power : char1Power;
-      
-      // Calcular dano baseado na diferença de poder
-      const powerDifference = winnerPower - loserPower;
-      const baseDamage = Math.max(10, Math.floor(winnerPower * 0.1));
-      const damage = baseDamage + Math.floor(powerDifference * 0.05);
       
       // Calcular experiência ganha
       let experienceGained = Math.ceil(GameLogic.calculateExperienceGain(winner, loser) * (1 + Number(extraExp)));
@@ -111,9 +145,8 @@ export const useBattleStore = defineStore('battle', {
       // Calcular mudança de bounty (apenas para piratas)
       let bountyChange = GameLogic.calculateBountyGain(winner, loser) + Number(extraReward);
       
-      
       // Gerar log da batalha
-      const battleLog = this.generateBattleLog(winner, loser, damage, char1Wins);
+      const battleLog = log;
 
       let canShowRecruitment = false;
     let recruitmentData: RecruitmentAttempt | undefined;
@@ -135,7 +168,6 @@ export const useBattleStore = defineStore('battle', {
         loser,
         challenger: char1,
         opponent: char2,
-        damage,
         experienceGained,
         bountyChange,
         battleLog,

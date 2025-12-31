@@ -1,4 +1,4 @@
-import { db, Character, Crew, Island, DevilFruit, StyleCombat, Yonkou, Shichibukai, Admiral, MarineBase, CypherPol, Gorousei } from './database'
+import { db, Character, Crew, Island } from './database'
 import { GenerationConfig } from '@/utils/generationConfig'
 import { useBattleStore } from '@/stores/battleStore'
 import { GameLogic } from '@/utils/gameLogic'
@@ -827,7 +827,7 @@ export class AdventureSystem {
     // ✅ 8. CRIAR SHICHIBUKAI (PRÓXIMOS 7 MAIS FORTES)
     console.log(`⚔️ Criando ${config.schichibukai} Shichibukai...`)
     const shichibukaiPromises = []
-    const startIndex = config.yonkouCount
+    const startIndex = Math.ceil(sortedPirates.length * 0.3) //config.yonkouCount
     const endIndex = Math.min(startIndex + config.schichibukai, sortedPirates.length)
     
     for (let i = startIndex; i < endIndex; i++) {
@@ -861,14 +861,14 @@ export class AdventureSystem {
     }
     await Promise.all(admiralPromises)
 
-    // ✅ 10. CRIAR GOROUSEI (5 MAIS FORTES DO GOVERNO)
-    console.log(`🌟 Criando ${config.gorouseiCount} Gorousei...`)
-    const gorouseiPromises = []
+    // ✅ 10. CRIAR gorosei (5 MAIS FORTES DO GOVERNO)
+    console.log(`🌟 Criando ${config.gorouseiCount} gorosei...`)
+    const goroseiPromises = []
     for (let i = 0; i < Math.min(config.gorouseiCount, sortedGovernment.length); i++) {
       const gov = sortedGovernment[i]
-      console.log(`�� Gorousei ${i + 1}: ${gov.name} (Poder: ${calculatePowerSafe(gov)})`)
+      console.log(`�� gorosei ${i + 1}: ${gov.name} (Poder: ${calculatePowerSafe(gov)})`)
       
-      gorouseiPromises.push(
+      goroseiPromises.push(
         db.gorouseis.add({
           govId: gov.id!,
           currentIsland: getBaseIsland(gov),
@@ -876,7 +876,7 @@ export class AdventureSystem {
         })
       )
     }
-    await Promise.all(gorouseiPromises)
+    await Promise.all(goroseiPromises)
 
     // ✅ 11. CRIAR CYPHER POL (PRÓXIMOS 90 DO GOVERNO)
     console.log(`🕵️ Criando ${config.cypherPolCount} Cypher Pol...`)
@@ -905,7 +905,7 @@ export class AdventureSystem {
     await Promise.all(cypherPolPromises)
 
     // ✅ 12. ESTATÍSTICAS FINAIS
-    const [finalYonkou, finalShichibukai, finalAdmirals, finalGorousei, finalCypherPol] = await Promise.all([
+    const [finalYonkou, finalShichibukai, finalAdmirals, finalgorosei, finalCypherPol] = await Promise.all([
       db.yonkous.count(),
       db.shichibukais.count(),
       db.admirals.count(),
@@ -917,7 +917,7 @@ export class AdventureSystem {
       yonkou: finalYonkou,
       shichibukai: finalShichibukai,
       admirals: finalAdmirals,
-      gorousei: finalGorousei,
+      gorosei: finalgorosei,
       cypherPol: finalCypherPol
     })
 

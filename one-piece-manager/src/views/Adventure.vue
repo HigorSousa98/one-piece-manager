@@ -178,7 +178,7 @@
                 {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA' }}
               </v-btn>
               <v-spacer />
-              <!--<v-btn
+              <v-btn
                 color="primary"
                 size="x-large"
                 :disabled="hasActiveTasks || loadingAdventure"
@@ -202,7 +202,7 @@
               >
                 <v-icon left>mdi-sail-boat</v-icon>
                 {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA 50X' }}
-              </v-btn>-->
+              </v-btn>
               
               <div v-if="hasActiveTasks" class="mt-2">
                 <v-chip color="warning" variant="elevated">
@@ -457,6 +457,17 @@
                   </v-col>
                 </v-row>
               </div>
+              <v-divider class="my-4"></v-divider>
+                <div class="text-h6 mb-3">Como a batalha ocorreu:</div>
+                <v-row>
+                  <v-col cols="12" md="12">
+                    <ul id="example-2">
+                      <li v-for="(item, index) in lastBattleResult.battleLog">
+                        {{ item }}
+                      </li>
+                    </ul>
+                  </v-col>
+                </v-row>
             </v-card-text>
           </v-card>
 

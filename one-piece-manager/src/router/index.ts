@@ -53,6 +53,11 @@ const router = createRouter({
       path: '/encyclopedia',
       name: 'WorldEncyclopedia',
       component: () => import('@/views/WorldEncyclopedia.vue')
+    },
+    {
+      path: '/boss-fight',
+      name: 'BossFight',
+      component: () => import('@/views/BossFight.vue')
     }
   ]
 })

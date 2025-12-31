@@ -32,6 +32,7 @@ export interface GenerationSettings {
   upgradeShipTime: number
   stepTimeLiberation: number
   showAd: boolean
+  shichibukaiMaxLevel: number
 }
 
 export class GenerationConfig {
@@ -64,11 +65,12 @@ export class GenerationConfig {
     devilFruitDropRate: 0.1,
     civillianRecruitmentChance: 0.3,
     regularCrewHelp: 0.35,
-    regularCrewSharedGain: 0.7,
+    regularCrewSharedGain: 0.8,
     lossGain: 0.1,
     upgradeShipTime: 20,
     stepTimeLiberation: 3,
-    showAd: false
+    showAd: false,
+    shichibukaiMaxLevel: 75
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -121,11 +123,11 @@ export class GenerationConfig {
     // Configuração épica para mundo completo
     EPIC: {
       ...GenerationConfig.DEFAULT_CONFIG,
-      totalPirates: 12000,
-      totalMarines: 12000,
+      totalPirates: 9000,
+      totalMarines: 9000,
       totalGovernment: 4000,
       totalBountyHunter: 7000,
-      totalCivillians: 8000,
+      totalCivillians: 7000,
       totalIslands: 200,
       difficultyLevels: 30,
       islandsPerLevel: 4,
@@ -187,6 +189,7 @@ export class GenerationConfig {
   get upgradeShipTime(): number { return this.config.upgradeShipTime }
   get stepTimeLiberation(): number { return this.config.stepTimeLiberation }
   get showAd(): boolean { return this.config.showAd }
+  get shichibukaiMaxLevel(): number { return this.config.shichibukaiMaxLevel }
 
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

@@ -265,7 +265,7 @@ export interface Task {
   id?: number;
   characterId: number;
   helpType?: '' | 'help_civilian' | 'rescue_mission' | 'delivery' | 'construction' | 'medical_aid' | 'liberation';
-  type: 'exploration'  | 'ship_upgrade' | 'ship_repair' | 'training' | 'navigation' | 'island_liberation';
+  type: 'exploration'  | 'ship_upgrade' | 'ship_repair' | 'training' | 'navigation' | 'island_liberation'| 'boss_fight';
   description: string;
   startTime: Date;
   endTime: Date;
@@ -286,6 +286,23 @@ export interface Task {
   targetCrewId?: number // Para island_liberation
 }
 
+export interface BossFight {
+  id?: number
+  playerCrewId: number
+  bossType: 'Yonkou' | 'Shichibukai' | 'Admiral' | 'Gorousei'
+  bossId: number
+  bossCrewId: number
+  currentBattleIndex: number
+  totalBattles: number
+  playerDefeatedMembers: number[]
+  bossDefeatedMembers: number[]
+  isCompleted: boolean
+  playerWon: boolean
+  startedAt: Date
+  completedAt?: Date
+  battleOrder: number[]
+}
+
 class OnePieceGameDB extends Dexie {
   characters!: Table<Character>
   devilFruits!: Table<DevilFruit>
@@ -304,6 +321,7 @@ class OnePieceGameDB extends Dexie {
   islands!: Table<Island>
   tasks!: Table<Task>
   avatars!: Table<Avatar>
+  bossFights!: Table<BossFight>
 
   constructor() {
     super('OnePieceGameDB')
@@ -325,7 +343,8 @@ class OnePieceGameDB extends Dexie {
       gameState: '++id, key',
       islands: '++id, name, difficulty',
       tasks: '++id, characterId, targetId, startTime, endTime, isCompleted, type, helpType, crewId',
-      avatars: '++id, characterId, createdAt' 
+      avatars: '++id, characterId, createdAt',
+      bossFights: '++id, playerCrewId, bossType, bossId, bossCrewId, isCompleted, startedAt' 
     })
 
 // Hook para CREATE (add)

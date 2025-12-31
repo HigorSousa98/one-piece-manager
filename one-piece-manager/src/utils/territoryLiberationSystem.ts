@@ -295,58 +295,12 @@ export class TerritoryLiberationSystem {
       const playerDevilFruit = allDevilFruits.find(df => df.id == player.devilFruitId)
       const opponentDevilFruit = allDevilFruits.find(df => df.id == opponent.devilFruitId)
 
-      // Simular batalha usando lógica similar ao AdventureSystem
-      const playerPower = GameLogic.calculatePower(player, playerDevilFruit)
-      const opponentPower = GameLogic.calculatePower(opponent, opponentDevilFruit)
-      const playerCrewPower = GameLogic.calculateCrewPower(playerCrewMembers, allDevilFruits)
-      const opponentCrewPower = GameLogic.calculateCrewPower(opponenteCrewMembers, allDevilFruits)
+      const battle = await battleStore.simulateBattle(player, opponent, null, null, isLastStep);
+
+      const playerWins = battle.winner.id == player.id
       
-      const totalPower = isLastStep ? playerPower + opponentPower : playerPower + opponentPower + (playerCrewPower + opponentCrewPower) * 1
-      const playerWinChance = (isLastStep ? playerPower : (playerPower + playerCrewPower) * 1) / totalPower
-      
-      // Adicionar elemento de sorte (±10%)
-      const luck = (Math.random() * 0.2) - 0.1
-      const finalWinChance = Math.max(0.1, Math.min(0.9, playerWinChance + luck))
-      
-      const playerWins = playerWinChance > 0.5
       const winner = playerWins ? player : opponent
       const loser = playerWins ? opponent : player
-
-      // Aplicar recompensas se player venceu
-      if (playerWins) {
-        const expGain = GameLogic.calculateExperienceGain(player, opponent)
-        const bountyGain = GameLogic.calculateBountyGain(player, opponent)
-
-        // ✅ Processar capitão e membros em paralelo
-        const [captainUpdates, memberUpdates] = await Promise.all([
-          battleStore.processCaptainUpdates(player, expGain, bountyGain, true),
-          battleStore.processCrewMemberUpdates(player, expGain, bountyGain, true, 1)
-        ])
-
-      // ✅ Aplicar todas as atualizações em paralelo
-        const allUpdates = [
-          db.characters.update(player.id!, captainUpdates),
-          ...memberUpdates.map(update => 
-            db.characters.update(update.id, update.updates)
-          )
-        ]
-
-        await Promise.all(allUpdates)
-
-        // Registrar batalha
-        await db.battles.add({
-          timestamp: new Date(),
-          challenger: player.id!,
-          opponent: opponent.id!,
-          winner: player.id!,
-          loser: opponent.id!,
-          experienceGained: expGain,
-          bountyGained: bountyGain,
-          battleLog: [`${player.name} derrotou ${opponent.name} na liberação de território!`],
-          challengerCrewId: player.crewId!,
-          opponentCrewId: opponent.crewId!
-        })
-      }
 
       return {
         winner: winner.id,
