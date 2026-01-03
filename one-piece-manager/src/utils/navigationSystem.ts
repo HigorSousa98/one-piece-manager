@@ -4,6 +4,7 @@ import { AdventureSystem } from './adventureSystem'
 import type { Task, Character, Crew, Island, Ship } from './database'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GameLogic } from './gameLogic'
+import { GenerationConfig } from '@/utils/generationConfig'
 
 export class NavigationSystem {
   // ✅ VERIFICAR SE PODE NAVEGAR
@@ -67,8 +68,11 @@ export class NavigationSystem {
 
   // ✅ CALCULAR TEMPO DE NAVEGAÇÃO
   static calculateNavigationTime(shipLevel: number): number {
-    // Fórmula: 30 - (level-1)*5, mínimo 5 minutos
-    const timeInMinutes = Math.max(5, 25 - (shipLevel - 1) * 5)
+    const navigationFactor = GenerationConfig.createEpic().navigationFactor
+    const timeInMinutes = Math.max(
+      navigationFactor,
+      navigationFactor * 5 - (shipLevel - 1) * navigationFactor,
+    )
     //const timeInMinutes = 1
     return timeInMinutes
   }

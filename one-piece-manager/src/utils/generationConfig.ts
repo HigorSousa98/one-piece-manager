@@ -35,6 +35,7 @@ export interface GenerationSettings {
   shichibukaiMaxLevel: number
   battleSimulatedByTurn: number
   islandEncounters: number
+  navigationFactor: number
 }
 
 export class GenerationConfig {
@@ -62,18 +63,19 @@ export class GenerationConfig {
     shipFactor: 3,
     lastCombats: 7,
     allowKingHakiFor: 0.7,
-    dockedFactor: 0.7,
-    devilFruitDropRate: 0.1,
+    dockedFactor: 0.8,
+    devilFruitDropRate: 0.15,
     civillianRecruitmentChance: 0.7,
     regularCrewHelp: 0.35,
     regularCrewSharedGain: 0.8,
-    lossGain: 0.1,
-    upgradeShipTime: 20,
+    lossGain: 15,
+    upgradeShipTime: 10,
     stepTimeLiberation: 3,
     showAd: false,
     shichibukaiMaxLevel: 75,
     battleSimulatedByTurn: 250,
     islandEncounters: 10,
+    navigationFactor: 4,
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -94,8 +96,7 @@ export class GenerationConfig {
       shipFactor: 3,
       lastCombats: 3,
       allowKingHakiFor: 0.5,
-      dockedFactor: 0.5,
-      devilFruitDropRate: 0.1,
+      dockedFactor: 0.9,
     } as GenerationSettings,
 
     // Configuração média
@@ -114,8 +115,7 @@ export class GenerationConfig {
       shipFactor: 3,
       lastCombats: 5,
       allowKingHakiFor: 0.6,
-      dockedFactor: 0.6,
-      devilFruitDropRate: 0.1,
+      dockedFactor: 0.9,
     } as GenerationSettings,
 
     // Configuração grande (padrão)
@@ -138,7 +138,6 @@ export class GenerationConfig {
       lastCombats: 20,
       allowKingHakiFor: 0.9,
       dockedFactor: 0.8,
-      devilFruitDropRate: 0.1,
     } as GenerationSettings,
   }
 
@@ -262,6 +261,9 @@ export class GenerationConfig {
   }
   get islandEncounters(): number {
     return this.config.islandEncounters
+  }
+  get navigationFactor(): number {
+    return this.config.navigationFactor
   }
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

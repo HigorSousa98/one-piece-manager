@@ -30,6 +30,7 @@ export class NavalBattleSystem {
     island: Island,
   ): Promise<BattleResult> {
     try {
+      const battleStore = useBattleStore()
       console.log('⚔️ NavalBattleSystem - Iniciando batalha naval:', {
         playerCrewId,
         enemyCrewId,
@@ -65,30 +66,15 @@ export class NavalBattleSystem {
         enemy: enemyPower,
       })
 
+      const battleResult = await battleStore.simulateCrewBattle(playerCrew, enemyCrew)
+
       // Executar batalha
-      const battleResult = this.executeBattle(
-        playerCrew,
-        enemyCrew,
-        playerMembers,
-        enemyMembers,
-        playerPower,
-        enemyPower,
-        island,
-      )
-
-      const loserCaptain = enemyMembers.find((char) => char.position === 'Captain')
-
-      // Aplicar recompensas/penalidades
-      if (battleResult.victory && loserCaptain) {
-        await this.applyVictoryRewards(playerCrewId, battleResult.rewards!, loserCaptain)
+      let battleResultReturn = <BattleResult>{
+        victory: battleResult.winnerCrew.id == playerCrew.id,
+        playerCrew: playerCrew,
+        enemyCrew: enemyCrew,
       }
-
-      console.log('✅ NavalBattleSystem - Batalha concluída:', {
-        victory: battleResult.victory,
-        rewards: battleResult.rewards,
-      })
-
-      return battleResult
+      return battleResultReturn
     } catch (error) {
       console.error('❌ NavalBattleSystem - Erro na batalha:', error)
       throw error

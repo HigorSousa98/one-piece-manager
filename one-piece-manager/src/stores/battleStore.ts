@@ -4,9 +4,10 @@ import { GameLogic } from '@/utils/gameLogic'
 import { WorldSimulator } from '@/utils/worldSimulator'
 import { AdventureSystem } from '@/utils/adventureSystem'
 import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentSystem'
-import { db, Character, Battle, DevilFruit, StyleCombat } from '@/utils/database'
+import { db, Character, Battle, DevilFruit, StyleCombat, Crew } from '@/utils/database'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GenerationConfig } from '@/utils/generationConfig'
+import { config } from 'node:process'
 
 interface BattleResult {
   winner: Character
@@ -135,7 +136,138 @@ export const useBattleStore = defineStore('battle', {
       }
     },
 
-    simulateCrewBattle(
+    async simulateCrewBattle(
+      crew1: Crew,
+      crew2: Crew,
+    ): Promise<{
+      winnerCrew: Crew
+      loserCrew: Crew
+      casualties: number
+    } | null> {
+      try {
+        const allDevilFruits = await db.devilFruits.toArray()
+
+        // Buscar capitães dos crews
+        const [captain1, captain2] = await Promise.all([
+          db.characters.get(crew1.captainId),
+          db.characters.get(crew2.captainId),
+        ])
+
+        if (!captain1 || !captain2) return null
+
+        // Calcular poder total dos crews
+        const [crew1Members, crew2Members] = await Promise.all([
+          db.characters.where('crewId').equals(crew1.id!).toArray(),
+          db.characters.where('crewId').equals(crew2.id!).toArray(),
+        ])
+
+        const crew1Wins = this.simulateCrewBattleMembers(crew1Members, crew2Members, allDevilFruits)
+
+        const winnerCrew = crew1Wins ? crew1 : crew2
+        const loserCrew = crew1Wins ? crew2 : crew1
+
+        // Simular batalha entre capitães para XP/Bounty
+        const winnerCaptain = crew1Wins ? captain1 : captain2
+        const loserCaptain = crew1Wins ? captain2 : captain1
+
+        // Aplicar recompensas ao capitão vencedor
+        const expGain = GameLogic.calculateExperienceGain(winnerCaptain, loserCaptain)
+        const bountyGain = GameLogic.calculateBountyGain(winnerCaptain, loserCaptain)
+
+        // ✅ Processar capitão e membros em paralelo
+        const [captainUpdates, memberUpdates] = await Promise.all([
+          this.processCaptainUpdates(winnerCaptain, expGain, bountyGain, true),
+          this.processCrewMemberUpdates(
+            winnerCaptain,
+            expGain,
+            bountyGain,
+            true,
+            0.3 + Math.random() * 0.2,
+          ),
+        ])
+
+        // ✅ Aplicar todas as atualizações em paralelo
+        const allUpdates = [
+          db.characters.update(winnerCaptain.id!, captainUpdates),
+          ...memberUpdates.map((update) => db.characters.update(update.id, update.updates)),
+        ]
+
+        await Promise.all(allUpdates)
+
+        // ✅ PROCESSAR RECRUTAMENTO E REMOÇÃO
+        const recruitmentResult = await this.processCrewRecruitmentAndRemoval(
+          winnerCrew.id!,
+          loserCrew.id!,
+          false, // Não é player
+        )
+
+        // ✅ VERIFICAR SE CREW PERDEDOR FICOU SEM MEMBROS
+        const remainingLoserMembers = await db.characters
+          .where('crewId')
+          .equals(loserCrew.id!)
+          .toArray()
+
+        if (remainingLoserMembers.length === 0) {
+          // Remover crew vazio
+          await db.crews.delete(loserCrew.id!)
+
+          // Remover navio do crew
+          const ship = await db.ships.where('crewId').equals(loserCrew.id!).first()
+          if (ship) {
+            await db.ships.delete(ship.id!)
+          }
+        }
+
+        // ✅ CRIAR NOVO CREW PARA MEMBROS REMOVIDOS (SE HOUVER SUFICIENTES)
+        if (recruitmentResult.removed.length >= 1) {
+          const newCrew = await this.createCrewForOrphanMembers(
+            recruitmentResult.removed,
+            loserCrew.currentIsland,
+          )
+        }
+
+        // Atualizar reputação dos crews
+        winnerCrew.reputation += Math.floor(loserCrew.reputation * 0.1)
+        loserCrew.reputation = Math.max(
+          0,
+          loserCrew.reputation - Math.floor(loserCrew.reputation * 0.05),
+        )
+
+        await Promise.all([
+          db.crews.update(winnerCrew.id!, { reputation: winnerCrew.reputation }),
+          db.crews.update(loserCrew.id!, { reputation: loserCrew.reputation }),
+        ])
+
+        // Registrar batalha
+        await db.battles.add({
+          timestamp: new Date(),
+          challenger: winnerCaptain.id!,
+          opponent: loserCaptain.id!,
+          winner: winnerCaptain.id!,
+          loser: loserCaptain.id!,
+          experienceGained: expGain,
+          bountyGained: bountyGain,
+          battleLog: [
+            `${winnerCaptain.name} derrotou ${loserCaptain.name} em uma batalha entre crews!`,
+          ],
+          challengerCrewId: winnerCrew.id!,
+          opponentCrewId: loserCrew.id!,
+        })
+
+        const casualties = Math.floor(Math.random() * 3) // 0-2 baixas
+
+        return {
+          winnerCrew,
+          loserCrew,
+          casualties,
+        }
+      } catch (error) {
+        console.error('Erro ao simular batalha entre crews:', error)
+        return null
+      }
+    },
+
+    simulateCrewBattleMembers(
       crew1Members: Character[],
       crew2Members: Character[],
       allDevilFruits: DevilFruit[],
@@ -323,7 +455,16 @@ export const useBattleStore = defineStore('battle', {
         )
 
         // Atualizar stats do perdedor (pode perder experiência ou bounty)
-        await this.updateCharacterAfterBattle(result.loser, Math.ceil((result.experienceGained * GameLogic.randomBetween(5,15) / 100)), 0, false)
+        await this.updateCharacterAfterBattle(
+          result.loser,
+          Math.ceil(
+            (result.experienceGained *
+              GameLogic.randomBetween(1, GenerationConfig.createEpic().lossGain)) /
+              100,
+          ),
+          0,
+          false,
+        )
       } catch (error) {
         console.error('Erro ao salvar resultado da batalha:', error)
         throw error
@@ -460,9 +601,11 @@ export const useBattleStore = defineStore('battle', {
         if (isWinner) {
           // ✅ Calcular ganhos dos membros (30-50% do capitão)
           const memberExpGain = Math.floor(
-            expGained * percentage * GameLogic.randomBetween(100,120) / 100,
+            (expGained * percentage * GameLogic.randomBetween(100, 120)) / 100,
           )
-          const memberBountyGain = Math.floor(bountyGained * percentage * GameLogic.randomBetween(100,120) / 100)
+          const memberBountyGain = Math.floor(
+            (bountyGained * percentage * GameLogic.randomBetween(100, 120)) / 100,
+          )
 
           // ✅ Calcular nova experiência SEM mutar o objeto original
           const newExpMember = member.experience + memberExpGain
