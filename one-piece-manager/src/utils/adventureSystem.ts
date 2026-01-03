@@ -1527,11 +1527,11 @@ export class AdventureSystem {
       let selectedIslands: Island[]
       let movementType: 'easier' | 'same' | 'harder'
 
-      if (movementRoll <= 0.1 && easierIslands.length > 0) {
+      if (movementRoll <= 0.2 && easierIslands.length > 0) {
         // 20% chance para ilha de dificuldade -1
         selectedIslands = easierIslands
         movementType = 'easier'
-      } else if (movementRoll <= 0.7 && sameIslands.length > 0) {
+      } else if (movementRoll <= 0.8 && sameIslands.length > 0) {
         // 30% chance para ilha de mesma dificuldade (20% + 30% = 50%)
         selectedIslands = sameIslands
         movementType = 'same'
