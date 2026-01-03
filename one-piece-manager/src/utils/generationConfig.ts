@@ -75,7 +75,7 @@ export class GenerationConfig {
     shichibukaiMaxLevel: 75,
     battleSimulatedByTurn: 250,
     islandEncounters: 10,
-    navigationFactor: 4,
+    navigationFactor: 3,
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS

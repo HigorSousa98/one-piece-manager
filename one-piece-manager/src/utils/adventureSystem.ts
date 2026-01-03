@@ -692,7 +692,7 @@ export class AdventureSystem {
         devilFruitId: 0,
         crewId: crewId,
         position: 'Captain',
-        isPlayer: 1,
+        isPlayer: 0,
         kindness: 50 + Math.ceil(Math.random() * 30),
         potentialToHaveKngHaki: potentialToHaveKngHaki,
         defendingBase: 0,
