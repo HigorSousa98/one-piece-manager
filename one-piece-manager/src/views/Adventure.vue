@@ -882,44 +882,32 @@ const crew = (crew: number): Crew => {
 
 const getDevilFruits = async () => {
     try {
-    console.log('🔄 Carregando akumas no mi...')
     
     const df = await db.devilFruits.toArray()
     if(df){
       availableDevilFruit.value = df
-      console.log(`✅ Akumas no mi carregados`)
-      console.log('Akumas no mi ', availableDevilFruit.value)
     }
     else {
-      console.log('⚠️ Nenhum navio encontrado para esta tripulação')
     }
-    
     devilFruitLoaded.value = true
     
   } catch (error) {
-    console.error('❌ Erro ao carregar Akuma no mi:', error)
     devilFruitLoaded.value = true
   }
 }
 
 const getCrews = async () => {
     try {
-    console.log('🔄 Carregando crews...')
-    
     const crw = await db.crews.toArray()
     if(crw){
       allCrews.value = crw
-      console.log(`✅ Crews carregados`)
-      console.log('Crews ', allCrews.value)
     }
     else {
-      console.log('⚠️ Nenhum crew encontrado')
     }
     
     crewsLoaded.value = true
     
   } catch (error) {
-    console.error('❌ Erro ao carregar crew:', error)
     crewsLoaded.value = true
   }
 }
@@ -927,7 +915,6 @@ const getCrews = async () => {
 // ✅ WATCHERS PARA DETECTAR QUANDO OS DADOS SÃO CARREGADOS
 watch(() => playerCharacter.value, (newValue) => {
   if (newValue) {
-    console.log('✅ PlayerCharacter carregado:', newValue.name)
     playerCharacterLoaded.value = true
   }
 }, { immediate: true })
@@ -935,34 +922,25 @@ watch(() => playerCharacter.value, (newValue) => {
 // 🔄 CARREGAMENTO SEQUENCIAL
 const loadDataSequentially = async () => {
   try {
-    console.log('🔄 Iniciando carregamento sequencial...')
     
     // 1. Aguardar playerCharacter estar disponível
         while (!playerCharacter.value) {
-      console.log('⏳ Aguardando playerCharacter...')
       await new Promise(resolve => setTimeout(resolve, 100))
     }
     
-    console.log('✅ PlayerCharacter disponível')
     
     // 2. Verificar tarefas ativas
-    console.log('🔄 Verificando tarefas ativas...')
     await checkActiveTasks()
     const styleCombats = await db.styleCombats.toArray()
     availableStyleCombat.value = styleCombats
 
-    console.log('🔄 Carregando akumas no mi...')
     await getDevilFruits()
 
-    console.log('🔄 Carregando crews...')
     await getCrews()
     
 
     // 3. ✅ INICIALIZAR SISTEMA DE AVATARES
-    console.log('🎨 Inicializando sistema de avatares...')
     await initializeAvatarSystem()
-    
-    console.log('✅ Todos os dados carregados!')
     
   } catch (error) {
     console.error('❌ Erro no carregamento sequencial:', error)
@@ -972,14 +950,11 @@ const loadDataSequentially = async () => {
 // ✅ INICIALIZAR SISTEMA DE AVATARES
 const initializeAvatarSystem = async () => {
   try {
-    // Simular inicialização do sistema de avatares
-    console.log('🎨 Sistema de avatares inicializando...')
     
     // Aguardar um pouco para simular carregamento
     await new Promise(resolve => setTimeout(resolve, 500))
     
     avatarSystemLoaded.value = true
-    console.log('✅ Sistema de avatares inicializado')
     
   } catch (error) {
     console.error('❌ Erro ao inicializar sistema de avatares:', error)
@@ -990,12 +965,10 @@ const initializeAvatarSystem = async () => {
 // ✅ VERIFICAR TAREFAS ATIVAS (versão melhorada)
 const checkActiveTasks = async () => {
   if (!playerCharacter.value) {
-    console.log('⚠️ PlayerCharacter não disponível para verificar tarefas')
     return
   }
   
   try {
-    console.log('🔄 Verificando tarefas ativas...')
     
     // Carregar tarefas completas para ter dados detalhados
     activeTasks.value = await IslandExplorationSystem.getActiveTasks(playerCharacter.value.id!)
@@ -1010,7 +983,6 @@ const checkActiveTasks = async () => {
     activeTasksLoaded.value = true
     activeTaskType.value = taskType
     
-    console.log(`✅ Tarefas ativas verificadas: ${count} ativas`)
     
     // Se há tarefas, configurar timer para recheck quando a próxima completar
     if (hasActive && nextTaskToComplete.value) {
@@ -1032,12 +1004,10 @@ const checkActiveTasks = async () => {
 
 // 🎯 MÉTODO PARA QUANDO TAREFA É COMPLETADA
 const onTaskCompleted = async () => {
-  console.log('⏰ Uma tarefa foi completada! Recarregando lista...')
   await checkActiveTasks()
   
   // Se não há mais tarefas ativas, o botão de aventura será habilitado automaticamente
   if (!hasActiveTasks.value) {
-    console.log('✅ Todas as tarefas foram completadas! Aventura disponível.')
   }
 }
 
@@ -1089,9 +1059,7 @@ const startAdventure = async () => {
       lastBattleResult.value = null
       recruitmentData.value = null
       recruitmentResult.value = null
-      console.log('✅ Aventura iniciada:', encounter.opponent.name, encounter.opponent.id)
     } else {
-      console.log('🚫 Nenhuma aventura disponível no momento')
     }
     
   } catch (error) {

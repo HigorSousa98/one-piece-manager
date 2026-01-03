@@ -7,59 +7,59 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('@/views/Dashboard.vue')
+      component: () => import('@/views/Dashboard.vue'),
     },
     {
       path: '/crew',
       name: 'crew',
-      component: () => import('@/views/CrewManagement.vue')
+      component: () => import('@/views/CrewManagement.vue'),
     },
     {
       path: '/islands',
       name: 'islands',
-      component: () => import('@/views/IslandExploration.vue')
+      component: () => import('@/views/IslandExploration.vue'),
     },
     {
       path: '/history',
       name: 'history',
-      component: () => import('@/views/History.vue')
+      component: () => import('@/views/History.vue'),
     },
     {
       path: '/adventure',
       name: 'Adventure',
-      component: () => import('@/views/Adventure.vue')
+      component: () => import('@/views/Adventure.vue'),
     },
     {
       path: '/training',
       name: 'Training',
-      component: () => import('@/views/Training.vue')
+      component: () => import('@/views/Training.vue'),
     },
     {
       path: '/navigation',
       name: 'Navigation',
-      component: () => import('@/views/Navigation.vue')
+      component: () => import('@/views/Navigation.vue'),
     },
     {
       path: '/character-creation',
       name: 'Character Creation',
-      component: () => import('@/views/CharacterCreation.vue')
+      component: () => import('@/views/CharacterCreation.vue'),
     },
     {
       path: '/territory-liberation',
       name: 'territory-liberation',
-      component: () => import('@/views/TerritoryLiberation.vue')
+      component: () => import('@/views/TerritoryLiberation.vue'),
     },
     {
       path: '/encyclopedia',
       name: 'WorldEncyclopedia',
-      component: () => import('@/views/WorldEncyclopedia.vue')
+      component: () => import('@/views/WorldEncyclopedia.vue'),
     },
     {
       path: '/boss-fight',
       name: 'BossFight',
-      component: () => import('@/views/BossFight.vue')
-    }
-  ]
+      component: () => import('@/views/BossFight.vue'),
+    },
+  ],
 })
 
 export default router

@@ -33,10 +33,11 @@ export interface GenerationSettings {
   stepTimeLiberation: number
   showAd: boolean
   shichibukaiMaxLevel: number
+  battleSimulatedByTurn: number
+  islandEncounters: number
 }
 
 export class GenerationConfig {
-  
   // 🎯 CONFIGURAÇÕES PADRÃO
   private static readonly DEFAULT_CONFIG: GenerationSettings = {
     totalPirates: 1000,
@@ -44,7 +45,7 @@ export class GenerationConfig {
     totalGovernment: 300,
     totalBountyHunter: 500,
     totalCivillians: 2000,
-    devilFruitDistributionRate: 0.2, 
+    devilFruitDistributionRate: 0.2,
     yonkouCount: 4,
     schichibukai: 7,
     admiralCount: 3,
@@ -63,14 +64,16 @@ export class GenerationConfig {
     allowKingHakiFor: 0.7,
     dockedFactor: 0.7,
     devilFruitDropRate: 0.1,
-    civillianRecruitmentChance: 0.3,
+    civillianRecruitmentChance: 0.7,
     regularCrewHelp: 0.35,
     regularCrewSharedGain: 0.8,
     lossGain: 0.1,
     upgradeShipTime: 20,
     stepTimeLiberation: 3,
     showAd: false,
-    shichibukaiMaxLevel: 75
+    shichibukaiMaxLevel: 75,
+    battleSimulatedByTurn: 250,
+    islandEncounters: 10,
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -93,7 +96,6 @@ export class GenerationConfig {
       allowKingHakiFor: 0.5,
       dockedFactor: 0.5,
       devilFruitDropRate: 0.1,
-      civillianRecruitmentChance: 0.3,
     } as GenerationSettings,
 
     // Configuração média
@@ -114,7 +116,6 @@ export class GenerationConfig {
       allowKingHakiFor: 0.6,
       dockedFactor: 0.6,
       devilFruitDropRate: 0.1,
-      civillianRecruitmentChance: 0.3,
     } as GenerationSettings,
 
     // Configuração grande (padrão)
@@ -138,16 +139,18 @@ export class GenerationConfig {
       allowKingHakiFor: 0.9,
       dockedFactor: 0.8,
       devilFruitDropRate: 0.1,
-      civillianRecruitmentChance: 0.3,
-    } as GenerationSettings
+    } as GenerationSettings,
   }
 
   private config: GenerationSettings
 
   // 🏗️ CONSTRUTOR
-  constructor(preset: keyof typeof GenerationConfig.PRESETS = 'LARGE', customOverrides?: Partial<GenerationSettings>) {
+  constructor(
+    preset: keyof typeof GenerationConfig.PRESETS = 'LARGE',
+    customOverrides?: Partial<GenerationSettings>,
+  ) {
     this.config = { ...GenerationConfig.PRESETS[preset] }
-    
+
     // Aplicar overrides personalizados se fornecidos
     if (customOverrides) {
       this.config = { ...this.config, ...customOverrides }
@@ -158,43 +161,117 @@ export class GenerationConfig {
   }
 
   // 🔍 GETTERS PARA ACESSAR CONFIGURAÇÕES
-  get totalPirates(): number { return this.config.totalPirates }
-  get totalMarines(): number { return this.config.totalMarines }
-  get totalGovernment(): number { return this.config.totalGovernment }
-  get totalBountyHunter(): number { return this.config.totalBountyHunter }
-  get totalCivillians(): number { return this.config.totalCivillians }
-  get devilFruitDistributionRate(): number { return this.config.devilFruitDistributionRate }
-  get yonkouCount(): number { return this.config.yonkouCount }
-  get schichibukai(): number { return this.config.schichibukai }
-  get admiralCount(): number { return this.config.admiralCount }
-  get gorouseiCount(): number { return this.config.gorouseiCount }
-  get cypherPolCount(): number { return this.config.cypherPolCount }
-  get totalIslands(): number { return this.config.totalIslands }
-  get difficultyLevels(): number { return this.config.difficultyLevels }
-  get islandsPerLevel(): number { return this.config.islandsPerLevel }
-  get avgCrewSize(): number { return this.config.avgCrewSize }
-  get styleCombatCount(): number { return this.config.styleCombatCount }
-  get maxLevel(): number { return this.config.maxLevel }
-  get minBounty(): number { return this.config.minBounty }
-  get maxBounty(): number { return this.config.maxBounty }
-  get shipFactor(): number { return this.config.shipFactor }
-  get lastCombats(): number { return this.config.lastCombats }
-  get allowKingHakiFor(): number { return this.config.allowKingHakiFor }
-  get dockedFactor(): number { return this.config.dockedFactor }
-  get devilFruitDropRate(): number { return this.config.devilFruitDropRate }
-  get civillianRecruitmentChance(): number { return this.config.civillianRecruitmentChance }
-  get regularCrewHelp(): number { return this.config.regularCrewHelp }
-  get regularCrewSharedGain(): number { return this.config.regularCrewSharedGain }
-  get lossGain(): number { return this.config.lossGain }
-  get upgradeShipTime(): number { return this.config.upgradeShipTime }
-  get stepTimeLiberation(): number { return this.config.stepTimeLiberation }
-  get showAd(): boolean { return this.config.showAd }
-  get shichibukaiMaxLevel(): number { return this.config.shichibukaiMaxLevel }
-
+  get totalPirates(): number {
+    return this.config.totalPirates
+  }
+  get totalMarines(): number {
+    return this.config.totalMarines
+  }
+  get totalGovernment(): number {
+    return this.config.totalGovernment
+  }
+  get totalBountyHunter(): number {
+    return this.config.totalBountyHunter
+  }
+  get totalCivillians(): number {
+    return this.config.totalCivillians
+  }
+  get devilFruitDistributionRate(): number {
+    return this.config.devilFruitDistributionRate
+  }
+  get yonkouCount(): number {
+    return this.config.yonkouCount
+  }
+  get schichibukai(): number {
+    return this.config.schichibukai
+  }
+  get admiralCount(): number {
+    return this.config.admiralCount
+  }
+  get gorouseiCount(): number {
+    return this.config.gorouseiCount
+  }
+  get cypherPolCount(): number {
+    return this.config.cypherPolCount
+  }
+  get totalIslands(): number {
+    return this.config.totalIslands
+  }
+  get difficultyLevels(): number {
+    return this.config.difficultyLevels
+  }
+  get islandsPerLevel(): number {
+    return this.config.islandsPerLevel
+  }
+  get avgCrewSize(): number {
+    return this.config.avgCrewSize
+  }
+  get styleCombatCount(): number {
+    return this.config.styleCombatCount
+  }
+  get maxLevel(): number {
+    return this.config.maxLevel
+  }
+  get minBounty(): number {
+    return this.config.minBounty
+  }
+  get maxBounty(): number {
+    return this.config.maxBounty
+  }
+  get shipFactor(): number {
+    return this.config.shipFactor
+  }
+  get lastCombats(): number {
+    return this.config.lastCombats
+  }
+  get allowKingHakiFor(): number {
+    return this.config.allowKingHakiFor
+  }
+  get dockedFactor(): number {
+    return this.config.dockedFactor
+  }
+  get devilFruitDropRate(): number {
+    return this.config.devilFruitDropRate
+  }
+  get civillianRecruitmentChance(): number {
+    return this.config.civillianRecruitmentChance
+  }
+  get regularCrewHelp(): number {
+    return this.config.regularCrewHelp
+  }
+  get regularCrewSharedGain(): number {
+    return this.config.regularCrewSharedGain
+  }
+  get lossGain(): number {
+    return this.config.lossGain
+  }
+  get upgradeShipTime(): number {
+    return this.config.upgradeShipTime
+  }
+  get stepTimeLiberation(): number {
+    return this.config.stepTimeLiberation
+  }
+  get showAd(): boolean {
+    return this.config.showAd
+  }
+  get shichibukaiMaxLevel(): number {
+    return this.config.shichibukaiMaxLevel
+  }
+  get battleSimulatedByTurn(): number {
+    return this.config.battleSimulatedByTurn
+  }
+  get islandEncounters(): number {
+    return this.config.islandEncounters
+  }
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {
-    return this.totalPirates + this.totalMarines + this.totalGovernment + 
-           this.totalBountyHunter + this.totalCivillians
+    return (
+      this.totalPirates +
+      this.totalMarines +
+      this.totalGovernment +
+      this.totalBountyHunter +
+      this.totalCivillians
+    )
   }
 
   get totalCaptains(): number {
@@ -207,8 +284,13 @@ export class GenerationConfig {
   }
 
   get totalSpecialPositions(): number {
-    return this.yonkouCount + this.schichibukai + this.admiralCount + 
-           this.gorouseiCount + this.cypherPolCount
+    return (
+      this.yonkouCount +
+      this.schichibukai +
+      this.admiralCount +
+      this.gorouseiCount +
+      this.cypherPolCount
+    )
   }
 
   // 📈 DISTRIBUIÇÃO POR TIPO
@@ -218,7 +300,7 @@ export class GenerationConfig {
       Marine: this.totalMarines,
       Government: this.totalGovernment,
       BountyHunter: this.totalBountyHunter,
-      Civillian: this.totalCivillians
+      Civillian: this.totalCivillians,
     }
   }
 
@@ -233,7 +315,7 @@ export class GenerationConfig {
       totalIslands: this.totalIslands,
       difficultyLevels: this.difficultyLevels,
       islandsPerLevel: this.islandsPerLevel,
-      calculatedIslands: this.difficultyLevels * this.islandsPerLevel
+      calculatedIslands: this.difficultyLevels * this.islandsPerLevel,
     }
   }
 
@@ -246,7 +328,7 @@ export class GenerationConfig {
     return {
       styleCombatCount: this.styleCombatCount,
       distributionRate: this.devilFruitDistributionRate,
-      charactersWithFruit: this.charactersWithDevilFruit
+      charactersWithFruit: this.charactersWithDevilFruit,
     }
   }
 
@@ -297,7 +379,9 @@ export class GenerationConfig {
     // Validações de ilhas
     const calculatedIslands = this.difficultyLevels * this.islandsPerLevel
     if (calculatedIslands !== this.totalIslands) {
-      console.warn(`⚠️ Aviso: Total de ilhas (${this.totalIslands}) não coincide com cálculo (${calculatedIslands})`)
+      console.warn(
+        `⚠️ Aviso: Total de ilhas (${this.totalIslands}) não coincide com cálculo (${calculatedIslands})`,
+      )
     }
 
     if (errors.length > 0) {

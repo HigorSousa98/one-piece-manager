@@ -8,12 +8,12 @@ export interface HistoryEntry {
   description: string
   timestamp: Date
   location?: string
-  difficulty?: 'easy' | 'medium' | 'hard'
+  difficulty?: 'easy' | 'medium' | 'hard' | 'very hard'
   experienceReward?: number
   bountyReward?: number
   kindnessReward?: number
-expanded?: boolean
-  
+  expanded?: boolean
+
   // Task specific
   helpType?: string
   duration?: number
@@ -23,7 +23,7 @@ expanded?: boolean
   completedAt?: number
   step?: number
   stepCompleted?: boolean
-  
+
   // Battle specific
   isWinner?: boolean
   opponent?: string
@@ -61,7 +61,7 @@ export class HistorySystem {
   static async getTasksByCharacter(characterId: number): Promise<Task[]> {
     try {
       const allTasks = await db.tasks.toArray()
-      return allTasks.filter(task => task.characterId === characterId)
+      return allTasks.filter((task) => task.characterId === characterId)
     } catch (error) {
       console.error('Failed to get tasks by character:', error)
       return []
@@ -74,8 +74,8 @@ export class HistorySystem {
   static async getBattlesByCharacter(characterId: number): Promise<Battle[]> {
     try {
       const allBattles = await db.battles.toArray()
-      return allBattles.filter(battle => 
-        battle.challenger === characterId || battle.opponent === characterId
+      return allBattles.filter(
+        (battle) => battle.challenger === characterId || battle.opponent === characterId,
       )
     } catch (error) {
       console.error('Failed to get battles by character:', error)
@@ -90,7 +90,7 @@ export class HistorySystem {
     try {
       const [tasks, battles] = await Promise.all([
         this.getTasksByCharacter(characterId),
-        this.getBattlesByCharacter(characterId)
+        this.getBattlesByCharacter(characterId),
       ])
 
       const allCharacters = await db.characters.toArray()
@@ -99,12 +99,12 @@ export class HistorySystem {
       const entries: HistoryEntry[] = []
 
       // Process tasks
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         entries.push(this.convertTaskToHistoryEntry(task))
       })
 
       // Process battles
-      battles.forEach(battle => {
+      battles.forEach((battle) => {
         entries.push(this.convertBattleToHistoryEntry(battle, characterId, allCrews, allCharacters))
       })
 
@@ -120,45 +120,45 @@ export class HistorySystem {
    * Get filtered history
    */
   static async getFilteredHistory(
-    characterId: number, 
-    filters: HistoryFilters
+    characterId: number,
+    filters: HistoryFilters,
   ): Promise<HistoryEntry[]> {
     try {
       let history = await this.getCharacterHistory(characterId)
 
       // Apply filters
       if (filters.source) {
-        history = history.filter(entry => entry.source === filters.source)
+        history = history.filter((entry) => entry.source === filters.source)
       }
 
       if (filters.type) {
         if (filters.type === 'task' || filters.type === 'battle') {
-          history = history.filter(entry => entry.source === filters.type)
+          history = history.filter((entry) => entry.source === filters.type)
         } else {
-          history = history.filter(entry => entry.type === filters.type)
+          history = history.filter((entry) => entry.type === filters.type)
         }
       }
 
       if (filters.difficulty) {
-        history = history.filter(entry => entry.difficulty === filters.difficulty)
+        history = history.filter((entry) => entry.difficulty === filters.difficulty)
       }
 
       if (filters.location) {
-        history = history.filter(entry => 
-          entry.location?.toLowerCase().includes(filters.location!.toLowerCase())
+        history = history.filter((entry) =>
+          entry.location?.toLowerCase().includes(filters.location!.toLowerCase()),
         )
       }
 
       if (filters.dateFrom) {
-        history = history.filter(entry => entry.timestamp >= filters.dateFrom!)
+        history = history.filter((entry) => entry.timestamp >= filters.dateFrom!)
       }
 
       if (filters.dateTo) {
-        history = history.filter(entry => entry.timestamp <= filters.dateTo!)
+        history = history.filter((entry) => entry.timestamp <= filters.dateTo!)
       }
 
       if (filters.isCompleted !== null && filters.isCompleted !== undefined) {
-        history = history.filter(entry => {
+        history = history.filter((entry) => {
           if (entry.source === 'task') {
             return entry.isCompleted === filters.isCompleted
           }
@@ -180,46 +180,48 @@ export class HistorySystem {
     try {
       const [tasks, battles] = await Promise.all([
         this.getTasksByCharacter(characterId),
-        this.getBattlesByCharacter(characterId)
+        this.getBattlesByCharacter(characterId),
       ])
 
-      const completedTasks = tasks.filter(task => task.isCompleted)
-      const battlesWon = battles.filter(battle => battle.winner === characterId)
-      const battlesLost = battles.filter(battle => battle.loser === characterId)
+      const completedTasks = tasks.filter((task) => task.isCompleted)
+      const battlesWon = battles.filter((battle) => battle.winner === characterId)
+      const battlesLost = battles.filter((battle) => battle.loser === characterId)
 
       // Calculate totals
       const totalExperience = [
-        ...tasks.map(t => t.experienceReward || 0),
-        ...battles.map(b => b.challenger === characterId ? b.experienceGained : 0)
+        ...tasks.map((t) => t.experienceReward || 0),
+        ...battles.map((b) => (b.challenger === characterId ? b.experienceGained : 0)),
       ].reduce((sum, exp) => sum + exp, 0)
 
       const totalBounty = [
-        ...tasks.map(t => t.bountyReward || 0),
-        ...battles.map(b => b.challenger === characterId ? b.bountyGained : 0)
+        ...tasks.map((t) => t.bountyReward || 0),
+        ...battles.map((b) => (b.challenger === characterId ? b.bountyGained : 0)),
       ].reduce((sum, bounty) => sum + bounty, 0)
 
       const totalKindness = tasks
-        .map(t => t.kindnessReward || 0)
+        .map((t) => t.kindnessReward || 0)
         .reduce((sum, kindness) => sum + kindness, 0)
 
       // Find favorite location
       const locationCounts: Record<string, number> = {}
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         if (task.location) {
           locationCounts[task.location] = (locationCounts[task.location] || 0) + 1
         }
       })
-      const favoriteLocation = Object.keys(locationCounts).reduce((a, b) => 
-        locationCounts[a] > locationCounts[b] ? a : b, 'Unknown'
+      const favoriteLocation = Object.keys(locationCounts).reduce(
+        (a, b) => (locationCounts[a] > locationCounts[b] ? a : b),
+        'Unknown',
       )
 
       // Find most common task type
       const taskTypeCounts: Record<string, number> = {}
-      tasks.forEach(task => {
+      tasks.forEach((task) => {
         taskTypeCounts[task.type] = (taskTypeCounts[task.type] || 0) + 1
       })
-      const mostCommonTaskType = Object.keys(taskTypeCounts).reduce((a, b) => 
-        taskTypeCounts[a] > taskTypeCounts[b] ? a : b, 'None'
+      const mostCommonTaskType = Object.keys(taskTypeCounts).reduce(
+        (a, b) => (taskTypeCounts[a] > taskTypeCounts[b] ? a : b),
+        'None',
       )
 
       return {
@@ -232,7 +234,7 @@ export class HistorySystem {
         totalBounty,
         totalKindness,
         favoriteLocation,
-        mostCommonTaskType
+        mostCommonTaskType,
       }
     } catch (error) {
       console.error('Failed to get history stats:', error)
@@ -246,7 +248,7 @@ export class HistorySystem {
         totalBounty: 0,
         totalKindness: 0,
         favoriteLocation: 'Unknown',
-        mostCommonTaskType: 'None'
+        mostCommonTaskType: 'None',
       }
     }
   }
@@ -268,15 +270,13 @@ export class HistorySystem {
    * Get history by date range
    */
   static async getHistoryByDateRange(
-    characterId: number, 
-    startDate: Date, 
-    endDate: Date
+    characterId: number,
+    startDate: Date,
+    endDate: Date,
   ): Promise<HistoryEntry[]> {
     try {
       const history = await this.getCharacterHistory(characterId)
-      return history.filter(entry => 
-        entry.timestamp >= startDate && entry.timestamp <= endDate
-      )
+      return history.filter((entry) => entry.timestamp >= startDate && entry.timestamp <= endDate)
     } catch (error) {
       console.error('Failed to get history by date range:', error)
       return []
@@ -286,12 +286,14 @@ export class HistorySystem {
   /**
    * Get history grouped by type
    */
-  static async getHistoryGroupedByType(characterId: number): Promise<Record<string, HistoryEntry[]>> {
+  static async getHistoryGroupedByType(
+    characterId: number,
+  ): Promise<Record<string, HistoryEntry[]>> {
     try {
       const history = await this.getCharacterHistory(characterId)
       const grouped: Record<string, HistoryEntry[]> = {}
 
-      history.forEach(entry => {
+      history.forEach((entry) => {
         if (!grouped[entry.type]) {
           grouped[entry.type] = []
         }
@@ -328,19 +330,25 @@ export class HistorySystem {
       isCompleted: task.isCompleted,
       completedAt: task.completedAt,
       step: task.step,
-      stepCompleted: task.stepCompleted
+      stepCompleted: task.stepCompleted,
     }
   }
 
   /**
    * Convert Battle to HistoryEntry
    */
-  private static convertBattleToHistoryEntry(battle: Battle, characterId: number, allCrews: Crew[], allCharacter: Character[]): HistoryEntry {
+  private static convertBattleToHistoryEntry(
+    battle: Battle,
+    characterId: number,
+    allCrews: Crew[],
+    allCharacter: Character[],
+  ): HistoryEntry {
     const isWinner = battle.winner === characterId
     const opponent = battle.challenger === characterId ? battle.opponent : battle.challenger
-    const opponentCrewId = battle.challenger === characterId ? battle.opponentCrewId : battle.challengerCrewId
-    const crewName = allCrews.find(crew => crew.id === opponentCrewId)?.name || ''
-    const opponentName = allCharacter.find(char => char.id === opponent)?.name || ''
+    const opponentCrewId =
+      battle.challenger === characterId ? battle.opponentCrewId : battle.challengerCrewId
+    const crewName = allCrews.find((crew) => crew.id === opponentCrewId)?.name || ''
+    const opponentName = allCharacter.find((char) => char.id === opponent)?.name || ''
 
     return {
       id: battle.id!,
@@ -354,7 +362,7 @@ export class HistorySystem {
       isWinner,
       opponent: opponentName,
       opponentCrew: crewName,
-      battleLog: battle.battleLog
+      battleLog: battle.battleLog,
     }
   }
 
@@ -387,12 +395,12 @@ export class HistorySystem {
     try {
       const history = await this.getCharacterHistory(characterId)
       const stats = await this.getHistoryStats(characterId)
-      
+
       const exportData = {
         characterId,
         exportDate: new Date().toISOString(),
         stats,
-        history
+        history,
       }
 
       return JSON.stringify(exportData, null, 2)

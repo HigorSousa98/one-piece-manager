@@ -9,7 +9,7 @@ export function useTimeRemaining(updateInterval: number = 1000) {
 
   const startTimer = () => {
     if (intervalId) return
-    
+
     intervalId = setInterval(() => {
       currentTime.value = new Date().getTime()
     }, updateInterval)
@@ -25,13 +25,13 @@ export function useTimeRemaining(updateInterval: number = 1000) {
   const formatTimeRemaining = (endTime: Date | string): string => {
     const end = new Date(endTime).getTime()
     const remaining = Math.max(0, end - currentTime.value)
-    
+
     if (remaining === 0) return 'Concluído!'
-    
+
     const hours = Math.floor(remaining / (1000 * 60 * 60))
     const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))
     const seconds = Math.floor((remaining % (1000 * 60)) / 1000)
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${seconds}s`
     } else if (minutes > 0) {
@@ -44,18 +44,18 @@ export function useTimeRemaining(updateInterval: number = 1000) {
   const getTimeRemainingData = (endTime: Date | string) => {
     const end = new Date(endTime).getTime()
     const remaining = Math.max(0, end - currentTime.value)
-    
+
     const hours = Math.floor(remaining / (1000 * 60 * 60))
     const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))
     const seconds = Math.floor((remaining % (1000 * 60)) / 1000)
-    
+
     return {
       remaining,
       hours,
       minutes,
       seconds,
       isCompleted: remaining === 0,
-      formatted: formatTimeRemaining(endTime)
+      formatted: formatTimeRemaining(endTime),
     }
   }
 
@@ -74,7 +74,7 @@ export function useTimeRemaining(updateInterval: number = 1000) {
         elapsed: 0,
         formattedTimeRemaining: 'N/A',
         formattedElapsedTime: 'N/A',
-        formattedTotalTime: 'N/A'
+        formattedTotalTime: 'N/A',
       }
     }
 
@@ -97,7 +97,7 @@ export function useTimeRemaining(updateInterval: number = 1000) {
       elapsed,
       formattedTimeRemaining: formatDuration(remaining),
       formattedElapsedTime: formatDuration(elapsed),
-      formattedTotalTime: formatDuration(totalTime)
+      formattedTotalTime: formatDuration(totalTime),
     }
   }
 
@@ -124,9 +124,9 @@ export function useTimeRemaining(updateInterval: number = 1000) {
    */
   const getTaskStatus = (task: Task | null): 'none' | 'pending' | 'running' | 'completed' => {
     if (!task) return 'none'
-    
+
     const progress = getTaskProgress(task)
-    
+
     if (progress.isCompleted) return 'completed'
     if (progress.progress > 0) return 'running'
     return 'pending'
@@ -137,12 +137,12 @@ export function useTimeRemaining(updateInterval: number = 1000) {
    */
   const formatDuration = (milliseconds: number): string => {
     if (milliseconds <= 0) return '0s'
-    
+
     const totalSeconds = Math.floor(milliseconds / 1000)
     const hours = Math.floor(totalSeconds / 3600)
     const minutes = Math.floor((totalSeconds % 3600) / 60)
     const seconds = totalSeconds % 60
-    
+
     if (hours > 0) {
       return `${hours}h ${minutes}m ${seconds}s`
     } else if (minutes > 0) {
@@ -155,7 +155,9 @@ export function useTimeRemaining(updateInterval: number = 1000) {
   /**
    * Obter informações formatadas para exibição em cards/interfaces
    */
-  const getTaskDisplayInfo = (task: Task): {
+  const getTaskDisplayInfo = (
+    task: Task,
+  ): {
     title: string
     subtitle: string
     progress: number
@@ -166,19 +168,21 @@ export function useTimeRemaining(updateInterval: number = 1000) {
   } => {
     const progress = getTaskProgress(task)
     const status = getTaskStatus(task)
-    
+
     // Mapear tipos de task para ícones e cores
     const taskTypeMap = {
       exploration: { icon: 'mdi-compass', color: 'green' },
       training: { icon: 'mdi-dumbbell', color: 'orange' },
       navigation: { icon: 'mdi-ship-wheel', color: 'blue' },
       ship_upgrade: { icon: 'mdi-hammer-wrench', color: 'purple' },
-      island_liberation: { icon: 'mdi-sword-cross', color: 'red' }
+      island_liberation: { icon: 'mdi-sword-cross', color: 'red' },
     }
-    
-    const taskInfo = taskTypeMap[task.type as keyof typeof taskTypeMap] || 
-                    { icon: 'mdi-clipboard', color: 'grey' }
-    
+
+    const taskInfo = taskTypeMap[task.type as keyof typeof taskTypeMap] || {
+      icon: 'mdi-clipboard',
+      color: 'grey',
+    }
+
     return {
       title: task.description || `${task.type} Task`,
       subtitle: `${task.type.charAt(0).toUpperCase() + task.type.slice(1)} • ${task.location || 'Unknown'}`,
@@ -186,7 +190,7 @@ export function useTimeRemaining(updateInterval: number = 1000) {
       timeInfo: progress.isCompleted ? 'Concluída!' : progress.formattedTimeRemaining,
       statusColor: getProgressColor(progress.progress, progress.isCompleted),
       statusIcon: taskInfo.icon,
-      isCompleted: progress.isCompleted
+      isCompleted: progress.isCompleted,
     }
   }
 
@@ -194,7 +198,7 @@ export function useTimeRemaining(updateInterval: number = 1000) {
    * Verificar se múltiplas tasks estão completas
    */
   const areTasksCompleted = (tasks: Task[]): boolean => {
-    return tasks.every(task => getTaskProgress(task).isCompleted)
+    return tasks.every((task) => getTaskProgress(task).isCompleted)
   }
 
   /**
@@ -202,20 +206,20 @@ export function useTimeRemaining(updateInterval: number = 1000) {
    */
   const getTasksStatistics = (tasks: Task[]) => {
     const total = tasks.length
-    const completed = tasks.filter(task => getTaskProgress(task).isCompleted).length
-    const running = tasks.filter(task => {
+    const completed = tasks.filter((task) => getTaskProgress(task).isCompleted).length
+    const running = tasks.filter((task) => {
       const status = getTaskStatus(task)
       return status === 'running' || status === 'pending'
     }).length
-    
+
     const overallProgress = total > 0 ? (completed / total) * 100 : 0
-    
+
     return {
       total,
       completed,
       running,
       overallProgress,
-      completionRate: `${completed}/${total}`
+      completionRate: `${completed}/${total}`,
     }
   }
 
@@ -223,23 +227,23 @@ export function useTimeRemaining(updateInterval: number = 1000) {
    * Criar um watcher reativo para detectar conclusão de task
    */
   const watchTaskCompletion = (
-    taskRef: any, 
+    taskRef: any,
     onComplete: (task: Task) => void,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
   ) => {
     let wasCompleted = false
-    
+
     const unwatch = computed(() => {
       const task = taskRef.value
       if (!task) return
-      
+
       const progress = getTaskProgress(task)
-      
+
       // Callback de progresso
       if (onProgress) {
         onProgress(progress.progress)
       }
-      
+
       // Callback de conclusão
       if (progress.isCompleted && !wasCompleted) {
         wasCompleted = true
@@ -247,10 +251,10 @@ export function useTimeRemaining(updateInterval: number = 1000) {
       } else if (!progress.isCompleted) {
         wasCompleted = false
       }
-      
+
       return progress
     })
-    
+
     return unwatch
   }
 
@@ -269,7 +273,7 @@ export function useTimeRemaining(updateInterval: number = 1000) {
     getTimeRemainingData,
     startTimer,
     stopTimer,
-    
+
     // ✅ NOVAS FUNCIONALIDADES PARA TASKS
     getTaskProgress,
     createTaskProgressComputed,
@@ -279,6 +283,6 @@ export function useTimeRemaining(updateInterval: number = 1000) {
     getTaskDisplayInfo,
     areTasksCompleted,
     getTasksStatistics,
-    watchTaskCompletion
+    watchTaskCompletion,
   }
 }

@@ -14,35 +14,36 @@ export const useBossFightStore = defineStore('bossFight', {
     nextOpponent: null as Character | null,
     availableMembers: [] as Character[],
     loading: false,
-    error: null as string | null
+    error: null as string | null,
   }),
 
   getters: {
     // ✅ GETTERS PRIMEIRO (ANTES DAS ACTIONS)
     hasBossesOnIsland: (state) => state.detectedBosses.length > 0,
-    
-    hasActiveBossFight: (state) => 
+
+    hasActiveBossFight: (state) =>
       state.currentBossFight !== null && !state.currentBossFight.isCompleted,
-    
+
     currentBattleProgress: (state) => {
       if (!state.currentBossFight) return null
-      
+
       return {
         current: state.currentBossFight.currentBattleIndex + 1,
         total: state.currentBossFight.totalBattles,
         percentage: Math.round(
-          ((state.currentBossFight.currentBattleIndex + 1) / state.currentBossFight.totalBattles) * 100
-        )
+          ((state.currentBossFight.currentBattleIndex + 1) / state.currentBossFight.totalBattles) *
+            100,
+        ),
       }
     },
-    
+
     bossType: (state) => state.currentBossFight?.bossType || null,
-    
-    canSelectFighter: (state) => 
-      state.currentBossFight !== null && 
+
+    canSelectFighter: (state) =>
+      state.currentBossFight !== null &&
       !state.currentBossFight.isCompleted &&
-      state.nextOpponent !== null && 
-      state.availableMembers.length > 0
+      state.nextOpponent !== null &&
+      state.availableMembers.length > 0,
   },
 
   actions: {
@@ -50,7 +51,7 @@ export const useBossFightStore = defineStore('bossFight', {
     async detectBossesOnIsland(islandId: number) {
       this.loading = true
       this.error = null
-      
+
       try {
         this.detectedBosses = await BossDetectionSystem.detectBossesOnIsland(islandId)
       } catch (error) {
@@ -65,7 +66,7 @@ export const useBossFightStore = defineStore('bossFight', {
     async checkActiveBossFight(playerCrewId: number) {
       try {
         this.currentBossFight = await BossFightSystem.getCurrentBossFight(playerCrewId)
-        
+
         if (this.currentBossFight && !this.currentBossFight.isCompleted) {
           await this.loadBossFightData()
         } else {
@@ -81,13 +82,13 @@ export const useBossFightStore = defineStore('bossFight', {
     // ✅ CARREGAR DADOS DO BOSS FIGHT
     async loadBossFightData() {
       if (!this.currentBossFight) return
-      
+
       try {
         const [opponent, members] = await Promise.all([
           BossFightSystem.getNextOpponent(this.currentBossFight.id!),
-          BossFightSystem.getAvailablePlayerMembers(this.currentBossFight.id!)
+          BossFightSystem.getAvailablePlayerMembers(this.currentBossFight.id!),
         ])
-        
+
         this.nextOpponent = opponent
         this.availableMembers = members
       } catch (error) {
@@ -99,17 +100,17 @@ export const useBossFightStore = defineStore('bossFight', {
     async startBossFight(playerCrewId: number, detectedBoss: DetectedBoss) {
       this.loading = true
       this.error = null
-      
+
       try {
         const bossFightId = await BossFightSystem.startBossFight(playerCrewId, detectedBoss)
-        
+
         // ✅ ATUALIZAR ESTADO
         this.currentBossFight = await BossFightSystem.getCurrentBossFight(playerCrewId)
-        
+
         if (this.currentBossFight) {
           await this.loadBossFightData()
         }
-        
+
         return bossFightId
       } catch (error) {
         this.error = 'Erro ao iniciar boss fight'
@@ -125,46 +126,46 @@ export const useBossFightStore = defineStore('bossFight', {
       if (!this.currentBossFight || !this.nextOpponent) {
         throw new Error('Não há boss fight ativo ou oponente disponível')
       }
-      
+
       this.loading = true
       this.error = null
-      
+
       try {
         const battleStore = useBattleStore()
-        
+
         // ✅ OBTER PERSONAGEM DO PLAYER
         const playerCharacter = await db.characters.get(playerCharacterId)
         if (!playerCharacter) {
           throw new Error('Personagem do player não encontrado')
         }
-        
+
         // ✅ CALCULAR RECOMPENSAS EXTRAS
         const extraReward = BossFightSystem.calculateBossReward(
-          this.currentBossFight.bossType, 
-          this.nextOpponent.level
+          this.currentBossFight.bossType,
+          this.nextOpponent.level,
         )
         const extraExp = BossFightSystem.calculateBossExperience(
-          this.currentBossFight.bossType, 
-          this.nextOpponent.level
+          this.currentBossFight.bossType,
+          this.nextOpponent.level,
         )
-        
+
         // ✅ EXECUTAR BATALHA USANDO BATTLESTORE
         const battleResult = await battleStore.simulateBattle(
           playerCharacter,
           this.nextOpponent,
           extraReward,
-          extraExp
+          extraExp,
         )
-        
+
         // ✅ ATUALIZAR BOSS FIGHT
         const playerWon = battleResult.winner.id === playerCharacterId
         this.currentBossFight = await BossFightSystem.updateBossFightAfterBattle(
           this.currentBossFight.id!,
           playerWon,
           playerCharacterId,
-          this.nextOpponent.id!
+          this.nextOpponent.id!,
         )
-        
+
         // ✅ ATUALIZAR DADOS SE BOSS FIGHT CONTINUA
         if (this.currentBossFight && !this.currentBossFight.isCompleted) {
           await this.loadBossFightData()
@@ -172,13 +173,12 @@ export const useBossFightStore = defineStore('bossFight', {
           this.nextOpponent = null
           this.availableMembers = []
         }
-        
+
         return {
           ...battleResult,
           bossFightCompleted: this.currentBossFight?.isCompleted || false,
-          playerWonBossFight: this.currentBossFight?.playerWon || false
+          playerWonBossFight: this.currentBossFight?.playerWon || false,
         }
-        
       } catch (error) {
         this.error = 'Erro ao executar batalha'
         console.error('Erro ao executar batalha:', error)
@@ -195,6 +195,6 @@ export const useBossFightStore = defineStore('bossFight', {
       this.nextOpponent = null
       this.availableMembers = []
       this.error = null
-    }
-  }
+    },
+  },
 })

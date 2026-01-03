@@ -1,7 +1,7 @@
 // src/composables/useBossFight.ts
 import { computed, onMounted, watch } from 'vue'
 import { useBossFightStore } from '@/stores/bossFightStore'
-import type { DetectedBoss } from '@/utils/bossDetectionSystem' 
+import type { DetectedBoss } from '@/utils/bossDetectionSystem'
 
 export function useBossFight(playerCrewId: number, currentIslandId: number) {
   const bossFightStore = useBossFightStore()
@@ -41,11 +41,15 @@ export function useBossFight(playerCrewId: number, currentIslandId: number) {
   }
 
   // ✅ WATCHERS
-  watch(() => currentIslandId, async (newIslandId) => {
-    if (newIslandId) {
-      await detectBosses()
-    }
-  }, { immediate: true })
+  watch(
+    () => currentIslandId,
+    async (newIslandId) => {
+      if (newIslandId) {
+        await detectBosses()
+      }
+    },
+    { immediate: true },
+  )
 
   // ✅ LIFECYCLE
   onMounted(async () => {
@@ -63,19 +67,19 @@ export function useBossFight(playerCrewId: number, currentIslandId: number) {
     availableMembers,
     loading,
     error,
-    
+
     // Getters
     hasBossesOnIsland,
     hasActiveBossFight,
     currentBattleProgress,
     bossType,
     canSelectFighter,
-    
+
     // Methods
     detectBosses,
     checkActiveFight,
     startBossFight,
     executeBattle,
-    clearState
+    clearState,
   }
 }

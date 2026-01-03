@@ -8,7 +8,7 @@ export function useAvatarManager() {
     totalEntries: 0,
     totalSize: '0 KB',
     oldestEntry: null as Date | null,
-    mostAccessed: null as any
+    mostAccessed: null as any,
   })
 
   const updateCacheStats = async () => {
@@ -24,6 +24,6 @@ export function useAvatarManager() {
     isLoading: computed(() => isLoading.value),
     cacheStats: computed(() => cacheStats.value),
     updateCacheStats,
-    clearCache
+    clearCache,
   }
 }

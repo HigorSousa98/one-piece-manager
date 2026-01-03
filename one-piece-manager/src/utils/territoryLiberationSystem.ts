@@ -1,9 +1,17 @@
 // src/utils/territoryLiberationSystem.ts
-import { db, type Territory, type Task, type Character, type Crew, type Island, type DevilFruit } from './database'
+import {
+  db,
+  type Territory,
+  type Task,
+  type Character,
+  type Crew,
+  type Island,
+  type DevilFruit,
+} from './database'
 import { AdventureSystem } from './adventureSystem'
 import { GameLogic } from './gameLogic'
 import { useBattleStore } from '@/stores/battleStore'
-import {GenerationConfig} from '@/utils/generationConfig'
+import { GenerationConfig } from '@/utils/generationConfig'
 import { useCharacterStore } from '@/stores/characterStore'
 
 export interface LiberationTaskResult {
@@ -21,15 +29,11 @@ export interface LiberationTaskResult {
 }
 
 export class TerritoryLiberationSystem {
-  
   // ✅ VERIFICAR SE ILHA TEM TERRITÓRIO OCUPADO
   static async getIslandTerritory(islandId: number): Promise<Territory | null> {
     try {
-      const territory = await db.territories
-        .where('islandId')
-        .equals(islandId)
-        .first()
-      
+      const territory = await db.territories.where('islandId').equals(islandId).first()
+
       return territory || null
     } catch (error) {
       console.error('❌ Erro ao buscar território da ilha:', error)
@@ -49,7 +53,10 @@ export class TerritoryLiberationSystem {
   }
 
   // ✅ INICIAR PROCESSO DE LIBERAÇÃO
-  static async startLiberationProcess(characterId: number, islandId: number): Promise<{
+  static async startLiberationProcess(
+    characterId: number,
+    islandId: number,
+  ): Promise<{
     success: boolean
     message: string
     task?: Task
@@ -79,29 +86,34 @@ export class TerritoryLiberationSystem {
       const existingTask = await db.tasks
         .where('characterId')
         .equals(characterId)
-        .and(task => 
-          task.type === 'island_liberation' && 
-          task.targetIslandId === islandId && 
-          !task.isCompleted
+        .and(
+          (task) =>
+            task.type === 'island_liberation' &&
+            task.targetIslandId === islandId &&
+            !task.isCompleted,
         )
         .first()
 
       if (existingTask) {
-        return { success: false, message: 'Você já tem uma missão de liberação ativa para esta ilha' }
+        return {
+          success: false,
+          message: 'Você já tem uma missão de liberação ativa para esta ilha',
+        }
       }
 
       // Determinar step inicial
       let currentStep = 1
-      
+
       // Verificar se já completou steps anteriores
       const completedTasks = await db.tasks
         .where('characterId')
         .equals(characterId)
-        .and(task => 
-          task.type === 'island_liberation' && 
-          task.targetIslandId === islandId && 
-          task.isCompleted && 
-          task.stepCompleted === true
+        .and(
+          (task) =>
+            task.type === 'island_liberation' &&
+            task.targetIslandId === islandId &&
+            task.isCompleted &&
+            task.stepCompleted === true,
         )
         .toArray()
 
@@ -120,7 +132,7 @@ export class TerritoryLiberationSystem {
 
       // Criar nova task (seguindo padrão do shipUpgradeSystem)
       const now = new Date()
-      const duration= GenerationConfig.createEpic().stepTimeLiberation
+      const duration = GenerationConfig.createEpic().stepTimeLiberation
       const endTime = new Date(now.getTime() + duration * 60 * 1000) // 5 minutos
 
       const newTask: Omit<Task, 'id'> = {
@@ -133,18 +145,23 @@ export class TerritoryLiberationSystem {
         description: `Liberando ${island.name} - Step ${currentStep}/${island.difficulty}`,
         kindnessReward: 0,
         experienceReward: this.calculateExperienceReward(currentStep, island.difficulty),
-        bountyReward: await this.calculateBountyReward(occupyingCrew.captainId, character, currentStep, island.difficulty),
-        duration: duration, 
+        bountyReward: await this.calculateBountyReward(
+          occupyingCrew.captainId,
+          character,
+          currentStep,
+          island.difficulty,
+        ),
+        duration: duration,
         helpType: 'liberation',
         difficulty: this.getDifficultyFromStep(currentStep, island.difficulty),
         location: island.name,
         createdAt: now,
-        
+
         // Campos específicos de liberation
         step: currentStep,
         stepCompleted: false,
         targetIslandId: islandId,
-        targetCrewId: territory.crewId
+        targetCrewId: territory.crewId,
       }
 
       const taskId = await db.tasks.add(newTask)
@@ -155,9 +172,8 @@ export class TerritoryLiberationSystem {
       return {
         success: true,
         message: `Missão de liberação iniciada! Step ${currentStep} de ${island.difficulty}`,
-        task: createdTask
+        task: createdTask,
       }
-
     } catch (error) {
       console.error('❌ Erro ao iniciar processo de liberação:', error)
       return { success: false, message: `Erro: ${error}` }
@@ -197,7 +213,7 @@ export class TerritoryLiberationSystem {
         const crewMembers = await db.characters
           .where('crewId')
           .equals(crew.id!)
-          .and(char => char.id !== crew.captainId)
+          .and((char) => char.id !== crew.captainId)
           .toArray()
 
         if (crewMembers.length === 0) {
@@ -214,9 +230,13 @@ export class TerritoryLiberationSystem {
       const battleResult = await this.executeLiberationBattle(character, opponent, isLastStep)
 
       // Calcular recompensas baseadas no step
-      const rewardDetails = await this.calculateLiberationRewards(task.step!, island.difficulty, isLastStep, crew.captainId, character)
-
-      const worldUpdate = await AdventureSystem.updateWorldAfterPlayerAction();
+      const rewardDetails = await this.calculateLiberationRewards(
+        task.step!,
+        island.difficulty,
+        isLastStep,
+        crew.captainId,
+        character,
+      )
 
       let devilFruitDropped: DevilFruit | undefined
 
@@ -230,36 +250,37 @@ export class TerritoryLiberationSystem {
           stepCompleted: true,
           experienceReward: rewardDetails.experience,
           bountyReward: rewardDetails.bounty,
-          description: `${task.description} - CONCLUÍDO COM SUCESSO`
+          description: `${task.description} - CONCLUÍDO COM SUCESSO`,
         })
 
         // Aplicar recompensas
         await this.applyLiberationRewards(character.id!, rewardDetails)
 
-        // Chance de dropar Devil Fruit 
+        // Chance de dropar Devil Fruit
         if (Math.random() < GenerationConfig.createEpic().devilFruitDropRate) {
           devilFruitDropped = await this.handleDevilFruitDrop(character.id!)
         }
 
         // Se foi o último step, liberar território
         if (isLastStep) {
-            const allTerritories = await db.territories.toArray()
-            const currentTerritory = allTerritories.find(terr => terr.islandId === task.targetIslandId)
-            await db.territories.update(currentTerritory!, { crewId: 0 })
-            console.log(`🏝️ Ilha ${island.name} foi liberada!`)
+          const allTerritories = await db.territories.toArray()
+          const currentTerritory = allTerritories.find(
+            (terr) => terr.islandId === task.targetIslandId,
+          )
+          await db.territories.update(currentTerritory!, { crewId: 0 })
+          console.log(`🏝️ Ilha ${island.name} foi liberada!`)
         }
 
         return {
           success: true,
-          message: isLastStep 
+          message: isLastStep
             ? `🎉 Parabéns! Você liberou a ilha ${island.name}!`
             : `✅ Step ${task.step} concluído! Próximo: ${task.step! + 1}/${island.difficulty}`,
           task,
           battleResult,
           devilFruitDropped,
-          rewardDetails
+          rewardDetails,
         }
-
       } else {
         // DERROTA
         console.log(`💀 ${character.name} foi derrotado...`)
@@ -268,17 +289,16 @@ export class TerritoryLiberationSystem {
         await db.tasks.update(taskId, {
           isCompleted: true,
           stepCompleted: false,
-          description: `${task.description} - FALHOU`
+          description: `${task.description} - FALHOU`,
         })
 
         return {
           success: false,
           message: `💀 Você foi derrotado! Tente novamente o step ${task.step}.`,
           task,
-          battleResult
+          battleResult,
         }
       }
-
     } catch (error) {
       console.error('❌ Erro ao processar conclusão da task:', error)
       return { success: false, message: `Erro: ${error}` }
@@ -286,19 +306,31 @@ export class TerritoryLiberationSystem {
   }
 
   // ✅ EXECUTAR BATALHA DE LIBERAÇÃO (USANDO ADVENTURESYSTEM)
-  private static async executeLiberationBattle(player: Character, opponent: Character, isLastStep: boolean): Promise<any> {
+  private static async executeLiberationBattle(
+    player: Character,
+    opponent: Character,
+    isLastStep: boolean,
+  ): Promise<any> {
     try {
       const battleStore = useBattleStore()
       const allDevilFruits = await db.devilFruits.toArray()
-      const playerCrewMembers = await db.characters.where('crewId').equals(player.crewId).and(char => char.position != 'Captain').toArray()
-      const opponenteCrewMembers = await db.characters.where('crewId').equals(opponent.crewId).and(char => char.position != 'Captain').toArray()
-      const playerDevilFruit = allDevilFruits.find(df => df.id == player.devilFruitId)
-      const opponentDevilFruit = allDevilFruits.find(df => df.id == opponent.devilFruitId)
+      const playerCrewMembers = await db.characters
+        .where('crewId')
+        .equals(player.crewId)
+        .and((char) => char.position != 'Captain')
+        .toArray()
+      const opponenteCrewMembers = await db.characters
+        .where('crewId')
+        .equals(opponent.crewId)
+        .and((char) => char.position != 'Captain')
+        .toArray()
+      const playerDevilFruit = allDevilFruits.find((df) => df.id == player.devilFruitId)
+      const opponentDevilFruit = allDevilFruits.find((df) => df.id == opponent.devilFruitId)
 
-      const battle = await battleStore.simulateBattle(player, opponent, null, null, isLastStep);
+      const battle = await battleStore.simulateBattle(player, opponent, null, null, isLastStep)
 
       const playerWins = battle.winner.id == player.id
-      
+
       const winner = playerWins ? player : opponent
       const loser = playerWins ? opponent : player
 
@@ -306,9 +338,8 @@ export class TerritoryLiberationSystem {
         winner: winner.id,
         loser: loser.id,
         playerWins,
-        battleLog: [`${winner.name} derrotou ${loser.name}!`]
+        battleLog: [`${winner.name} derrotou ${loser.name}!`],
       }
-
     } catch (error) {
       console.error('❌ Erro na batalha de liberação:', error)
       throw error
@@ -316,7 +347,13 @@ export class TerritoryLiberationSystem {
   }
 
   // ✅ CALCULAR RECOMPENSAS
-  private static async calculateLiberationRewards(step: number, maxSteps: number, isLastStep: boolean, captainEnemy: number, character: Character): Promise<{
+  private static async calculateLiberationRewards(
+    step: number,
+    maxSteps: number,
+    isLastStep: boolean,
+    captainEnemy: number,
+    character: Character,
+  ): Promise<{
     experience: number
     bounty: number
     treasury: number
@@ -325,39 +362,41 @@ export class TerritoryLiberationSystem {
     // Base rewards aumentam com o step
     const baseExp = this.calculateExperienceReward(step, maxSteps)
     const baseBounty = await this.calculateBountyReward(captainEnemy, character, step, maxSteps)
-    const baseTreasury = 5000 + (step * 2500)
-    
+    const baseTreasury = 5000 + step * 2500
+
     // Bonus progressivo
     const stepBonus = step / maxSteps
-    
+
     // Bonus final se for último step
     const finalBonus = isLastStep ? 2 : 1
-    
+
     return {
       experience: Math.floor(baseExp * (1 + stepBonus)),
       bounty: Math.floor(baseBounty * (1 + stepBonus)),
       treasury: Math.floor(baseTreasury * (1 + stepBonus)),
-      stepBonus: Math.round(stepBonus * 100)
+      stepBonus: Math.round(stepBonus * 100),
     }
   }
 
   // ✅ APLICAR RECOMPENSAS
-  private static async applyLiberationRewards(characterId: number, rewards: {
-    experience: number
-    bounty: number
-    treasury: number
-  }): Promise<void> {
+  private static async applyLiberationRewards(
+    characterId: number,
+    rewards: {
+      experience: number
+      bounty: number
+      treasury: number
+    },
+  ): Promise<void> {
     try {
       const character = await db.characters.get(characterId)
       if (!character) return
-
 
       // Atualizar tesouro do crew
       if (character.crewId) {
         const crew = await db.crews.get(character.crewId)
         if (crew) {
           await db.crews.update(character.crewId, {
-            treasury: crew.treasury + rewards.treasury
+            treasury: crew.treasury + rewards.treasury,
           })
         }
       }
@@ -365,23 +404,28 @@ export class TerritoryLiberationSystem {
       const battleStore = useBattleStore()
 
       // ✅ Processar capitão e membros em paralelo
-        const [captainUpdates, memberUpdates] = await Promise.all([
-          battleStore.processCaptainUpdates(character, rewards.experience, rewards.bounty, true),
-          battleStore.processCrewMemberUpdates(character, rewards.experience, rewards.bounty, true, (0.3 + Math.random() * 0.2))
-        ])
+      const [captainUpdates, memberUpdates] = await Promise.all([
+        battleStore.processCaptainUpdates(character, rewards.experience, rewards.bounty, true),
+        battleStore.processCrewMemberUpdates(
+          character,
+          rewards.experience,
+          rewards.bounty,
+          true,
+          0.3 + Math.random() * 0.2,
+        ),
+      ])
 
       // ✅ Aplicar todas as atualizações em paralelo
-        const allUpdates = [
-          db.characters.update(character.id!, captainUpdates),
-          ...memberUpdates.map(update => 
-            db.characters.update(update.id, update.updates)
-          )
-        ]
+      const allUpdates = [
+        db.characters.update(character.id!, captainUpdates),
+        ...memberUpdates.map((update) => db.characters.update(update.id, update.updates)),
+      ]
 
-        await Promise.all(allUpdates)
+      await Promise.all(allUpdates)
 
-      console.log(`💰 Recompensas aplicadas: +${rewards.experience} XP, +${rewards.bounty} bounty, +${rewards.treasury} treasury`)
-
+      console.log(
+        `💰 Recompensas aplicadas: +${rewards.experience} XP, +${rewards.bounty} bounty, +${rewards.treasury} treasury`,
+      )
     } catch (error) {
       console.error('❌ Erro ao aplicar recompensas:', error)
     }
@@ -391,10 +435,7 @@ export class TerritoryLiberationSystem {
   private static async handleDevilFruitDrop(characterId: number): Promise<DevilFruit | undefined> {
     try {
       // Buscar Devil Fruit disponível (sem owner)
-      const availableFruits = await db.devilFruits
-        .where('ownerId')
-        .equals(0)
-        .toArray()
+      const availableFruits = await db.devilFruits.where('ownerId').equals(0).toArray()
 
       if (availableFruits.length === 0) {
         console.log('📦 Nenhuma Devil Fruit disponível para drop')
@@ -410,7 +451,6 @@ export class TerritoryLiberationSystem {
       // Por enquanto, só retorna a fruta
       // A escolha de comer/dar será feita na interface
       return droppedFruit
-
     } catch (error) {
       console.error('❌ Erro ao processar drop de Devil Fruit:', error)
       return undefined
@@ -418,7 +458,10 @@ export class TerritoryLiberationSystem {
   }
 
   // ✅ CONSUMIR DEVIL FRUIT
-  static async consumeDevilFruit(characterId: number, devilFruitId: number): Promise<{
+  static async consumeDevilFruit(
+    characterId: number,
+    devilFruitId: number,
+  ): Promise<{
     success: boolean
     message: string
   }> {
@@ -444,103 +487,103 @@ export class TerritoryLiberationSystem {
         devilFruitId: devilFruitId,
         stats: {
           ...character.stats,
-          devilFruit: 0 // Stats baseados no level
-        }
+          devilFruit: 0, // Stats baseados no level
+        },
       })
 
       await db.devilFruits.update(devilFruitId, {
-        ownerId: characterId
+        ownerId: characterId,
       })
 
       console.log(`🍎 ${character.name} consumiu ${devilFruit.name}`)
 
-    await characterStore.loadPlayerCharacter();
-    await characterStore.loadPlayerCrew();
-
+      await characterStore.loadPlayerCharacter()
+      await characterStore.loadPlayerCrew()
 
       return {
         success: true,
-        message: `${character.name} consumiu a ${devilFruit.name}!`
+        message: `${character.name} consumiu a ${devilFruit.name}!`,
       }
-
     } catch (error) {
       console.error('❌ Erro ao consumir Devil Fruit:', error)
       return { success: false, message: `Erro: ${error}` }
     }
   }
 
-   // ✅ NOVO MÉTODO PARA DAR DEVIL FRUIT À TRIPULAÇÃO
+  // ✅ NOVO MÉTODO PARA DAR DEVIL FRUIT À TRIPULAÇÃO
   static async giveDevilFruitToCrewMember(
     crewMemberId: number,
-    devilFruitId: number
+    devilFruitId: number,
   ): Promise<{
     success: boolean
     message: string
   }> {
     try {
       console.log(`🍎 Dando Devil Fruit ${devilFruitId} para membro ${crewMemberId}`)
-      
+
       // Verificar se o membro existe e não tem Devil Fruit
       const crewMember = await db.characters.get(crewMemberId)
       if (!crewMember) {
         return {
           success: false,
-          message: 'Membro da tripulação não encontrado'
+          message: 'Membro da tripulação não encontrado',
         }
       }
-      
+
       if (crewMember.devilFruitId && crewMember.devilFruitId !== 0) {
         return {
           success: false,
-          message: 'Este membro já possui uma Devil Fruit'
+          message: 'Este membro já possui uma Devil Fruit',
         }
       }
-      
+
       // Verificar se a Devil Fruit existe
       const devilFruit = await db.devilFruits.get(devilFruitId)
       if (!devilFruit) {
         return {
           success: false,
-          message: 'Devil Fruit não encontrada'
+          message: 'Devil Fruit não encontrada',
         }
       }
-      
+
       // Atualizar o membro com a Devil Fruit
       await db.characters.update(crewMemberId, {
-        devilFruitId: devilFruitId
+        devilFruitId: devilFruitId,
       })
 
       await db.devilFruits.update(devilFruitId, {
-        ownerId: crewMemberId
+        ownerId: crewMemberId,
       })
-      
+
       // Aumentar loyalty do membro (receber Devil Fruit é um grande presente)
       const loyaltyIncrease = Math.floor(Math.random() * 20) + 10 // 10-30 pontos
       const newLoyalty = Math.min(100, crewMember.loyalty + loyaltyIncrease)
-      
+
       await db.characters.update(crewMemberId, {
-        loyalty: newLoyalty
+        loyalty: newLoyalty,
       })
-      
+
       console.log(`✅ ${crewMember.name} recebeu ${devilFruit.name}`)
       console.log(`📈 Loyalty: ${crewMember.loyalty} → ${newLoyalty} (+${loyaltyIncrease})`)
-      
+
       return {
         success: true,
-        message: `${crewMember.name} consumiu a ${devilFruit.name} e sua loyalty aumentou para ${newLoyalty}!`
+        message: `${crewMember.name} consumiu a ${devilFruit.name} e sua loyalty aumentou para ${newLoyalty}!`,
       }
-      
     } catch (error) {
       console.error('❌ Erro ao dar Devil Fruit para membro:', error)
       return {
         success: false,
-        message: 'Erro interno ao processar Devil Fruit'
+        message: 'Erro interno ao processar Devil Fruit',
       }
     }
   }
 
   // ✅ OBTER PROGRESSO DE LIBERAÇÃO
-  static async getLiberationProgress(characterId: number, islandId: number): Promise<{
+  static async getLiberationProgress(
+    characterId: number,
+    islandId: number,
+  ): Promise<{
     currentStep: number
     maxSteps: number
     completedSteps: number
@@ -557,7 +600,7 @@ export class TerritoryLiberationSystem {
           maxSteps: 0,
           completedSteps: 0,
           isLiberated: false,
-          canStart: false
+          canStart: false,
         }
       }
 
@@ -567,8 +610,8 @@ export class TerritoryLiberationSystem {
       let occupyingCrew: Crew | undefined
       let occupyingCaptain: Character | undefined
       if (territory && territory.crewId) {
-        occupyingCrew = await db.crews.get(territory.crewId) || undefined
-        if(occupyingCrew){
+        occupyingCrew = (await db.crews.get(territory.crewId)) || undefined
+        if (occupyingCrew) {
           occupyingCaptain = await db.characters.get(occupyingCrew.captainId)
         }
       }
@@ -576,20 +619,19 @@ export class TerritoryLiberationSystem {
       const completedTasks = await db.tasks
         .where('characterId')
         .equals(characterId)
-        .and(task => 
-          task.type === 'island_liberation' && 
-          task.targetIslandId === islandId && 
-          task.isCompleted && 
-          task.stepCompleted === true
+        .and(
+          (task) =>
+            task.type === 'island_liberation' &&
+            task.targetIslandId === islandId &&
+            task.isCompleted &&
+            task.stepCompleted === true,
         )
         .toArray()
 
-        const hasActiveTask = await db.tasks
+      const hasActiveTask = await db.tasks
         .where('characterId')
         .equals(characterId)
-        .and(task => 
-          !task.isCompleted
-        )
+        .and((task) => !task.isCompleted)
         .toArray()
 
       const completedSteps = completedTasks.length
@@ -602,10 +644,9 @@ export class TerritoryLiberationSystem {
         completedSteps,
         isLiberated,
         canStart,
-        occupyingCrew, 
-        occupyingCaptain
+        occupyingCrew,
+        occupyingCaptain,
       }
-
     } catch (error) {
       console.error('❌ Erro ao obter progresso de liberação:', error)
       return {
@@ -613,31 +654,30 @@ export class TerritoryLiberationSystem {
         maxSteps: 0,
         completedSteps: 0,
         isLiberated: false,
-        canStart: false
+        canStart: false,
       }
     }
   }
 
   // ✅ VERIFICAR SE TEM TASK ATIVA DE LIBERAÇÃO
-  static async hasActiveLiberationTask(characterId: number, islandId?: number): Promise<Task | null> {
+  static async hasActiveLiberationTask(
+    characterId: number,
+    islandId?: number,
+  ): Promise<Task | null> {
     try {
       const now = new Date()
-      
+
       let query = db.tasks
         .where('characterId')
         .equals(characterId)
-        .and(task => 
-          task.type === 'island_liberation' && 
-          !task.isCompleted
-        )
+        .and((task) => task.type === 'island_liberation' && !task.isCompleted)
 
       if (islandId) {
-        query = query.and(task => task.targetIslandId === islandId)
+        query = query.and((task) => task.targetIslandId === islandId)
       }
 
       const activeTask = await query.first()
       return activeTask || null
-      
     } catch (error) {
       console.error('❌ Erro ao verificar task de liberação ativa:', error)
       return null
@@ -647,13 +687,22 @@ export class TerritoryLiberationSystem {
   // ✅ MÉTODOS AUXILIARES
   public static calculateExperienceReward(step: number, maxSteps: number): number {
     const baseExp = GameLogic.expNeeded(maxSteps * 3) / 2
-    return (1 + maxSteps) * 100  + (step * baseExp / maxSteps) + (step === maxSteps ? baseExp / maxSteps : 0) // Bonus no último step
+    return (
+      (1 + maxSteps) * 100 +
+      (step * baseExp) / maxSteps +
+      (step === maxSteps ? baseExp / maxSteps : 0)
+    ) // Bonus no último step
   }
 
-  public static async calculateBountyReward(captainEnemy: number, character: Character, step: number, maxSteps: number): Promise<number> {
+  public static async calculateBountyReward(
+    captainEnemy: number,
+    character: Character,
+    step: number,
+    maxSteps: number,
+  ): Promise<number> {
     const captain = await db.characters.get(captainEnemy)
     const bountySuggested = GameLogic.calculateBountyGain(character, captain)
-    return bountySuggested * step / maxSteps
+    return (bountySuggested * step) / maxSteps
   }
 
   private static getDifficultyFromStep(step: number, maxSteps: number): 'easy' | 'medium' | 'hard' {
@@ -672,18 +721,18 @@ export class TerritoryLiberationSystem {
     const now = new Date()
     const startTime = new Date(task.startTime)
     const endTime = new Date(task.endTime)
-    
+
     const totalTime = endTime.getTime() - startTime.getTime()
     const elapsed = now.getTime() - startTime.getTime()
     const remaining = endTime.getTime() - now.getTime()
-    
+
     const progress = Math.min(100, Math.max(0, (elapsed / totalTime) * 100))
     const isCompleted = now >= endTime
-    
+
     return {
       progress,
       timeRemaining: Math.max(0, remaining),
-      isCompleted
+      isCompleted,
     }
   }
 

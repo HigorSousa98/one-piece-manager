@@ -22,19 +22,19 @@ export default {
       push: () => {
         try {
           if (typeof window !== 'undefined' && window.adsbygoogle) {
-            (window.adsbygoogle = window.adsbygoogle || []).push({})
+            ;(window.adsbygoogle = window.adsbygoogle || []).push({})
           }
         } catch (error) {
           console.error('Erro ao carregar anúncio:', error)
         }
-      }
+      },
     }
 
     // Método para carregar anúncios
     app.provide('loadAd', () => {
       if (typeof window !== 'undefined' && window.adsbygoogle) {
-        (window.adsbygoogle = window.adsbygoogle || []).push({})
+        ;(window.adsbygoogle = window.adsbygoogle || []).push({})
       }
     })
-  }
+  },
 }
