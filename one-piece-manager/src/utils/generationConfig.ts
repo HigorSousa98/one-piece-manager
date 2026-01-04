@@ -378,14 +378,6 @@ export class GenerationConfig {
       errors.push('Bounty mínimo deve ser menor que bounty máximo')
     }
 
-    // Validações de ilhas
-    const calculatedIslands = this.difficultyLevels * this.islandsPerLevel
-    if (calculatedIslands !== this.totalIslands) {
-      console.warn(
-        `⚠️ Aviso: Total de ilhas (${this.totalIslands}) não coincide com cálculo (${calculatedIslands})`,
-      )
-    }
-
     if (errors.length > 0) {
       throw new Error(`Configuração inválida:\n${errors.join('\n')}`)
     }

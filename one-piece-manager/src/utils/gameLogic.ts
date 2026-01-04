@@ -415,10 +415,6 @@ export class GameLogic {
       }
 
       if (levelsGained > 0) {
-        console.log(
-          `🎉 ${character.name} subiu ${levelsGained} level(s)! ${initialLevel} → ${currentLevel}`,
-        )
-
         return {
           shouldLevelUp: true,
           newLevel: currentLevel,
@@ -438,6 +434,318 @@ export class GameLogic {
       }
     }
   }
+
+  static calculateStatIncrease(character: Character): Character['stats'] {
+    // ✅ DEFINIR PONTOS TOTAIS DISPONÍVEIS POR LEVEL
+    const pointsPerLevel = 2 + Math.floor(Math.random() * 3) // 2-4 pontos aleatórios
+
+    // ✅ STATS BASE ATUAIS
+    const currentStats = character.stats || {
+      attack: 0,
+      defense: 0,
+      speed: 0,
+      intelligence: 0,
+      skill: 0,
+      armHaki: 0,
+      obsHaki: 0,
+      kingHaki: 0,
+      devilFruit: 0,
+    }
+
+    // ✅ DEFINIR PRIORIDADES POR TIPO DE PERSONAGEM
+    const typePriorities = this.getTypePriorities(character.type)
+
+    // ✅ CRIAR POOL DE STATS ELEGÍVEIS
+    const eligibleStats = this.getEligibleStats(character)
+
+    // ✅ DISTRIBUIR PONTOS ALEATORIAMENTE
+    const distributedPoints = this.distributePointsRandomly(
+      pointsPerLevel,
+      eligibleStats,
+      typePriorities,
+    )
+
+    // ✅ APLICAR AUMENTOS AOS STATS ATUAIS
+    return {
+      attack: currentStats.attack + (distributedPoints.attack || 0),
+      defense: currentStats.defense + (distributedPoints.defense || 0),
+      speed: currentStats.speed + (distributedPoints.speed || 0),
+      intelligence: currentStats.intelligence + (distributedPoints.intelligence || 0),
+      skill: currentStats.skill + (distributedPoints.skill || 0),
+      armHaki: currentStats.armHaki + (distributedPoints.armHaki || 0),
+      obsHaki: currentStats.obsHaki + (distributedPoints.obsHaki || 0),
+      kingHaki: currentStats.kingHaki + (distributedPoints.kingHaki || 0),
+      devilFruit: currentStats.devilFruit + (distributedPoints.devilFruit || 0),
+    }
+  }
+
+  static getTypePriorities(type: string): { [key: string]: number } {
+    // ✅ MAPEAMENTO POR CATEGORIA
+    const categoryMappings = {
+      // COMBATENTES
+      'Combatente - Artes marciais': 'martial_artist',
+      'Combatente - Mestre em armadilhas': 'trap_master',
+      'Combatente - Cyborg': 'cyborg',
+
+      // ESPADACHINS
+      'Espadachim - Estilo de 1 espada': 'one_sword',
+      'Espadachim - Estilo de 2 espadas': 'two_sword',
+      'Espadachim - Estilo de 3 espadas': 'three_sword',
+
+      // ATIRADORES
+      'Atirador - Pistola': 'pistol_user',
+      'Atirador - Rifle': 'rifle_user',
+      'Atirador - Armas improvisadas': 'improvised_weapons',
+
+      // SUPORTE
+      'Suporte - Utensílios': 'utility_support',
+      'Suporte - Tanque': 'tank_support',
+      'Suporte - Cura': 'healer_support',
+    }
+
+    const priorities = {
+      // ✅ COMBATENTES
+      martial_artist: {
+        // Haki: armHaki(10) + obsHaki(5) = 15
+        armHaki: 10,
+        obsHaki: 5,
+        // Stats: attack(35) + skill(25) + speed(15) + defense(7) + intelligence(3) = 85
+        attack: 35,
+        skill: 25,
+        speed: 15,
+        defense: 7,
+        intelligence: 3,
+      },
+
+      trap_master: {
+        // Haki: armHaki(3) + obsHaki(12) = 15
+        armHaki: 3,
+        obsHaki: 12,
+        // Stats: intelligence(35) + skill(25) + attack(15) + speed(7) + defense(3) = 85
+        intelligence: 35,
+        skill: 25,
+        attack: 15,
+        speed: 7,
+        defense: 3,
+      },
+
+      cyborg: {
+        // Haki: armHaki(8) + obsHaki(7) = 15
+        armHaki: 8,
+        obsHaki: 7,
+        // Stats: attack(25) + defense(25) + intelligence(15) + speed(12) + skill(8) = 85
+        attack: 25,
+        defense: 25,
+        intelligence: 15,
+        speed: 12,
+        skill: 8,
+      },
+
+      // ✅ ESPADACHINS
+      one_sword: {
+        // Haki: armHaki(8) + obsHaki(7) = 15
+        armHaki: 8,
+        obsHaki: 7,
+        // Stats: speed(35) + attack(25) + intelligence(10) + defense(8) + skill(7) = 85
+        speed: 35,
+        attack: 25,
+        intelligence: 10,
+        defense: 8,
+        skill: 7,
+      },
+
+      two_sword: {
+        // Haki: armHaki(7) + obsHaki(8) = 15
+        armHaki: 7,
+        obsHaki: 8,
+        // Stats: speed(30) + skill(25) + attack(18) + defense(10) + intelligence(2) = 85
+        speed: 30,
+        skill: 25,
+        attack: 18,
+        defense: 10,
+        intelligence: 2,
+      },
+
+      three_sword: {
+        // Haki: armHaki(12) + obsHaki(3) = 15
+        armHaki: 12,
+        obsHaki: 3,
+        // Stats: attack(35) + skill(30) + speed(12) + defense(5) + intelligence(3) = 85
+        attack: 35,
+        skill: 30,
+        speed: 12,
+        defense: 5,
+        intelligence: 3,
+      },
+
+      // ✅ ATIRADORES
+      pistol_user: {
+        // Haki: armHaki(2) + obsHaki(13) = 15
+        armHaki: 2,
+        obsHaki: 13,
+        // Stats: speed(30) + skill(25) + attack(15) + intelligence(12) + defense(3) = 85
+        speed: 30,
+        skill: 25,
+        attack: 15,
+        intelligence: 12,
+        defense: 3,
+      },
+
+      rifle_user: {
+        // Haki: armHaki(4) + obsHaki(11) = 15
+        armHaki: 4,
+        obsHaki: 11,
+        // Stats: attack(35) + intelligence(25) + skill(15) + speed(7) + defense(3) = 85
+        attack: 35,
+        intelligence: 25,
+        skill: 15,
+        speed: 7,
+        defense: 3,
+      },
+
+      improvised_weapons: {
+        // Haki: armHaki(2) + obsHaki(13) = 15
+        armHaki: 2,
+        obsHaki: 13,
+        // Stats: intelligence(35) + speed(25) + skill(15) + attack(7) + defense(3) = 85
+        intelligence: 35,
+        speed: 25,
+        skill: 15,
+        attack: 7,
+        defense: 3,
+      },
+
+      // ✅ SUPORTE
+      utility_support: {
+        // Haki: armHaki(4) + obsHaki(11) = 15
+        armHaki: 4,
+        obsHaki: 11,
+        // Stats: intelligence(35) + skill(25) + defense(15) + speed(7) + attack(3) = 85
+        intelligence: 35,
+        skill: 25,
+        defense: 15,
+        speed: 7,
+        attack: 3,
+      },
+
+      tank_support: {
+        // Haki: armHaki(12) + obsHaki(3) = 15
+        armHaki: 12,
+        obsHaki: 3,
+        // Stats: defense(40) + skill(20) + intelligence(15) + attack(7) + speed(3) = 85
+        defense: 40,
+        skill: 20,
+        intelligence: 15,
+        attack: 7,
+        speed: 3,
+      },
+
+      healer_support: {
+        // Haki: armHaki(2) + obsHaki(13) = 15
+        armHaki: 2,
+        obsHaki: 13,
+        // Stats: intelligence(35) + defense(25) + speed(15) + skill(8) + attack(2) = 85
+        intelligence: 35,
+        defense: 25,
+        speed: 15,
+        skill: 8,
+        attack: 2,
+      },
+    }
+
+    // ✅ BUSCAR CATEGORIA E RETORNAR PRIORIDADES
+    const category = categoryMappings[type as keyof typeof categoryMappings]
+
+    if (category && priorities[category as keyof typeof priorities]) {
+      return priorities[category as keyof typeof priorities]
+    }
+
+    // ✅ FALLBACK EQUILIBRADO
+    return {
+      attack: 15,
+      defense: 15,
+      speed: 15,
+      intelligence: 15,
+      skill: 15,
+      armHaki: 12,
+      obsHaki: 13,
+    }
+  }
+
+  static getEligibleStats(character: Character): string[] {
+      const eligible: string[] = []
+
+      // Stats básicos sempre elegíveis
+      eligible.push('attack', 'defense', 'speed', 'intelligence', 'skill')
+
+      // Haki só elegível se já tiver ou se for de alto level
+      if (character.stats.armHaki > 0 || character.level >= 50) {
+        eligible.push('armHaki')
+      }
+
+      if (character.stats.obsHaki > 0 || character.level >= 50) {
+        eligible.push('obsHaki')
+      }
+
+      // Devil Fruit só se já tiver ou chance especial
+      if (character.stats.devilFruit > 0) {
+        eligible.push('devilFruit')
+      }
+
+      return eligible
+    }
+
+    static distributePointsRandomly(
+      totalPoints: number,
+      eligibleStats: string[],
+      priorities: { [key: string]: number },
+    ): { [key: string]: number } {
+      const distribution: { [key: string]: number } = {}
+      let remainingPoints = totalPoints
+
+      // Inicializar todos os stats elegíveis com 0
+      eligibleStats.forEach((stat) => {
+        distribution[stat] = 0
+      })
+
+      // ✅ DISTRIBUIR PONTOS UM POR VEZ
+      while (remainingPoints > 0) {
+        // Criar array ponderado baseado nas prioridades
+        const weightedStats: string[] = []
+
+        eligibleStats.forEach((stat) => {
+          const weight = priorities[stat] || 10
+          // Adicionar o stat múltiplas vezes baseado no peso
+          for (let i = 0; i < weight; i++) {
+            weightedStats.push(stat)
+          }
+        })
+
+        // Selecionar stat aleatório do array ponderado
+        const selectedStat = weightedStats[Math.floor(Math.random() * weightedStats.length)]
+
+        // ✅ APLICAR LIMITADORES PARA EVITAR CONCENTRAÇÃO EXCESSIVA
+        const maxPointsPerStat = Math.ceil(totalPoints * 0.6) // Máximo 60% dos pontos em um stat
+
+        if (distribution[selectedStat] < maxPointsPerStat) {
+          distribution[selectedStat]++
+          remainingPoints--
+        } else {
+          // Se o stat atingiu o limite, remover das opções temporariamente
+          const statIndex = eligibleStats.indexOf(selectedStat)
+          if (statIndex > -1 && eligibleStats.length > 1) {
+            eligibleStats.splice(statIndex, 1)
+          }
+
+          // Se todos os stats atingiram o limite, quebrar o loop
+          if (eligibleStats.length === 0) {
+            break
+          }
+        }
+      }
+
+      return distribution
+    }
 
   static increaseStats(
     character: Character,

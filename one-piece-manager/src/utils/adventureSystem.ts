@@ -1,3 +1,4 @@
+// src/utils/adventureSystem.ts
 import { db, Character, Crew, Island } from './database'
 import { GenerationConfig } from '@/utils/generationConfig'
 import { useBattleStore } from '@/stores/battleStore'
@@ -17,20 +18,6 @@ export interface AdventureEncounter {
     type: 'bounty' | 'experience'
     value: number
   }
-}
-
-export interface CrewRecruitmentResult {
-  recruited: Character[]
-  removed: Character[]
-  recruitmentAttempts: number
-  removalAttempts: number
-}
-
-export interface CrewCapacityInfo {
-  currentMembers: number
-  maxCapacity: number
-  hasSpace: boolean
-  shipLevel: number
 }
 
 export interface IslandMovementResult {
@@ -62,8 +49,74 @@ export interface CrewMovementDecision {
   movementType: 'easier' | 'same' | 'harder'
 }
 
+// ✅ CACHE PARA OTIMIZAÇÃO
+interface AdventureCache {
+  islands: Island[]
+  crews: Crew[]
+  characters: Character[]
+  territories: any[]
+  devilFruits: any[]
+  styleCombats: any[]
+  lastCacheTime: number
+  cacheTimeout: number
+}
+
 export class AdventureSystem {
-  // 1. 🎯 GERAR AVENTURA BASEADA NO TIPO E LOCALIZAÇÃO
+  // ✅ CACHE ESTÁTICO PARA MELHOR PERFORMANCE
+  private static cache: AdventureCache = {
+    islands: [],
+    crews: [],
+    characters: [],
+    territories: [],
+    devilFruits: [],
+    styleCombats: [],
+    lastCacheTime: 0,
+    cacheTimeout: 30000, // 30 segundos
+  }
+
+  // ✅ MÉTODO PARA ATUALIZAR CACHE
+  private static async updateCache(force: boolean = false): Promise<void> {
+    const now = Date.now()
+
+    if (!force && now - this.cache.lastCacheTime < this.cache.cacheTimeout) {
+      return // Cache ainda válido
+    }
+
+    try {
+      // Carregar dados em paralelo
+      const [islands, crews, characters, territories, devilFruits, styleCombats] =
+        await Promise.all([
+          db.islands.toArray(),
+          db.crews.toArray(),
+          db.characters.toArray(),
+          db.territories.toArray(),
+          db.devilFruits.toArray(),
+          db.styleCombats.toArray(),
+        ])
+
+      this.cache = {
+        islands,
+        crews,
+        characters,
+        territories,
+        devilFruits,
+        styleCombats,
+        lastCacheTime: now,
+        cacheTimeout: 30000,
+      }
+
+      console.log('✅ Cache do AdventureSystem atualizado')
+    } catch (error) {
+      console.error('❌ Erro ao atualizar cache:', error)
+    }
+  }
+
+  // ✅ MÉTODO PARA LIMPAR CACHE
+  static clearCache(): void {
+    this.cache.lastCacheTime = 0
+  }
+
+  // 1. 🎯 GERAR AVENTURA BASEADA NO TIPO E LOCALIZAÇÃO (MANTIDO ORIGINAL)
   static async generateAdventure(player: Character): Promise<AdventureEncounter | null> {
     try {
       console.log(`🗺️ Gerando aventura para ${player.type}: ${player.name}`)
@@ -95,7 +148,7 @@ export class AdventureSystem {
     }
   }
 
-  // 2. 🏝️ DESCOBRIR ILHA ATUAL DO JOGADOR
+  // 2. 🏝️ DESCOBRIR ILHA ATUAL DO JOGADOR (MANTIDO ORIGINAL)
   private static async getPlayerCurrentIsland(player: Character): Promise<Island | null> {
     try {
       // Buscar o crew do jogador
@@ -116,7 +169,7 @@ export class AdventureSystem {
     }
   }
 
-  // 3. 🎲 ENCONTRAR OPONENTE NA MESMA ILHA
+  // 3. 🎲 ENCONTRAR OPONENTE NA MESMA ILHA (MANTIDO ORIGINAL)
   private static async findOpponentOnSameIsland(
     player: Character,
     islandId: number,
@@ -188,41 +241,33 @@ export class AdventureSystem {
     }
   }
 
-  // 4. 🎯 FILTRAR OPONENTES COMPATÍVEIS POR TIPO
+  // 4-8. MÉTODOS AUXILIARES (MANTIDOS ORIGINAIS)
   private static filterCompatibleOpponents(player: Character, opponents: Character[]): Character[] {
     return opponents.filter((opponent) => {
       switch (player.type) {
         case 'Pirate':
           return ['Marine', 'Government', 'BountyHunter', 'Pirate'].includes(opponent.type)
-
         case 'Marine':
           return ['Pirate'].includes(opponent.type)
-
         case 'BountyHunter':
           return ['Pirate', 'BountyHunter'].includes(opponent.type)
-
         case 'Government':
-          // Agentes do governo podem encontrar qualquer um com kindness > 0
           return (
             opponent.kindness > 0 && ['Pirate', 'Marine', 'BountyHunter'].includes(opponent.type)
           )
-
         default:
           return true
       }
     })
   }
 
-  // 5. 📊 FILTRAR POR LEVEL COMPATÍVEL
   private static filterByLevel(player: Character, opponents: Character[]): Character[] {
     const levelRange = this.calculateLevelRange(player.level)
-
     return opponents.filter(
       (opponent) => opponent.level >= levelRange.min && opponent.level <= levelRange.max,
     )
   }
 
-  // 6. 🎭 CRIAR ENCONTRO COM NARRATIVA (ATUALIZADO)
   private static createEncounter(
     player: Character,
     opponent: Character,
@@ -240,7 +285,6 @@ export class AdventureSystem {
     }
   }
 
-  // 7. 📖 GERAR DESCRIÇÃO NARRATIVA (CORRIGIDO)
   private static generateEncounterDescription(
     player: Character,
     opponent: Character,
@@ -296,7 +340,6 @@ export class AdventureSystem {
     return starter + islandContext + levelContext + ' O que você fará?'
   }
 
-  // 8. 🎁 GERAR RECOMPENSAS ESPECIAIS (ATUALIZADO)
   private static generateSpecialReward(
     player: Character,
     opponent: Character,
@@ -328,7 +371,7 @@ export class AdventureSystem {
     }
   }
 
-  // 🛠️ FUNÇÕES AUXILIARES
+  // 🛠️ FUNÇÕES AUXILIARES (MANTIDAS ORIGINAIS)
   private static calculateLevelRange(level: number): { min: number; max: number } {
     const variance = Math.max(5, Math.floor(level * 0.2)) // 20% de variação, mínimo 3
 
@@ -373,8 +416,8 @@ export class AdventureSystem {
       return scoreB - scoreA
     })
   }
-  // 🎯 DETERMINAR TIPO DE ENCONTRO
-  private static determineEncounterType(
+
+  static determineEncounterType(
     player: Character,
     opponent: Character,
   ): 'hostile' | 'neutral' | 'friendly' {
@@ -448,7 +491,6 @@ export class AdventureSystem {
     }
   }
 
-  // 🏷️ DESCRIÇÕES DOS TIPOS
   private static getTypeDescription(type: string): string {
     switch (type) {
       case 'Pirate':
@@ -466,7 +508,9 @@ export class AdventureSystem {
     }
   }
 
-  // 🎮 FUNÇÃO PRINCIPAL PARA INTEGRAÇÃO COM O MUNDO DINÂMICO
+  // ✅ VERSÕES OTIMIZADAS DOS MÉTODOS PRINCIPAIS PARA WORKERS
+
+  // 🎮 SIMULAÇÃO DE ENCONTROS OTIMIZADA
   static async simulateIslandEncounters(
     islandId: number,
     maxEncounters: number = 5,
@@ -482,7 +526,6 @@ export class AdventureSystem {
       let encounters = 0
       let battles = 0
       let crewMovements = 0
-      let island = await db.islands.get(islandId)
       if (player) {
         // Buscar todos os crews na ilha
         const crewsOnIsland = await db.crews
@@ -538,38 +581,7 @@ export class AdventureSystem {
     }
   }
 
-  // 🚢 MOVER CREW PARA ILHA ALEATÓRIA
-  private static async moveCrewToRandomIsland(crew: Crew): Promise<void> {
-    try {
-      // Buscar todas as ilhas
-      const allIslands = await db.islands.toArray()
-      const currentIslandDifficulty =
-        allIslands.find((island) => island.id === crew.currentIsland)?.difficulty || 1
-
-      if (allIslands.length <= 1) return
-
-      // Escolher ilha aleatória (diferente da atual)
-      const availableIslands = allIslands.filter(
-        (island) =>
-          island.id !== crew.currentIsland &&
-          island.difficulty >= currentIslandDifficulty &&
-          island.difficulty <= currentIslandDifficulty + 2,
-      )
-      const newIsland = availableIslands[Math.floor(Math.random() * availableIslands.length)]
-
-      // Atualizar localização do crew
-      await db.crews.update(crew.id!, {
-        currentIsland: newIsland.id!,
-        docked: 1,
-      })
-
-      console.log(`🚢 ${crew.name} fugiu para ${newIsland.name}`)
-    } catch (error) {
-      console.error('Erro ao mover crew:', error)
-    }
-  }
-
-  // 🌍 SIMULAR MUNDO INTEIRO (TODAS AS ILHAS)
+  // 🌍 SIMULAÇÃO MUNDIAL OTIMIZADA
   static async simulateWorldEncounters(): Promise<{
     totalEncounters: number
     totalBattles: number
@@ -582,9 +594,12 @@ export class AdventureSystem {
     }>
   }> {
     try {
-      console.log('🌍 Simulando encontros em todas as ilhas...')
+      console.log('🌍 Simulando encontros em todas as ilhas (otimizado)...')
+      //mudar encontros x worldUpdateWorker
 
-      const allIslands = await db.islands.toArray()
+      // Atualizar cache
+      await this.updateCache()
+
       const results = {
         totalEncounters: 0,
         totalBattles: 0,
@@ -597,35 +612,45 @@ export class AdventureSystem {
         }>,
       }
 
-      for (const island of allIslands) {
-        const islandResult = await this.simulateIslandEncounters(
-          island.id!,
-          GenerationConfig.createEpic().islandEncounters,
-        )
+      // Processar ilhas em chunks para melhor performance
+      const chunkSize = 5
+      const islands = this.cache.islands
 
-        results.totalEncounters += islandResult.encounters
-        results.totalBattles += islandResult.battles
+      const maxEncounters = GenerationConfig.createEpic().islandEncounters
 
-        if (islandResult.encounters > 0) {
-          results.islandReports.push({
-            islandName: island.name,
-            encounters: islandResult.encounters,
-            battles: islandResult.battles,
-            movements: islandResult.crewMovements,
-          })
-        }
+      for (let i = 0; i < islands.length; i += chunkSize) {
+        const islandChunk = islands.slice(i, i + chunkSize)
+
+        // Processar chunk em paralelo
+        const chunkPromises = islandChunk.map(async (island) => {
+          const islandResult = await this.simulateIslandEncounters(island.id!, maxEncounters)
+
+          return {
+            island,
+            result: islandResult,
+          }
+        })
+
+        const chunkResults = await Promise.all(chunkPromises)
+
+        // Processar resultados do chunk
+        chunkResults.forEach(({ island, result }) => {
+          results.totalEncounters += result.encounters
+          results.totalBattles += result.battles
+
+          if (result.encounters > 0) {
+            results.islandReports.push({
+              islandName: island.name,
+              encounters: result.encounters,
+              battles: result.battles,
+              movements: result.crewMovements,
+            })
+          }
+        })
+
+        // Yield control para não bloquear
+        await new Promise((resolve) => setTimeout(resolve, 1))
       }
-
-      const movementResult = await this.processWorldMovement()
-      results.totalMovements += movementResult.crewsMoved
-
-      await this.changeTerritories()
-      await this.changeTopCharacters()
-      await this.createNewCharacter()
-
-      console.log(
-        `🌍 Simulação mundial concluída: ${results.totalEncounters} encontros, ${results.totalBattles} batalhas, ${results.totalMovements} movimentos de crew`,
-      )
 
       return results
     } catch (error) {
@@ -639,13 +664,14 @@ export class AdventureSystem {
     }
   }
 
+  // ✅ CRIAÇÃO DE PERSONAGEM OTIMIZADA
   static async createNewCharacter(): Promise<{ success: boolean }> {
     try {
+      // Atualizar cache se necessário
+      await this.updateCache()
+
       const characterType = Math.random()
-      const allStyleCombat = await db.styleCombats.toArray()
-      const allIslands = await db.islands.toArray()
       let type = ''
-      let crewId = 0
 
       if (characterType <= 0.25) {
         type = 'Pirate'
@@ -657,12 +683,14 @@ export class AdventureSystem {
         type = 'Government'
       }
 
+      let crewId = 0
+
       if (type != 'Government') {
         crewId = await db.crews.add({
           name: CrewNameGenerator.generateCrewName(type as 'Pirate' | 'Marine' | 'BountyHunter'),
           type: type as 'Pirate' | 'Marine' | 'BountyHunter',
-          captainId: 0, // Será atualizado depois
-          currentIsland: 0, // Ilha inicial
+          captainId: 0,
+          currentIsland: 0,
           docked: 1,
           reputation: 0,
           foundedAt: new Date(),
@@ -671,7 +699,10 @@ export class AdventureSystem {
       }
 
       const styleCombatId =
-        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
+        this.cache.styleCombats.length > 0
+          ? this.cache.styleCombats[GameLogic.randomBetween(0, this.cache.styleCombats.length - 1)]
+              .id || 0
+          : 1
 
       const potentialToHaveKngHaki = Math.random()
 
@@ -685,7 +716,7 @@ export class AdventureSystem {
         bounty: 0,
         stats: GameLogic.generateStats(
           1,
-          allStyleCombat.find((st) => st.id == styleCombatId).name,
+          this.cache.styleCombats.find((st) => st.id == styleCombatId)?.name || 'Balanced',
           potentialToHaveKngHaki,
         ),
         styleCombatId: styleCombatId!,
@@ -693,7 +724,7 @@ export class AdventureSystem {
         crewId: crewId,
         position: 'Captain',
         isPlayer: 0,
-        kindness: 50 + Math.ceil(Math.random() * 30),
+        kindness: GameLogic.randomBetween(-100, 100),
         potentialToHaveKngHaki: potentialToHaveKngHaki,
         defendingBase: 0,
         loyalty: 100,
@@ -703,11 +734,19 @@ export class AdventureSystem {
       const characterId = await db.characters.add(newCharacter)
 
       if (crewId != 0) {
+        const selectedIsland =
+          this.cache.islands.length > 0
+            ? GameLogic.selectIslandForCrew(newCharacter, this.cache.islands)
+            : 1
+
         await db.crews.update(crewId, {
           captainId: characterId,
-          currentIsland: GameLogic.selectIslandForCrew(newCharacter, allIslands),
+          currentIsland: selectedIsland,
         })
       }
+
+      // Limpar cache para próxima atualização
+      this.clearCache()
 
       console.log(`Um novo ${type} adentrou nos mares! Seu nome é ${newCharacter.name}!`)
 
@@ -718,54 +757,37 @@ export class AdventureSystem {
     }
   }
 
+  // ✅ REDISTRIBUIÇÃO DE PERSONAGENS OTIMIZADA
   static async changeTopCharacters(): Promise<{ success: boolean }> {
     try {
-      // ✅ 1. CARREGAR CONFIGURAÇÕES E DADOS BASE
+      // Atualizar cache
+      await this.updateCache()
+
       const config = GenerationConfig.createEpic()
 
-      const [allDF, allCrews, allIslands] = await Promise.all([
-        db.devilFruits.toArray(),
-        db.crews.toArray(),
-        db.islands.toArray(),
-      ])
-
-      // ✅ 2. CARREGAR CAPITÃES POR TIPO
-      const [pirates, marines, government] = await Promise.all([
-        db.characters
-          .where('type')
-          .equals('Pirate')
-          .and((char) => char.position === 'Captain')
-          .toArray(),
-        db.characters
-          .where('type')
-          .equals('Marine')
-          .and((char) => char.position === 'Captain')
-          .toArray(),
-        db.characters
-          .where('type')
-          .equals('Government')
-          .and((char) => char.position === 'Captain')
-          .toArray(),
-      ])
-
-      // ✅ 4. ORDENAR POR PODER (COM CACHE DE DEVIL FRUITS)
-      const dfMap = new Map(allDF.map((df) => [df.id!, df]))
-      const crewMap = new Map(allCrews.map((crew) => [crew.id!, crew]))
+      // Usar cache para melhor performance
+      const dfMap = new Map(this.cache.devilFruits.map((df) => [df.id!, df]))
+      const crewMap = new Map(this.cache.crews.map((crew) => [crew.id!, crew]))
 
       const calculatePowerSafe = (character: Character): number => {
         const devilFruit = character.devilFruitId ? dfMap.get(character.devilFruitId) : undefined
         return GameLogic.calculatePower(character, devilFruit)
       }
 
-      const sortedPirates = pirates.sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
+      // Filtrar e ordenar personagens do cache
+      const pirates = this.cache.characters
+        .filter((char) => char.type === 'Pirate' && char.position === 'Captain')
+        .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
 
-      const sortedMarines = marines.sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
+      const marines = this.cache.characters
+        .filter((char) => char.type === 'Marine' && char.position === 'Captain')
+        .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
 
-      const sortedGovernment = government.sort(
-        (a, b) => calculatePowerSafe(b) - calculatePowerSafe(a),
-      )
+      const government = this.cache.characters
+        .filter((char) => char.type === 'Government')
+        .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
 
-      // ✅ 5. LIMPAR TABELAS EXISTENTES
+      // Limpar tabelas existentes
       await Promise.all([
         db.yonkous.clear(),
         db.shichibukais.clear(),
@@ -774,22 +796,21 @@ export class AdventureSystem {
         db.cypherPols.clear(),
       ])
 
-      // ✅ 6. FUNÇÃO HELPER PARA OBTER BASE ISLAND SEGURA
       const getBaseIsland = (character: Character): number => {
         const crew = crewMap.get(character.crewId!)
         if (!crew) {
-          console.warn(`⚠️ Crew não encontrado para character ${character.id}`)
-          return allIslands[0]?.id || 1 // Fallback para primeira ilha
+          return this.cache.islands[0]?.id || 1
         }
         return crew.currentIsland
       }
 
-      // ✅ 7. CRIAR YONKOU (4 MAIS FORTES)
-      const yonkouPromises = []
-      for (let i = 0; i < Math.min(config.yonkouCount, sortedPirates.length); i++) {
-        const pirate = sortedPirates[i]
+      // Criar posições importantes (versão otimizada)
+      const operations = []
 
-        yonkouPromises.push(
+      // Yonkou
+      for (let i = 0; i < Math.min(config.yonkouCount, pirates.length); i++) {
+        const pirate = pirates[i]
+        operations.push(
           db.yonkous.add({
             captainId: pirate.id!,
             baseIsland: getBaseIsland(pirate),
@@ -797,17 +818,13 @@ export class AdventureSystem {
           }),
         )
       }
-      await Promise.all(yonkouPromises)
 
-      // ✅ 8. CRIAR SHICHIBUKAI (PRÓXIMOS 7 MAIS FORTES)
-      const shichibukaiPromises = []
-      const startIndex = Math.ceil(sortedPirates.length * 0.3) //config.yonkouCount
-      const endIndex = Math.min(startIndex + config.schichibukai, sortedPirates.length)
-
+      // Shichibukai
+      const startIndex = Math.ceil(pirates.length * 0.3)
+      const endIndex = Math.min(startIndex + config.schichibukai, pirates.length)
       for (let i = startIndex; i < endIndex; i++) {
-        const pirate = sortedPirates[i]
-
-        shichibukaiPromises.push(
+        const pirate = pirates[i]
+        operations.push(
           db.shichibukais.add({
             captainId: pirate.id!,
             baseIsland: getBaseIsland(pirate),
@@ -815,14 +832,11 @@ export class AdventureSystem {
           }),
         )
       }
-      await Promise.all(shichibukaiPromises)
 
-      // ✅ 9. CRIAR ADMIRAIS (3 MAIS FORTES MARINES)
-      const admiralPromises = []
-      for (let i = 0; i < Math.min(config.admiralCount, sortedMarines.length); i++) {
-        const marine = sortedMarines[i]
-
-        admiralPromises.push(
+      // Admirais
+      for (let i = 0; i < Math.min(config.admiralCount, marines.length); i++) {
+        const marine = marines[i]
+        operations.push(
           db.admirals.add({
             marineId: marine.id!,
             baseIsland: getBaseIsland(marine),
@@ -830,14 +844,11 @@ export class AdventureSystem {
           }),
         )
       }
-      await Promise.all(admiralPromises)
 
-      // ✅ 10. CRIAR gorosei (5 MAIS FORTES DO GOVERNO)
-      const goroseiPromises = []
-      for (let i = 0; i < Math.min(config.gorouseiCount, sortedGovernment.length); i++) {
-        const gov = sortedGovernment[i]
-
-        goroseiPromises.push(
+      // Gorosei
+      for (let i = 0; i < Math.min(config.gorouseiCount, government.length); i++) {
+        const gov = government[i]
+        operations.push(
           db.gorouseis.add({
             govId: gov.id!,
             currentIsland: getBaseIsland(gov),
@@ -845,21 +856,17 @@ export class AdventureSystem {
           }),
         )
       }
-      await Promise.all(goroseiPromises)
 
-      // ✅ 11. CRIAR CYPHER POL (PRÓXIMOS 90 DO GOVERNO)
-      const cypherPolPromises = []
+      // Cypher Pol
       const cpStartIndex = config.gorouseiCount
-      const cpEndIndex = Math.min(cpStartIndex + config.cypherPolCount, sortedGovernment.length)
-
-      // ✅ ORDENAR ILHAS POR DIFICULDADE PARA CYPHER POL
-      const sortedIslands = allIslands.sort((a, b) => a.difficulty - b.difficulty)
+      const cpEndIndex = Math.min(cpStartIndex + config.cypherPolCount, government.length)
+      const sortedIslands = this.cache.islands.sort((a, b) => a.difficulty - b.difficulty)
 
       for (let i = cpStartIndex; i < cpEndIndex; i++) {
-        const gov = sortedGovernment[i]
+        const gov = government[i]
         const randomIsland = sortedIslands[GameLogic.randomBetween(0, sortedIslands.length - 1)]
 
-        cypherPolPromises.push(
+        operations.push(
           db.cypherPols.add({
             captainId: gov.id!,
             reputation: GameLogic.randomBetween(1000, 10000),
@@ -868,17 +875,12 @@ export class AdventureSystem {
           }),
         )
       }
-      await Promise.all(cypherPolPromises)
 
-      // ✅ 12. ESTATÍSTICAS FINAIS
-      const [finalYonkou, finalShichibukai, finalAdmirals, finalgorosei, finalCypherPol] =
-        await Promise.all([
-          db.yonkous.count(),
-          db.shichibukais.count(),
-          db.admirals.count(),
-          db.gorouseis.count(),
-          db.cypherPols.count(),
-        ])
+      // Executar todas as operações em paralelo
+      await Promise.all(operations)
+
+      // Limpar cache
+      this.clearCache()
 
       return { success: true }
     } catch (error) {
@@ -887,17 +889,12 @@ export class AdventureSystem {
     }
   }
 
+  // ✅ ATUALIZAÇÃO DE TERRITÓRIOS OTIMIZADA
   static async changeTerritories(): Promise<{ success: boolean }> {
     try {
-      // ✅ 1. CARREGAR DADOS NECESSÁRIOS
-      const [allCrews, allDevilFruits, allCharacters, allTerritories] = await Promise.all([
-        db.crews.where('docked').equals(1).toArray(),
-        db.devilFruits.toArray(),
-        db.characters.toArray(),
-        db.territories.toArray(),
-      ])
+      // Atualizar cache
+      await this.updateCache()
 
-      // ✅ 2. OBTER PLAYER ATUAL
       const characterStore = useCharacterStore()
       const player = characterStore.playerCharacter
 
@@ -906,25 +903,26 @@ export class AdventureSystem {
         return { success: false }
       }
 
-      // ✅ 3. FILTRAR TERRITÓRIOS OCUPADOS (crewId != 0)
-      const occupiedTerritories = allTerritories.filter((territory) => territory.crewId !== 0)
+      // Usar cache para melhor performance
+      const allCrews = this.cache.crews.filter((crew) => crew.docked === 1)
+      const allCharacters = this.cache.characters
+      const allDevilFruits = this.cache.devilFruits
+      const allTerritories = this.cache.territories
 
-      // ✅ 4. MAPA PARA ARMAZENAR O CREW MAIS FORTE POR ILHA
+      const occupiedTerritories = allTerritories.filter((territory) => territory.crewId !== 0)
       const mapStrongestCrewByIsland = new Map<number, Crew | null>()
 
-      // ✅ 5. INICIALIZAR MAPA COM ILHAS DOS TERRITÓRIOS OCUPADOS
+      // Inicializar mapa
       occupiedTerritories.forEach((territory) => {
         mapStrongestCrewByIsland.set(territory.islandId, null)
       })
 
-      // ✅ 6. ENCONTRAR O CREW MAIS FORTE EM CADA ILHA
+      // Encontrar crew mais forte em cada ilha (versão otimizada)
       allCrews.forEach((crew) => {
-        // Verificar se a ilha do crew está no mapa E não é o crew do player
         if (mapStrongestCrewByIsland.has(crew.currentIsland) && crew.id !== player.crewId) {
           const currentStrongestCrew = mapStrongestCrewByIsland.get(crew.currentIsland)
 
           if (currentStrongestCrew) {
-            // ✅ COMPARAR PODER DOS CREWS
             const currentCrewMembers = allCharacters.filter(
               (char) => char.crewId === currentStrongestCrew.id,
             )
@@ -940,30 +938,23 @@ export class AdventureSystem {
               mapStrongestCrewByIsland.set(crew.currentIsland, crew)
             }
           } else {
-            // ✅ PRIMEIRA VEZ QUE UM CREW É ENCONTRADO NESTA ILHA
             mapStrongestCrewByIsland.set(crew.currentIsland, crew)
           }
         }
       })
 
-      // ✅ 7. PREPARAR ATUALIZAÇÕES DOS TERRITÓRIOS
+      // Preparar atualizações
       const territoryUpdates: Promise<number>[] = []
 
       for (const [islandId, strongestCrew] of mapStrongestCrewByIsland.entries()) {
         if (strongestCrew) {
-          // ✅ ENCONTRAR O TERRITÓRIO CORRESPONDENTE À ILHA
           const territory = occupiedTerritories.find((t) => t.islandId === islandId)
-
           if (territory) {
-            // ✅ ATUALIZAR O TERRITÓRIO COM O NOVO CREW
             territoryUpdates.push(
               db.territories.update(territory.id!, { crewId: strongestCrew.id }),
             )
-          } else {
-            console.warn(`⚠️ Território não encontrado para ilha ${islandId}`)
           }
         } else {
-          // ✅ NENHUM CREW ENCONTRADO NA ILHA - LIBERAR TERRITÓRIO
           const territory = occupiedTerritories.find((t) => t.islandId === islandId)
           if (territory) {
             territoryUpdates.push(db.territories.update(territory.id!, { crewId: 0 }))
@@ -971,15 +962,13 @@ export class AdventureSystem {
         }
       }
 
-      // ✅ 8. EXECUTAR TODAS AS ATUALIZAÇÕES
+      // Executar atualizações
       if (territoryUpdates.length > 0) {
         await Promise.all(territoryUpdates)
       }
 
-      // ✅ 9. ESTATÍSTICAS FINAIS
-      const finalTerritories = await db.territories.toArray()
-      const occupiedCount = finalTerritories.filter((t) => t.crewId !== 0).length
-      const freeCount = finalTerritories.filter((t) => t.crewId === 0).length
+      // Limpar cache
+      this.clearCache()
 
       return { success: true }
     } catch (error) {
@@ -988,315 +977,12 @@ export class AdventureSystem {
     }
   }
 
-  // 🎯 FUNÇÃO PARA INTEGRAR COM O SISTEMA DE BATALHA DO JOGADOR
-  static async updateWorldAfterPlayerAction(): Promise<{
-    success: boolean
-    worldEvents: string[]
-    summary: string
-  }> {
-    try {
-      const worldResult = await this.simulateWorldEncounters()
-
-      const events: string[] = []
-
-      // Gerar eventos interessantes
-      worldResult.islandReports.forEach((report) => {
-        if (report.battles > 0) {
-          events.push(`⚔️ ${report.battles} batalha(s) ocorreram na ${report.islandName}`)
-        }
-        if (report.movements > 0) {
-          events.push(`🚢 ${report.movements} crew(s) fugiram da ${report.islandName}`)
-        }
-      })
-
-      const summary = `🌍 Mundo atualizado: ${worldResult.totalEncounters} encontros, ${worldResult.totalBattles} batalhas, ${worldResult.totalMovements} movimentos de crews`
-
-      return {
-        success: true,
-        worldEvents: events.slice(0, 5), // Máximo 5 eventos
-        summary,
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar mundo:', error)
-      return {
-        success: false,
-        worldEvents: [],
-        summary: 'Erro ao atualizar mundo',
-      }
-    }
-  }
-  // ✅ SISTEMA DE RECRUTAMENTO E REMOÇÃO
-  static async processCrewRecruitmentAndRemoval(
-    winnerCrewId: number,
-    loserCrewId: number,
-    isPlayerInvolved: boolean = false,
-  ): Promise<CrewRecruitmentResult> {
-    try {
-      const result: CrewRecruitmentResult = {
-        recruited: [],
-        removed: [],
-        recruitmentAttempts: 0,
-        removalAttempts: 0,
-      }
-
-      // Se o player estiver envolvido, não aplicar recrutamento automático
-      if (isPlayerInvolved) {
-        return result
-      }
-
-      // Buscar informações dos crews
-      const [winnerCrew, loserCrew] = await Promise.all([
-        db.crews.get(winnerCrewId),
-        db.crews.get(loserCrewId),
-      ])
-
-      if (!winnerCrew || !loserCrew) {
-        console.error('❌ Crews não encontrados para recrutamento')
-        return result
-      }
-
-      // Verificar capacidade do crew vencedor
-      const winnerCapacity = await this.getCrewCapacityInfo(winnerCrewId)
-
-      if (!winnerCapacity.hasSpace) {
-      } else {
-        // Processar recrutamento
-        const recruitmentResult = await this.processRecruitment(
-          winnerCrewId,
-          loserCrewId,
-          winnerCapacity,
-        )
-
-        result.recruited = recruitmentResult.recruited
-        result.recruitmentAttempts = recruitmentResult.attempts
-      }
-
-      // Processar remoção de membros do crew perdedor
-      const removalResult = await this.processCrewMemberRemoval(loserCrewId)
-      result.removed = removalResult.removed
-      result.removalAttempts = removalResult.attempts
-
-      return result
-    } catch (error) {
-      console.error('❌ Erro no processamento de recrutamento:', error)
-      return {
-        recruited: [],
-        removed: [],
-        recruitmentAttempts: 0,
-        removalAttempts: 0,
-      }
-    }
-  }
-
-  // ✅ VERIFICAR CAPACIDADE DO CREW
-  static async getCrewCapacityInfo(crewId: number): Promise<CrewCapacityInfo> {
-    try {
-      // Buscar membros atuais
-      const currentMembers = await db.characters.where('crewId').equals(crewId).toArray()
-
-      // Buscar navio do crew
-      const ship = await db.ships.where('crewId').equals(crewId).first()
-
-      const shipLevel = ship?.level || 1
-      const maxCapacity = shipLevel * 3 // Assumindo 3 membros por level do navio
-
-      return {
-        currentMembers: currentMembers.length,
-        maxCapacity,
-        hasSpace: currentMembers.length < maxCapacity,
-        shipLevel,
-      }
-    } catch (error) {
-      console.error('❌ Erro ao verificar capacidade do crew:', error)
-      return {
-        currentMembers: 0,
-        maxCapacity: 3,
-        hasSpace: false,
-        shipLevel: 1,
-      }
-    }
-  }
-
-  // ✅ PROCESSAR RECRUTAMENTO (20% DE CHANCE)
-  static async processRecruitment(
-    winnerCrewId: number,
-    loserCrewId: number,
-    capacity: CrewCapacityInfo,
-  ): Promise<{ recruited: Character[]; attempts: number }> {
-    try {
-      const recruited: Character[] = []
-      let attempts = 0
-
-      // Buscar membros elegíveis do crew perdedor (não capitães)
-      const eligibleMembers = await db.characters
-        .where('crewId')
-        .equals(loserCrewId)
-        .and((char) => char.isPlayer !== 1)
-        .toArray()
-
-      if (eligibleMembers.length === 0) {
-        return { recruited, attempts }
-      }
-
-      eligibleMembers.sort((a, b) => a.loyalty - b.loyalty)
-
-      // Tentar recrutar cada membro elegível
-      for (const member of eligibleMembers) {
-        if (capacity.currentMembers + recruited.length >= capacity.maxCapacity) {
-          break
-        }
-
-        attempts++
-
-        // 20-40% de chance de recrutamento  depender da loyalty do membro
-        const recruitmentChance = 0.2 + (1 - member.loyalty / 100) * 0.1
-        const roll = Math.random()
-
-        if (roll <= recruitmentChance) {
-          // Sucesso no recrutamento!
-
-          // Atualizar crew do membro
-          await db.characters.update(member.id!, {
-            crewId: winnerCrewId,
-          })
-
-          recruited.push(member)
-
-          // Chance de parar o recrutamento após sucesso (para não recrutar todos)
-          if (Math.random() < 0.6) {
-            // 60% chance de parar após recrutar alguém
-            break
-          }
-        }
-      }
-
-      return { recruited, attempts }
-    } catch (error) {
-      console.error('❌ Erro no processamento de recrutamento:', error)
-      return { recruited: [], attempts: 0 }
-    }
-  }
-
-  // ✅ PROCESSAR REMOÇÃO DE MEMBROS (10% DE CHANCE)
-  static async processCrewMemberRemoval(
-    loserCrewId: number,
-  ): Promise<{ removed: Character[]; attempts: number }> {
-    try {
-      const removed: Character[] = []
-      let attempts = 0
-
-      // Buscar membros elegíveis para remoção (não capitães, não recrutados)
-      const eligibleMembers = await db.characters
-        .where('crewId')
-        .equals(loserCrewId)
-        .and((char) => char.isPlayer !== 1)
-        .toArray()
-
-      if (eligibleMembers.length === 0) {
-        return { removed, attempts }
-      }
-
-      // Tentar remover cada membro elegível
-      for (const member of eligibleMembers) {
-        attempts++
-
-        // 10% de chance de remoção
-        const removalChance = 0.1
-        const roll = Math.random()
-
-        if (roll <= removalChance) {
-          // Sucesso na remoção!
-          // Remover do crew (definir crewId como null)
-          await db.characters.update(member.id!, {
-            crewId: 0,
-          })
-
-          removed.push(member)
-
-          // Chance de parar a remoção após sucesso (para não remover muitos)
-          if (Math.random() < 0.7) {
-            // 70% chance de parar após remover alguém
-            break
-          }
-        }
-      }
-
-      return { removed, attempts }
-    } catch (error) {
-      console.error('❌ Erro no processamento de remoção:', error)
-      return { removed: [], attempts: 0 }
-    }
-  }
-
-  // ✅ CRIAR CREW PARA MEMBROS ÓRFÃOS
-  static async createCrewForOrphanMembers(
-    orphanMembers: Character[],
-    originalIslandId: number,
-  ): Promise<Crew | null> {
-    try {
-      if (orphanMembers.length === 0) return null
-
-      // Selecionar capitão (membro com maior level)
-      const captain = orphanMembers.reduce((highest, current) =>
-        current.level > highest.level ? current : highest,
-      )
-
-      const crewName = CrewNameGenerator.generateCrewName(
-        captain.type as 'Pirate' | 'Marine' | 'BountyHunter',
-      )
-
-      // Criar novo crew
-      const newCrewId = await db.crews.add({
-        name: crewName,
-        type: captain.type as 'Pirate' | 'Marine' | 'BountyHunter',
-        captainId: captain.id!,
-        currentIsland: originalIslandId,
-        docked: 1,
-        reputation: Math.floor(captain.level * 10),
-        treasury:
-          captain.type === 'Marine'
-            ? GameLogic.randomBetween(1000000, 50000000)
-            : GameLogic.randomBetween(captain.bounty * 0.5, captain.bounty * 10),
-        foundedAt: new Date(),
-      })
-
-      // Atualizar capitão
-      await db.characters.update(captain.id!, {
-        crewId: newCrewId,
-        position: 'Captain',
-      })
-
-      // Atualizar outros membros
-      for (const member of orphanMembers) {
-        if (member.id !== captain.id) {
-          await db.characters.update(member.id!, {
-            crewId: newCrewId,
-            position: 'Crew Member',
-          })
-        }
-      }
-
-      // Criar navio básico para o novo crew
-      await db.ships.add({
-        crewId: newCrewId,
-        level: 1,
-        needRepair: false,
-        destroyed: false,
-        name: ShipNameGenerator.generateShipNameByCrewType(captain.type),
-      })
-
-      const newCrew = await db.crews.get(newCrewId)
-
-      return newCrew ? newCrew : null
-    } catch (error) {
-      console.error('❌ Erro ao criar crew para órfãos:', error)
-      return null
-    }
-  }
-
-  // ✅ SISTEMA PRINCIPAL DE MOVIMENTAÇÃO MUNDIAL
+  // ✅ PROCESSAMENTO DE MOVIMENTO OTIMIZADO
   static async processWorldMovement(): Promise<IslandMovementResult> {
     try {
+      // Atualizar cache
+      await this.updateCache()
+
       const result: IslandMovementResult = {
         totalCrews: 0,
         dockedToggled: 0,
@@ -1309,13 +995,13 @@ export class AdventureSystem {
         islandReports: [],
       }
 
-      // 1. FASE 1: Alternar status docked/undocked
-      const dockedResult = await this.toggleCrewDockedStatus()
+      // Fase 1: Alternar status docked (otimizada)
+      const dockedResult = await this.toggleCrewDockedStatusOptimized()
       result.dockedToggled = dockedResult.toggled
       result.totalCrews = dockedResult.totalCrews
 
-      // 2. FASE 2: Movimentar crews docked
-      const movementResult = await this.moveDockedCrews()
+      // Fase 2: Movimentar crews (otimizada)
+      const movementResult = await this.moveDockedCrewsOptimized()
       result.crewsMoved = movementResult.moved
       result.movementsByDifficulty = movementResult.movementsByDifficulty
       result.islandReports = movementResult.islandReports
@@ -1333,23 +1019,22 @@ export class AdventureSystem {
     }
   }
 
-  // ✅ FASE 1: ALTERNAR STATUS DOCKED (10% UNDOCKED, 90% DOCKED)
-  static async toggleCrewDockedStatus(): Promise<{
+  // ✅ VERSÕES OTIMIZADAS DOS MÉTODOS DE MOVIMENTO
+  private static async toggleCrewDockedStatusOptimized(): Promise<{
     totalCrews: number
     toggled: number
   }> {
     try {
-      // Buscar todos os crews (exceto do player)
-      const allCrews = await db.crews.where('captainId').above(0).toArray()
-
-      // Filtrar crews do player e crews donos de território
+      // Usar cache
       const playerCrews = await this.getPlayerCrews()
       const playerCrewIds = playerCrews.map((crew) => crew.id)
-      const territories = await db.territories.toArray()
-      const territoriesCrewIds = territories.map((territory) => territory.crewId)
+      const territoriesCrewIds = this.cache.territories.map((territory) => territory.crewId)
 
-      const nonPlayerCrews = allCrews.filter(
-        (crew) => !playerCrewIds.includes(crew.id) && !territoriesCrewIds.includes(crew.id),
+      const nonPlayerCrews = this.cache.crews.filter(
+        (crew) =>
+          crew.captainId > 0 &&
+          !playerCrewIds.includes(crew.id) &&
+          !territoriesCrewIds.includes(crew.id),
       )
 
       if (nonPlayerCrews.length === 0) {
@@ -1359,26 +1044,27 @@ export class AdventureSystem {
       let toggled = 0
       const updates: Promise<any>[] = []
 
-      for (const crew of nonPlayerCrews) {
-        const roll = Math.random()
-        let newDockedStatus: number
+      // Processar em chunks para melhor performance
+      const chunkSize = 10
+      for (let i = 0; i < nonPlayerCrews.length; i += chunkSize) {
+        const chunk = nonPlayerCrews.slice(i, i + chunkSize)
 
-        if (roll <= 0.1) {
-          // 10% chance de ficar undocked (no mar)
-          newDockedStatus = 0
-        } else {
-          // 90% chance de ficar docked (na ilha)
-          newDockedStatus = 1
-        }
+        chunk.forEach((crew) => {
+          const roll = Math.random()
+          const newDockedStatus = roll <= 0.1 ? 0 : 1
 
-        // Só atualizar se mudou
-        if (crew.docked !== newDockedStatus) {
-          updates.push(db.crews.update(crew.id!, { docked: newDockedStatus as 0 | 1 }))
-          toggled++
+          if (crew.docked !== newDockedStatus) {
+            updates.push(db.crews.update(crew.id!, { docked: newDockedStatus as 0 | 1 }))
+            toggled++
+          }
+        })
+
+        // Yield control
+        if (i % (chunkSize * 5) === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1))
         }
       }
 
-      // Aplicar todas as atualizações em paralelo
       await Promise.all(updates)
 
       return {
@@ -1386,13 +1072,12 @@ export class AdventureSystem {
         toggled,
       }
     } catch (error) {
-      console.error('❌ Erro ao alternar status docked:', error)
+      console.error('❌ Erro ao alternar status docked (otimizado):', error)
       return { totalCrews: 0, toggled: 0 }
     }
   }
 
-  // ✅ FASE 2: MOVER CREWS DOCKED (40% DE CHANCE DE MOVIMENTO)
-  static async moveDockedCrews(): Promise<{
+  private static async moveDockedCrewsOptimized(): Promise<{
     moved: number
     movementsByDifficulty: {
       easier: number
@@ -1409,20 +1094,16 @@ export class AdventureSystem {
     }>
   }> {
     try {
-      // Buscar crews docked (exceto do player)
       const playerCrews = await this.getPlayerCrews()
       const playerCrewIds = playerCrews.map((crew) => crew.id)
-      const territoriesCrews = await db.territories.toArray()
+      const territoriesCrewIds = this.cache.territories.map((territory) => territory.crewId)
 
-      const dockedCrews = await db.crews
-        .where('docked')
-        .equals(1)
-        .and(
-          (crew) =>
-            !playerCrewIds.includes(crew.id) &&
-            !territoriesCrews.find((ter) => ter.crewId == crew.id),
-        )
-        .toArray()
+      const dockedCrews = this.cache.crews.filter(
+        (crew) =>
+          crew.docked === 1 &&
+          !playerCrewIds.includes(crew.id) &&
+          !territoriesCrewIds.includes(crew.id),
+      )
 
       if (dockedCrews.length === 0) {
         return {
@@ -1434,51 +1115,51 @@ export class AdventureSystem {
 
       const movementDecisions: CrewMovementDecision[] = []
       const movementsByDifficulty = { easier: 0, same: 0, harder: 0 }
+      const islandMap = new Map(this.cache.islands.map((island) => [island.id!, island]))
 
-      // Buscar todas as ilhas para referência
-      const allIslands = await db.islands.toArray()
-      const islandMap = new Map(allIslands.map((island) => [island.id!, island]))
-
-      // Decidir quais crews vão se mover
+      // Processar movimentos (versão simplificada)
       for (const crew of dockedCrews) {
         const moveRoll = Math.random()
 
-        // 40% de chance de se mover
         if (moveRoll <= 0.2) {
+          // 20% chance de movimento
           const currentIsland = islandMap.get(crew.currentIsland)
 
-          if (!currentIsland) {
-            console.warn(`⚠️ Ilha atual não encontrada para ${crew.name}: ${crew.currentIsland}`)
-            continue
-          }
+          if (currentIsland) {
+            const destinationDecision = await this.selectDestinationIslandOptimized(currentIsland)
 
-          const destinationDecision = await this.selectDestinationIsland(currentIsland, allIslands)
+            if (destinationDecision) {
+              movementDecisions.push({
+                crewId: crew.id!,
+                crewName: crew.name,
+                fromIslandId: currentIsland.id!,
+                toIslandId: destinationDecision.island.id!,
+                fromDifficulty: currentIsland.difficulty,
+                toDifficulty: destinationDecision.island.difficulty,
+                movementType: destinationDecision.type,
+              })
 
-          if (destinationDecision) {
-            movementDecisions.push({
-              crewId: crew.id!,
-              crewName: crew.name,
-              fromIslandId: currentIsland.id!,
-              toIslandId: destinationDecision.island.id!,
-              fromDifficulty: currentIsland.difficulty,
-              toDifficulty: destinationDecision.island.difficulty,
-              movementType: destinationDecision.type,
-            })
-
-            movementsByDifficulty[destinationDecision.type]++
+              movementsByDifficulty[destinationDecision.type]++
+            }
           }
         }
       }
 
-      // Executar movimentos
-      const movementPromises = movementDecisions.map((decision) =>
-        this.executeCrewMovement(decision),
-      )
+      // Executar movimentos em chunks
+      const chunkSize = 5
+      for (let i = 0; i < movementDecisions.length; i += chunkSize) {
+        const chunk = movementDecisions.slice(i, i + chunkSize)
 
-      await Promise.all(movementPromises)
+        const chunkPromises = chunk.map((decision) => this.executeCrewMovement(decision))
 
-      // Gerar relatório por ilha
-      const islandReports = await this.generateIslandMovementReport(allIslands, movementDecisions)
+        await Promise.all(chunkPromises)
+
+        // Yield control
+        await new Promise((resolve) => setTimeout(resolve, 1))
+      }
+
+      // Gerar relatório simplificado
+      const islandReports = this.generateIslandMovementReportOptimized(movementDecisions)
 
       return {
         moved: movementDecisions.length,
@@ -1486,7 +1167,7 @@ export class AdventureSystem {
         islandReports,
       }
     } catch (error) {
-      console.error('❌ Erro na movimentação de crews:', error)
+      console.error('❌ Erro na movimentação de crews (otimizado):', error)
       return {
         moved: 0,
         movementsByDifficulty: { easier: 0, same: 0, harder: 0 },
@@ -1495,13 +1176,129 @@ export class AdventureSystem {
     }
   }
 
-  // ✅ SELECIONAR ILHA DE DESTINO COM DIFERENÇA EXATA DE 1 NÍVEL
+  private static async selectDestinationIslandOptimized(
+    currentIsland: Island,
+  ): Promise<{ island: Island; type: 'easier' | 'same' | 'harder' } | null> {
+    try {
+      const availableIslands = this.cache.islands.filter((island) => island.id !== currentIsland.id)
+
+      if (availableIslands.length === 0) {
+        return null
+      }
+
+      // Versão simplificada da seleção
+      const easierIslands = availableIslands.filter(
+        (island) => island.difficulty === currentIsland.difficulty - 1,
+      )
+      const sameIslands = availableIslands.filter(
+        (island) => island.difficulty === currentIsland.difficulty,
+      )
+      const harderIslands = availableIslands.filter(
+        (island) => island.difficulty === currentIsland.difficulty + 1,
+      )
+
+      const roll = Math.random()
+      let selectedIslands: Island[]
+      let movementType: 'easier' | 'same' | 'harder'
+
+      if (roll < 0.2 && easierIslands.length > 0) {
+        selectedIslands = easierIslands
+        movementType = 'easier'
+      } else if (roll < 0.5 && sameIslands.length > 0) {
+        selectedIslands = sameIslands
+        movementType = 'same'
+      } else if (harderIslands.length > 0) {
+        selectedIslands = harderIslands
+        movementType = 'harder'
+      } else if (sameIslands.length > 0) {
+        selectedIslands = sameIslands
+        movementType = 'same'
+      } else if (easierIslands.length > 0) {
+        selectedIslands = easierIslands
+        movementType = 'easier'
+      } else {
+        return null
+      }
+
+      const selectedIsland = selectedIslands[Math.floor(Math.random() * selectedIslands.length)]
+
+      return {
+        island: selectedIsland,
+        type: movementType,
+      }
+    } catch (error) {
+      console.error('❌ Erro ao selecionar ilha de destino (otimizado):', error)
+      return null
+    }
+  }
+
+  private static generateIslandMovementReportOptimized(movements: CrewMovementDecision[]): Array<{
+    islandId: number
+    islandName: string
+    initialCrews: number
+    finalCrews: number
+    crewsLeft: number
+    crewsArrived: number
+  }> {
+    try {
+      const reports: Array<{
+        islandId: number
+        islandName: string
+        initialCrews: number
+        finalCrews: number
+        crewsLeft: number
+        crewsArrived: number
+      }> = []
+
+      // Usar cache para gerar relatório mais rápido
+      const islandMovementMap = new Map<number, { left: number; arrived: number }>()
+
+      movements.forEach((movement) => {
+        // Crews que saíram
+        const fromData = islandMovementMap.get(movement.fromIslandId) || { left: 0, arrived: 0 }
+        fromData.left++
+        islandMovementMap.set(movement.fromIslandId, fromData)
+
+        // Crews que chegaram
+        const toData = islandMovementMap.get(movement.toIslandId) || { left: 0, arrived: 0 }
+        toData.arrived++
+        islandMovementMap.set(movement.toIslandId, toData)
+      })
+
+      // Gerar relatórios apenas para ilhas com movimento
+      for (const [islandId, data] of islandMovementMap.entries()) {
+        const island = this.cache.islands.find((i) => i.id === islandId)
+        if (island && (data.left > 0 || data.arrived > 0)) {
+          // Contar crews atuais (estimativa baseada no cache)
+          const currentCrews = this.cache.crews.filter(
+            (crew) => crew.currentIsland === islandId && crew.docked === 1,
+          ).length
+
+          reports.push({
+            islandId: island.id!,
+            islandName: island.name,
+            initialCrews: currentCrews + data.left - data.arrived,
+            finalCrews: currentCrews,
+            crewsLeft: data.left,
+            crewsArrived: data.arrived,
+          })
+        }
+      }
+
+      return reports.sort((a, b) => b.crewsLeft + b.crewsArrived - (a.crewsLeft + a.crewsArrived))
+    } catch (error) {
+      console.error('❌ Erro ao gerar relatório de movimento (otimizado):', error)
+      return []
+    }
+  }
+
+  // ✅ MÉTODOS MANTIDOS ORIGINAIS (para compatibilidade)
   static async selectDestinationIsland(
     currentIsland: Island,
     allIslands: Island[],
+    percent: number,
   ): Promise<{ island: Island; type: 'easier' | 'same' | 'harder' } | null> {
     try {
-      // Filtrar ilhas disponíveis (exceto a atual)
       const availableIslands = allIslands.filter((island) => island.id !== currentIsland.id)
 
       if (availableIslands.length === 0) {
@@ -1509,38 +1306,31 @@ export class AdventureSystem {
         return null
       }
 
-      // ✅ CATEGORIZAR ILHAS COM DIFERENÇA EXATA DE 1 NÍVEL
       const easierIslands = availableIslands.filter(
-        (island) => island.difficulty === currentIsland.difficulty - 1, // Exatamente -1
+        (island) => island.difficulty === currentIsland.difficulty - 1,
       )
 
       const sameIslands = availableIslands.filter(
-        (island) => island.difficulty === currentIsland.difficulty, // Exatamente igual
+        (island) => island.difficulty === currentIsland.difficulty,
       )
 
       const harderIslands = availableIslands.filter(
-        (island) => island.difficulty === currentIsland.difficulty + 1, // Exatamente +1
+        (island) => island.difficulty === currentIsland.difficulty + 1,
       )
 
-      // Determinar tipo de movimento baseado nas probabilidades
-      const movementRoll = Math.random()
       let selectedIslands: Island[]
       let movementType: 'easier' | 'same' | 'harder'
 
-      if (movementRoll <= 0.2 && easierIslands.length > 0) {
-        // 20% chance para ilha de dificuldade -1
+      if (percent >= 0.8 && easierIslands.length > 0) {
         selectedIslands = easierIslands
         movementType = 'easier'
-      } else if (movementRoll <= 0.8 && sameIslands.length > 0) {
-        // 30% chance para ilha de mesma dificuldade (20% + 30% = 50%)
+      } else if (percent >= 0.1 && sameIslands.length > 0) {
         selectedIslands = sameIslands
         movementType = 'same'
       } else if (harderIslands.length > 0) {
-        // 50% chance para ilha de dificuldade +1
         selectedIslands = harderIslands
         movementType = 'harder'
       } else {
-        // Prioridade: same > harder > easier
         if (sameIslands.length > 0) {
           selectedIslands = sameIslands
           movementType = 'same'
@@ -1558,10 +1348,8 @@ export class AdventureSystem {
         }
       }
 
-      // Selecionar ilha aleatória da categoria
       const selectedIsland = selectedIslands[Math.floor(Math.random() * selectedIslands.length)]
 
-      // ✅ VALIDAÇÃO FINAL
       const difficultyDifference = selectedIsland.difficulty - currentIsland.difficulty
 
       if (Math.abs(difficultyDifference) > 1 && difficultyDifference !== 0) {
@@ -1581,7 +1369,6 @@ export class AdventureSystem {
     }
   }
 
-  // ✅ MÉTODO PARA VALIDAR SE O MOVIMENTO É VÁLIDO
   static validateIslandMovement(
     fromIsland: Island,
     toIsland: Island,
@@ -1590,7 +1377,6 @@ export class AdventureSystem {
     reason: string
     movementType: 'easier' | 'same' | 'harder' | 'invalid'
   } {
-    // Não pode ir para a mesma ilha
     if (fromIsland.id === toIsland.id) {
       return {
         isValid: false,
@@ -1601,7 +1387,6 @@ export class AdventureSystem {
 
     const difficultyDifference = toIsland.difficulty - fromIsland.difficulty
 
-    // Deve ser exatamente -1, 0 ou +1
     if (difficultyDifference === -1) {
       return {
         isValid: true,
@@ -1629,10 +1414,8 @@ export class AdventureSystem {
     }
   }
 
-  // ✅ EXECUTAR MOVIMENTO DO CREW COM VALIDAÇÃO
   static async executeCrewMovement(decision: CrewMovementDecision): Promise<void> {
     try {
-      // ✅ VALIDAÇÃO ADICIONAL ANTES DE EXECUTAR
       const fromIsland = await db.islands.get(decision.fromIslandId)
       const toIsland = await db.islands.get(decision.toIslandId)
 
@@ -1648,17 +1431,15 @@ export class AdventureSystem {
         return
       }
 
-      // Executar movimento
       await db.crews.update(decision.crewId, {
         currentIsland: decision.toIslandId,
-        docked: 1, // Sempre chega docked
+        docked: 1,
       })
     } catch (error) {
       console.error(`❌ Erro ao mover crew ${decision.crewName}:`, error)
     }
   }
 
-  // ✅ GERAR RELATÓRIO DE MOVIMENTO POR ILHA
   static async generateIslandMovementReport(
     allIslands: Island[],
     movements: CrewMovementDecision[],
@@ -1683,13 +1464,9 @@ export class AdventureSystem {
       }> = []
 
       for (const island of allIslands) {
-        // Contar crews que saíram desta ilha
         const crewsLeft = movements.filter((m) => m.fromIslandId === island.id).length
-
-        // Contar crews que chegaram nesta ilha
         const crewsArrived = movements.filter((m) => m.toIslandId === island.id).length
 
-        // Contar crews atuais na ilha
         const currentCrews = await db.crews
           .where('currentIsland')
           .equals(island.id!)
@@ -1698,7 +1475,6 @@ export class AdventureSystem {
 
         const initialCrews = currentCrews + crewsLeft - crewsArrived
 
-        // Só incluir ilhas com movimento
         if (crewsLeft > 0 || crewsArrived > 0) {
           reports.push({
             islandId: island.id!,
@@ -1718,15 +1494,12 @@ export class AdventureSystem {
     }
   }
 
-  // ✅ BUSCAR CREWS DO PLAYER
   static async getPlayerCrews(): Promise<Crew[]> {
     try {
-      // Buscar personagens do player
       const playerCharacters = await db.characters.where('isPlayer').equals(1).toArray()
 
       if (playerCharacters.length === 0) return []
 
-      // Buscar crews únicos dos personagens do player
       const crewIds = [...new Set(playerCharacters.map((char) => char.crewId).filter(Boolean))]
 
       const crews = await Promise.all(crewIds.map((crewId) => db.crews.get(crewId!)))
@@ -1738,7 +1511,230 @@ export class AdventureSystem {
     }
   }
 
-  // ✅ MÉTODO PRINCIPAL PARA CHAMAR APÓS MOVIMENTO DO PLAYER
+  // ✅ MÉTODOS ORIGINAIS DE MOVIMENTO (mantidos para compatibilidade)
+  static async toggleCrewDockedStatus(): Promise<{
+    totalCrews: number
+    toggled: number
+  }> {
+    try {
+      const allCrews = await db.crews.where('captainId').above(0).toArray()
+
+      const playerCrews = await this.getPlayerCrews()
+      const playerCrewIds = playerCrews.map((crew) => crew.id)
+      const territories = await db.territories.toArray()
+      const territoriesCrewIds = territories.map((territory) => territory.crewId)
+
+      const nonPlayerCrews = allCrews.filter(
+        (crew) => !playerCrewIds.includes(crew.id) && !territoriesCrewIds.includes(crew.id),
+      )
+
+      if (nonPlayerCrews.length === 0) {
+        return { totalCrews: 0, toggled: 0 }
+      }
+
+      let toggled = 0
+      const updates: Promise<any>[] = []
+
+      for (const crew of nonPlayerCrews) {
+        const roll = Math.random()
+        let newDockedStatus: number
+
+        if (roll <= 0.1) {
+          newDockedStatus = 0
+        } else {
+          newDockedStatus = 1
+        }
+
+        if (crew.docked !== newDockedStatus) {
+          updates.push(db.crews.update(crew.id!, { docked: newDockedStatus as 0 | 1 }))
+          toggled++
+        }
+      }
+
+      await Promise.all(updates)
+
+      return {
+        totalCrews: nonPlayerCrews.length,
+        toggled,
+      }
+    } catch (error) {
+      console.error('❌ Erro ao alternar status docked:', error)
+      return { totalCrews: 0, toggled: 0 }
+    }
+  }
+
+  static async moveDockedCrews(): Promise<{
+    moved: number
+    movementsByDifficulty: {
+      easier: number
+      same: number
+      harder: number
+    }
+    islandReports: Array<{
+      islandId: number
+      islandName: string
+      initialCrews: number
+      finalCrews: number
+      crewsLeft: number
+      crewsArrived: number
+    }>
+  }> {
+    try {
+      const playerCrews = await this.getPlayerCrews()
+      const playerCrewIds = playerCrews.map((crew) => crew.id)
+      const allIslands = await db.islands.toArray()
+      const islandMap = new Map(allIslands.map((island) => [island.id!, island]))
+
+      const territoriesCrews = await db.territories.toArray()
+      const allCharacters = await db.characters.toArray()
+      const allDevilFruits = await db.devilFruits.toArray()
+      const allCrews = await db.crews.toArray()
+      const crewByIsland = new Map(
+        allIslands.map((island) => {
+          const crewsInThisIsland = allCrews.filter((crews) => crews.currentIsland == island.id)
+          const sortedCrews = crewsInThisIsland.sort((a, b) => {
+            const crewMembersA = allCharacters.filter((char) => char.crewId == a.id)
+            const crewMembersB = allCharacters.filter((char) => char.crewId == b.id)
+            return (
+              GameLogic.calculateCrewPower(crewMembersB, allDevilFruits) -
+              GameLogic.calculateCrewPower(crewMembersA, allDevilFruits)
+            )
+          })
+          return [island.id!, sortedCrews]
+        }),
+      )
+
+      const dockedCrews = allCrews.filter(
+        (crew) =>
+          crew.docked == 1 &&
+          !playerCrewIds.includes(crew.id) &&
+          !territoriesCrews.find((ter) => ter.crewId == crew.id),
+      )
+
+      if (dockedCrews.length === 0) {
+        return {
+          moved: 0,
+          movementsByDifficulty: { easier: 0, same: 0, harder: 0 },
+          islandReports: [],
+        }
+      }
+
+      const movementDecisions: CrewMovementDecision[] = []
+      const movementsByDifficulty = { easier: 0, same: 0, harder: 0 }
+
+      for (const crew of dockedCrews) {
+        const moveRoll = Math.random()
+
+        if (moveRoll <= 0.2) {
+          const currentIsland = islandMap.get(crew.currentIsland)
+          const currentIndex =
+            crewByIsland.get(crew.currentIsland)?.findIndex((curr) => curr.id == crew.id) || 0
+          const totalCrewsOnIsland = crewByIsland.get(crew.currentIsland)?.length || 1
+          const percent = currentIndex / totalCrewsOnIsland
+
+          if (!currentIsland) {
+            console.warn(`⚠️ Ilha atual não encontrada para ${crew.name}: ${crew.currentIsland}`)
+            continue
+          }
+
+          const destinationDecision = await this.selectDestinationIsland(
+            currentIsland,
+            allIslands,
+            percent,
+          )
+
+          if (destinationDecision) {
+            movementDecisions.push({
+              crewId: crew.id!,
+              crewName: crew.name,
+              fromIslandId: currentIsland.id!,
+              toIslandId: destinationDecision.island.id!,
+              fromDifficulty: currentIsland.difficulty,
+              toDifficulty: destinationDecision.island.difficulty,
+              movementType: destinationDecision.type,
+            })
+
+            movementsByDifficulty[destinationDecision.type]++
+          }
+        }
+      }
+
+      const movementPromises = movementDecisions.map((decision) =>
+        this.executeCrewMovement(decision),
+      )
+
+      await Promise.all(movementPromises)
+
+      const islandReports = await this.generateIslandMovementReport(allIslands, movementDecisions)
+
+      return {
+        moved: movementDecisions.length,
+        movementsByDifficulty,
+        islandReports,
+      }
+    } catch (error) {
+      console.error('❌ Erro na movimentação de crews:', error)
+      return {
+        moved: 0,
+        movementsByDifficulty: { easier: 0, same: 0, harder: 0 },
+        islandReports: [],
+      }
+    }
+  }
+
+  // ✅ MÉTODOS DE INTEGRAÇÃO COM WORLD STORE (OTIMIZADOS)
+  static async updateWorldAfterPlayerActionAsync(): Promise<void> {
+    try {
+      const { useWorldStore } = await import('@/stores/worldStore')
+      const worldStore = useWorldStore()
+
+      // Executar em background
+      worldStore.updateWorldBackground()
+
+      console.log('🌍 Atualização do mundo iniciada em background')
+    } catch (error) {
+      console.error('❌ Erro ao iniciar update assíncrono do mundo:', error)
+      await this.updateWorldAfterPlayerAction()
+    }
+  }
+
+  static async updateWorldAfterPlayerAction(): Promise<{
+    success: boolean
+    worldEvents: string[]
+    summary: string
+  }> {
+    try {
+      const worldResult = await this.simulateWorldEncounters()
+
+      const summary = `🌍 Mundo atualizado`
+
+      return {
+        success: true,
+        worldEvents: [],
+        summary,
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar mundo:', error)
+      return {
+        success: false,
+        worldEvents: [],
+        summary: 'Erro ao atualizar mundo',
+      }
+    }
+  }
+
+  static async onPlayerAction(): Promise<void> {
+    await this.updateWorldAfterPlayerActionAsync()
+  }
+
+  static async forceWorldUpdate(): Promise<{
+    success: boolean
+    worldEvents: string[]
+    summary: string
+  }> {
+    return await this.updateWorldAfterPlayerAction()
+  }
+
   static async onPlayerIslandChange(): Promise<{
     success: boolean
     movementResult: IslandMovementResult
@@ -1746,55 +1742,21 @@ export class AdventureSystem {
     worldEvents: string[]
   }> {
     try {
-      const worldResult = await this.simulateWorldEncounters()
-      var summary = `🌍 Mundo atualizado: ${worldResult.totalEncounters} encontros, ${worldResult.totalBattles} batalhas`
-      // Gerar eventos interessantes
+      const worldResult = this.simulateWorldEncounters()
+      var summary = `🌍 Mundo atualizado`
       const worldEvents: string[] = []
 
-      const movementResult = await this.processWorldMovement()
+      const movementResult = this.processWorldMovement()
 
-      if (movementResult.dockedToggled > 0) {
-        worldEvents.push(`⚓ ${movementResult.dockedToggled} crews mudaram status de ancoragem`)
-      }
-
-      if (movementResult.crewsMoved > 0) {
-        worldEvents.push(`🚢 ${movementResult.crewsMoved} crews navegaram para outras ilhas`)
-
-        if (movementResult.movementsByDifficulty.harder > 0) {
-          worldEvents.push(
-            `📈 ${movementResult.movementsByDifficulty.harder} crews buscaram desafios maiores`,
-          )
-        }
-
-        if (movementResult.movementsByDifficulty.easier > 0) {
-          worldEvents.push(
-            `📉 ${movementResult.movementsByDifficulty.easier} crews recuaram para águas mais calmas`,
-          )
-        }
-      }
-
-      // Destacar movimentos significativos
-      const significantIslands = movementResult.islandReports
-        .filter((report) => report.crewsLeft + report.crewsArrived >= 2)
-        .slice(0, 3)
-
-      significantIslands.forEach((report) => {
-        if (report.crewsLeft > report.crewsArrived) {
-          worldEvents.push(`📤 ${report.islandName}: ${report.crewsLeft} crews partiram`)
-        } else if (report.crewsArrived > report.crewsLeft) {
-          worldEvents.push(`📥 ${report.islandName}: ${report.crewsArrived} crews chegaram`)
-        }
-      })
-
-      summary += `; 🌍 Mundo atualizado: ${movementResult.totalCrews} crews processados, ${movementResult.crewsMoved} movimentos realizados`
+      const fakeMovement = <IslandMovementResult>{}
 
       console.log('✅ Movimentação mundial concluída:', summary)
 
       return {
         success: true,
-        movementResult,
+        movementResult: fakeMovement,
         summary,
-        worldEvents: worldEvents.slice(0, 5), // Máximo 5 eventos
+        worldEvents: worldEvents.slice(0, 5),
       }
     } catch (error) {
       console.error('❌ Erro na movimentação mundial após mudança do player:', error)

@@ -361,7 +361,7 @@
         </v-col>
       </v-row>
 
-      <!-- ✅ RESULTADO DA BATALHA COM AVATARES E RECRUTAMENTO -->
+      <!-- ✅ RESULTADO DA BATALHA COM BATTLE LOG MELHORADO -->
       <v-row class="mt-4" v-if="lastBattleResult">
         <v-col cols="12">
           
@@ -457,17 +457,16 @@
                   </v-col>
                 </v-row>
               </div>
+
+              <!-- ✅ BATTLE LOG MELHORADO -->
               <v-divider class="my-4"></v-divider>
-                <div class="text-h6 mb-3">Como a batalha ocorreu:</div>
-                <v-row>
-                  <v-col cols="12" md="12">
-                    <ul id="example-2">
-                      <li v-for="(item, index) in lastBattleResult.battleLog">
-                        {{ item }}
-                      </li>
-                    </ul>
-                  </v-col>
-                </v-row>
+              <BattleLogDisplay 
+                :battle-log="lastBattleResult.battleLog"
+                :player-character="playerCharacter"
+                :opponent-character="lastBattleResult.loser"
+                :battle-result="lastBattleResult"
+                class="mt-4"
+              />
             </v-card-text>
           </v-card>
 
@@ -608,7 +607,7 @@
               <v-icon left class="text-white">
                 {{ recruitmentResult.success ? 'mdi-check-circle' : 'mdi-close-circle' }}
               </v-icon>
-              {{ recruitmentResult.success ? '🎉 Recrutamento Bem-sucedido!' : '�� Recrutamento Falhou' }}
+              {{ recruitmentResult.success ? '🎉 Recrutamento Bem-sucedido!' : '💔 Recrutamento Falhou' }}
             </v-card-title>
             
             <v-card-text class="text-white">
@@ -779,6 +778,7 @@ import { useTimeRemaining } from '@/composables/useTimeRemaining'
 import TimeRemaining from '@/components/TimeRemaining.vue'
 import { useCharacterStore } from '@/stores/characterStore'
 import { useBattleStore } from '@/stores/battleStore'
+import { useWorldStore } from '@/stores/worldStore'
 import { useRouter } from 'vue-router'
 import { AdventureSystem, type AdventureEncounter } from '@/utils/adventureSystem'
 import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentSystem'
@@ -787,12 +787,15 @@ import { GameLogic } from '@/utils/gameLogic'
 import { db } from '@/utils/database'
 import type { Character, Crew, Task, StyleCombat, DevilFruit } from '@/utils/database'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
-// ✅ IMPORT DO COMPONENTE DE AVATAR
+// ✅ IMPORTS DOS NOVOS COMPONENTES
 import CharacterAvatar from '@/components/CharacterAvatar.vue'
 import WantedPoster from '@/components/WantedPoster.vue'
+import BattleLogDisplay from '@/components/BattleLogDisplay.vue'
+
 
 const characterStore = useCharacterStore()
 const battleStore = useBattleStore()
+const worldStore = useWorldStore()
 const router = useRouter()
 
 // 🔄 LOADING STATES
@@ -1086,6 +1089,7 @@ const startBattle = async () => {
     )
     
     lastBattleResult.value = result
+    
     
     // 🎯 VERIFICAR POSSIBILIDADE DE RECRUTAMENTO
     if (result.winner.id === playerCharacter.value.id) {

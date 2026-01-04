@@ -109,6 +109,40 @@
 
       <v-spacer></v-spacer>
 
+      <!-- ✅ INDICADOR DISCRETO DE MUNDO ATUALIZANDO -->
+      <v-progress-circular
+        v-if="worldStore.isUpdating"
+        indeterminate
+        size="18"
+        width="2"
+        color="white"
+        class="world-updating-indicator mr-3"
+        :title="worldStore.currentPhase || 'Atualizando mundo...'"
+      />
+
+      <!-- ✅ INDICADOR DE PERFORMANCE DOS WORKERS -->
+      <v-tooltip v-if="showPerformanceIndicator" bottom>
+        <template v-slot:activator="{ props }">
+          <v-chip
+            v-bind="props"
+            :color="getPerformanceColor()"
+            size="x-small"
+            variant="outlined"
+            class="performance-indicator mr-2"
+          >
+            <v-icon size="12" start>{{ getPerformanceIcon() }}</v-icon>
+            {{ getPerformanceText() }}
+          </v-chip>
+        </template>
+        <div>
+          <div><strong>Método:</strong> {{ worldStore.updateMethod || 'N/A' }}</div>
+          <div><strong>Workers:</strong> {{ worldStore.workerStats.available ? 'Ativo' : 'Indisponível' }}</div>
+          <div><strong>Updates:</strong> {{ worldStore.performanceStats.totalUpdates }}</div>
+          <div><strong>Tempo Médio:</strong> {{ worldStore.performanceStats.averageUpdateTime }}ms</div>
+          <div><strong>Worker %:</strong> {{ worldStore.performanceStats.workerPercentage }}%</div>
+        </div>
+      </v-tooltip>
+
       <!-- Boss Fight Alert no Header -->
       <v-btn
         v-if="showBossFightMenu"
@@ -169,6 +203,18 @@
           ></v-progress-circular>
           <div class="text-h6 mt-4">Carregando o mundo de One Piece...</div>
           <div class="text-body-2 mt-2">Gerando piratas, marines e ilhas...</div>
+          
+          <!-- ✅ PROGRESSO DA INICIALIZAÇÃO DOS WORKERS -->
+          <div v-if="worldInitializing" class="mt-4">
+            <v-progress-linear
+              :model-value="worldInitProgress"
+              color="secondary"
+              height="6"
+              rounded
+              class="mb-2"
+            />
+            <div class="text-caption">{{ worldInitStatus }}</div>
+          </div>
         </div>
 
         <!-- Game Content -->
@@ -176,7 +222,7 @@
       </v-container>
     </v-main>
 
-    <!-- Snackbar para notificações -->
+    <!-- Snackbar para notificações críticas apenas -->
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
@@ -226,9 +272,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive, watch } from 'vue'
+import { ref, onMounted, computed, reactive, watch, onUnmounted } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import { useCharacterStore } from '@/stores/characterStore'
+import { useWorldStore } from '@/stores/worldStore'
 import { GameLogic } from '@/utils/gameLogic' 
 import { BossDetectionSystem } from '@/utils/bossDetectionSystem'
 import CharacterBountyDisplay from './components/CharacterBountyDisplay.vue'
@@ -236,11 +283,24 @@ import CharacterBountyDisplay from './components/CharacterBountyDisplay.vue'
 const drawer = ref(true)
 const gameStore = useGameStore()
 const characterStore = useCharacterStore()
+const worldStore = useWorldStore()
 const gameLoaded = ref(false)
 
 // ✅ BOSS FIGHT STATE
 const detectedBossesCount = ref(0)
 const lastCheckedIsland = ref<number | null>(null)
+
+const worldInitializing = ref(false)
+const worldInitProgress = ref(0)
+const worldInitStatus = ref('')
+
+// ✅ PERFORMANCE INDICATORS
+const showPerformanceIndicator = ref(false)
+const forcingUpdate = ref(false)
+const reinitializingWorkers = ref(false)
+
+// ✅ DEVELOPMENT MODE
+const isDevelopment = computed(() => import.meta.env.DEV)
 
 const playerCharacter = computed(() => characterStore.playerCharacter)
 const playerCrew = computed(() => characterStore.playerCrew)
@@ -268,14 +328,16 @@ const showBossFightMenu = computed(() => detectedBossesCount.value > 0)
 
 // ✅ COMPUTED PARA ILHA ATUAL
 const currentIslandId = computed(() => {
-  // Ajuste conforme sua implementação
-  // Pode ser do gameStore, characterStore ou crew
   if (playerCharacter.value?.crewId) {
-    // Assumindo que você tem essa informação em algum lugar
-    // Substitua pela lógica correta do seu projeto
     return playerCrew.value?.currentIsland || 1
   }
   return null
+})
+
+
+const preferWorkers = computed({
+  get: () => worldStore.preferWorkers,
+  set: (value) => worldStore.setPreferWorkers(value)
 })
 
 // ✅ SEPARAR MENU ITEMS
@@ -343,7 +405,7 @@ const detectBossesOnCurrentIsland = async () => {
     detectedBossesCount.value = bosses.length
     lastCheckedIsland.value = currentIslandId.value
     
-    // ✅ MOSTRAR NOTIFICAÇÃO SE ENCONTROU NOVOS BOSSES
+    // ✅ MOSTRAR NOTIFICAÇÃO APENAS PARA BOSSES (importante para gameplay)
     if (bosses.length > 0 && previousCount === 0) {
       const bossTypes = [...new Set(bosses.map(b => b.type))].join(', ')
       bossNotification.text = `${bosses.length} algoz(es) detectado(s): ${bossTypes}!`
@@ -356,21 +418,63 @@ const detectBossesOnCurrentIsland = async () => {
   }
 }
 
-const formatBounty = (bounty: number): string => {
-  if (bounty >= 1000000000) {
-    return `${(bounty / 1000000000).toFixed(2)}B B$`
-  } else if (bounty >= 1000000) {
-    return `${(bounty / 1000000).toFixed(2)}M B$`
-  } else if (bounty >= 1000) {
-    return `${(bounty / 1000).toFixed(2)}K B$`
-  }
-  return `${bounty} B$`
+// ✅ FUNÇÕES DE PERFORMANCE
+const getPerformanceColor = (): string => {
+  if (!worldStore.workerStats.available) return 'warning'
+  
+  const workerPercentage = worldStore.performanceStats.workerPercentage
+  if (workerPercentage >= 80) return 'success'
+  if (workerPercentage >= 50) return 'info'
+  return 'warning'
+}
+
+const getPerformanceIcon = (): string => {
+  if (!worldStore.workerStats.available) return 'mdi-alert-circle'
+  
+  const workerPercentage = worldStore.performanceStats.workerPercentage
+  if (workerPercentage >= 80) return 'mdi-rocket'
+  if (workerPercentage >= 50) return 'mdi-speedometer'
+  return 'mdi-turtle'
+}
+
+const getPerformanceText = (): string => {
+  if (!worldStore.workerStats.available) return 'FB'
+  
+  const workerPercentage = worldStore.performanceStats.workerPercentage
+  if (workerPercentage >= 80) return 'WK'
+  if (workerPercentage >= 50) return 'MX'
+  return 'FB'
 }
 
 const showNotification = (text: string, color: string = 'success') => {
-  snackbar.text = text
-  snackbar.color = color
-  snackbar.show = true
+  // ✅ APENAS PARA ERROS CRÍTICOS OU MENSAGENS IMPORTANTES DO SISTEMA
+  if (color === 'error' || text.includes('Bem-vindo')) {
+    snackbar.text = text
+    snackbar.color = color
+    snackbar.show = true
+  }
+}
+
+// ✅ INICIALIZAR MUNDO COM WORKERS
+const initializeWorldSystem = async () => {
+  worldInitializing.value = true
+  worldInitProgress.value = 0
+  worldInitStatus.value = 'Inicializando sistema de mundo...'
+
+  try {
+    // Passo 1: Inicializar workers
+    worldInitProgress.value = 25
+    worldInitStatus.value = 'Inicializando Web Workers...'
+    await worldStore.initializeWorkers()
+    
+  } catch (error) {
+    console.error('❌ Erro ao inicializar sistema de mundo:', error)
+    worldInitStatus.value = 'Erro na inicialização - usando fallback'
+  } finally {
+    setTimeout(() => {
+      worldInitializing.value = false
+    }, 1000)
+  }
 }
 
 // ✅ WATCHER PARA MUDANÇA DE ILHA
@@ -381,6 +485,15 @@ watch(currentIslandId, async (newIslandId) => {
   }
 }, { immediate: false })
 
+// ✅ WATCHER PARA MOSTRAR STATUS EM DESENVOLVIMENTO
+watch(() => worldStore.isUpdating, (isUpdating) => {
+  if (isDevelopment.value && isUpdating) {
+    // Mostrar progresso detalhado apenas em dev
+    console.log(`🌍 Update iniciado via ${worldStore.updateMethod}`)
+  }
+})
+
+// ✅ LIFECYCLE PRINCIPAL
 onMounted(async () => {
   try {
     // Inicializar o jogo primeiro
@@ -396,11 +509,15 @@ onMounted(async () => {
       showNotification(`Bem-vindo de volta, ${playerCharacter.value.name}!`)
       gameLoaded.value = true
       
+      // ✅ INICIALIZAR SISTEMA DE MUNDO
+      await initializeWorldSystem()
+      
       // ✅ DETECTAR BOSSES APÓS CARREGAR O JOGO
-      setTimeout(detectBossesOnCurrentIsland, 2000)
+      setTimeout(detectBossesOnCurrentIsland, 3000)
       
       // ✅ VERIFICAR PERIODICAMENTE POR NOVOS BOSSES
       setInterval(detectBossesOnCurrentIsland, 60000) // A cada 1 minuto
+      
     } else {
       showNotification('Clique em "Criar Personagem" para começar!', 'info')
     }
@@ -408,6 +525,11 @@ onMounted(async () => {
     console.error('Erro ao inicializar aplicação:', error)
     showNotification('Erro ao carregar o jogo. Tente recarregar a página.', 'error')
   }
+})
+
+// ✅ CLEANUP NO UNMOUNT
+onUnmounted(() => {
+  // Cleanup será feito automaticamente pelos watchers
 })
 </script>
 
@@ -458,6 +580,25 @@ onMounted(async () => {
   animation: glow 2s ease-in-out infinite alternate;
 }
 
+/* ✅ INDICADOR DISCRETO DE MUNDO ATUALIZANDO */
+.world-updating-indicator {
+  opacity: 0.7;
+  animation: fadeInOut 2s ease-in-out infinite;
+}
+
+/* ✅ INDICADOR DE PERFORMANCE */
+.performance-indicator {
+  font-size: 0.7rem !important;
+  height: 20px !important;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+}
+
+.performance-indicator:hover {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
@@ -476,5 +617,40 @@ onMounted(async () => {
   to {
     box-shadow: 0 0 20px rgba(255, 107, 107, 0.8), 0 0 30px rgba(255, 107, 107, 0.6);
   }
+}
+
+@keyframes fadeInOut {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* ✅ RESPONSIVE */
+@media (max-width: 768px) {
+  .v-app-bar .v-btn {
+    margin: 0 2px;
+  }
+  
+  .v-badge {
+    transform: scale(0.8);
+  }
+  
+  .world-updating-indicator {
+    margin-right: 8px !important;
+    size: 16px;
+  }
+
+  .performance-indicator {
+    display: none; /* Ocultar em mobile */
+  }
+}
+
+/* ✅ CARDS DE STATUS */
+.v-card {
+  transition: all 0.3s ease;
+}
+
+.v-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 </style>

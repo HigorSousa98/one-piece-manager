@@ -7,7 +7,8 @@ import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentS
 import { db, Character, Battle, DevilFruit, StyleCombat, Crew } from '@/utils/database'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GenerationConfig } from '@/utils/generationConfig'
-import { config } from 'node:process'
+import { CrewNameGenerator } from '@/data/crewNames'
+import { ShipNameGenerator } from '@/data/shipNameGenerator'
 
 interface BattleResult {
   winner: Character
@@ -19,6 +20,20 @@ interface BattleResult {
   battleLog: string[]
   canShowRecruitment: boolean
   recruitmentData?: RecruitmentAttempt
+}
+
+export interface CrewRecruitmentResult {
+  recruited: Character[]
+  removed: Character[]
+  recruitmentAttempts: number
+  removalAttempts: number
+}
+
+export interface CrewCapacityInfo {
+  currentMembers: number
+  maxCapacity: number
+  hasSpace: boolean
+  shipLevel: number
 }
 
 export const useBattleStore = defineStore('battle', {
@@ -123,10 +138,8 @@ export const useBattleStore = defineStore('battle', {
         await this.saveBattleResult(result)
 
         // 🌍 ATUALIZAR MUNDO APÓS BATALHA DO JOGADOR
-        const worldUpdate = await AdventureSystem.updateWorldAfterPlayerAction()
+        const worldUpdate = await AdventureSystem.onPlayerAction()
 
-        if (worldUpdate.success) {
-        }
         this.isSimulating = false
         return result
       } catch (error) {
@@ -267,6 +280,246 @@ export const useBattleStore = defineStore('battle', {
       }
     },
 
+    // ✅ SISTEMA DE RECRUTAMENTO E REMOÇÃO
+    async processCrewRecruitmentAndRemoval(
+      winnerCrewId: number,
+      loserCrewId: number,
+      isPlayerInvolved: boolean = false,
+    ): Promise<CrewRecruitmentResult> {
+      try {
+        const result: CrewRecruitmentResult = {
+          recruited: [],
+          removed: [],
+          recruitmentAttempts: 0,
+          removalAttempts: 0,
+        }
+
+        // Se o player estiver envolvido, não aplicar recrutamento automático
+        if (isPlayerInvolved) {
+          return result
+        }
+
+        // Buscar informações dos crews
+        const [winnerCrew, loserCrew] = await Promise.all([
+          db.crews.get(winnerCrewId),
+          db.crews.get(loserCrewId),
+        ])
+
+        if (!winnerCrew || !loserCrew) {
+          console.error('❌ Crews não encontrados para recrutamento')
+          return result
+        }
+
+        // Verificar capacidade do crew vencedor
+        const winnerCapacity = await this.getCrewCapacityInfo(winnerCrewId)
+
+        if (!winnerCapacity.hasSpace) {
+        } else {
+          // Processar recrutamento
+          const recruitmentResult = await this.processRecruitment(
+            winnerCrewId,
+            loserCrewId,
+            winnerCapacity,
+          )
+
+          result.recruited = recruitmentResult.recruited
+          result.recruitmentAttempts = recruitmentResult.attempts
+        }
+
+        // Processar remoção de membros do crew perdedor
+        const removalResult = await this.processCrewMemberRemoval(loserCrewId)
+        result.removed = removalResult.removed
+        result.removalAttempts = removalResult.attempts
+
+        return result
+      } catch (error) {
+        console.error('❌ Erro no processamento de recrutamento:', error)
+        return {
+          recruited: [],
+          removed: [],
+          recruitmentAttempts: 0,
+          removalAttempts: 0,
+        }
+      }
+    },
+
+    // ✅ PROCESSAR RECRUTAMENTO (20% DE CHANCE)
+    async processRecruitment(
+      winnerCrewId: number,
+      loserCrewId: number,
+      capacity: CrewCapacityInfo,
+    ): Promise<{ recruited: Character[]; attempts: number }> {
+      try {
+        const recruited: Character[] = []
+        let attempts = 0
+
+        // Buscar membros elegíveis do crew perdedor (não capitães)
+        const eligibleMembers = await db.characters
+          .where('crewId')
+          .equals(loserCrewId)
+          .and((char) => char.isPlayer !== 1)
+          .toArray()
+
+        if (eligibleMembers.length === 0) {
+          return { recruited, attempts }
+        }
+
+        eligibleMembers.sort((a, b) => a.loyalty - b.loyalty)
+
+        // Tentar recrutar cada membro elegível
+        for (const member of eligibleMembers) {
+          if (capacity.currentMembers + recruited.length >= capacity.maxCapacity) {
+            break
+          }
+
+          attempts++
+
+          // 20-40% de chance de recrutamento  depender da loyalty do membro
+          const recruitmentChance = 0.2 + (1 - member.loyalty / 100) * 0.1
+          const roll = Math.random()
+
+          if (roll <= recruitmentChance) {
+            // Sucesso no recrutamento!
+
+            // Atualizar crew do membro
+            await db.characters.update(member.id!, {
+              crewId: winnerCrewId,
+            })
+
+            recruited.push(member)
+
+            // Chance de parar o recrutamento após sucesso (para não recrutar todos)
+            if (Math.random() < 0.6) {
+              // 60% chance de parar após recrutar alguém
+              break
+            }
+          }
+        }
+
+        return { recruited, attempts }
+      } catch (error) {
+        console.error('❌ Erro no processamento de recrutamento:', error)
+        return { recruited: [], attempts: 0 }
+      }
+    },
+
+    // ✅ PROCESSAR REMOÇÃO DE MEMBROS (10% DE CHANCE)
+    async processCrewMemberRemoval(
+      loserCrewId: number,
+    ): Promise<{ removed: Character[]; attempts: number }> {
+      try {
+        const removed: Character[] = []
+        let attempts = 0
+
+        // Buscar membros elegíveis para remoção (não capitães, não recrutados)
+        const eligibleMembers = await db.characters
+          .where('crewId')
+          .equals(loserCrewId)
+          .and((char) => char.isPlayer !== 1)
+          .toArray()
+
+        if (eligibleMembers.length === 0) {
+          return { removed, attempts }
+        }
+
+        // Tentar remover cada membro elegível
+        for (const member of eligibleMembers) {
+          attempts++
+
+          // 10% de chance de remoção
+          const removalChance = 0.1
+          const roll = Math.random()
+
+          if (roll <= removalChance) {
+            // Sucesso na remoção!
+            // Remover do crew (definir crewId como null)
+            await db.characters.update(member.id!, {
+              crewId: 0,
+            })
+
+            removed.push(member)
+
+            // Chance de parar a remoção após sucesso (para não remover muitos)
+            if (Math.random() < 0.7) {
+              // 70% chance de parar após remover alguém
+              break
+            }
+          }
+        }
+
+        return { removed, attempts }
+      } catch (error) {
+        console.error('❌ Erro no processamento de remoção:', error)
+        return { removed: [], attempts: 0 }
+      }
+    },
+
+    // ✅ CRIAR CREW PARA MEMBROS ÓRFÃOS
+    async createCrewForOrphanMembers(
+      orphanMembers: Character[],
+      originalIslandId: number,
+    ): Promise<Crew | null> {
+      try {
+        if (orphanMembers.length === 0) return null
+
+        // Selecionar capitão (membro com maior level)
+        const captain = orphanMembers.reduce((highest, current) =>
+          current.level > highest.level ? current : highest,
+        )
+
+        const crewName = CrewNameGenerator.generateCrewName(
+          captain.type as 'Pirate' | 'Marine' | 'BountyHunter',
+        )
+
+        // Criar novo crew
+        const newCrewId = await db.crews.add({
+          name: crewName,
+          type: captain.type as 'Pirate' | 'Marine' | 'BountyHunter',
+          captainId: captain.id!,
+          currentIsland: originalIslandId,
+          docked: 1,
+          reputation: Math.floor(captain.level * 10),
+          treasury:
+            captain.type === 'Marine'
+              ? GameLogic.randomBetween(1000000, 50000000)
+              : GameLogic.randomBetween(captain.bounty * 0.5, captain.bounty * 10),
+          foundedAt: new Date(),
+        })
+
+        // Atualizar capitão
+        await db.characters.update(captain.id!, {
+          crewId: newCrewId,
+          position: 'Captain',
+        })
+
+        // Atualizar outros membros
+        for (const member of orphanMembers) {
+          if (member.id !== captain.id) {
+            await db.characters.update(member.id!, {
+              crewId: newCrewId,
+              position: 'Crew Member',
+            })
+          }
+        }
+
+        // Criar navio básico para o novo crew
+        await db.ships.add({
+          crewId: newCrewId,
+          level: 1,
+          needRepair: false,
+          destroyed: false,
+          name: ShipNameGenerator.generateShipNameByCrewType(captain.type),
+        })
+
+        const newCrew = await db.crews.get(newCrewId)
+
+        return newCrew ? newCrew : null
+      } catch (error) {
+        console.error('❌ Erro ao criar crew para órfãos:', error)
+        return null
+      }
+    },
+
     simulateCrewBattleMembers(
       crew1Members: Character[],
       crew2Members: Character[],
@@ -331,6 +584,36 @@ export const useBattleStore = defineStore('battle', {
         }
       })
       return Math.round(crewHelp)
+    },
+
+    // ✅ VERIFICAR CAPACIDADE DO CREW
+    async getCrewCapacityInfo(crewId: number): Promise<CrewCapacityInfo> {
+      try {
+        
+        // Buscar membros atuais
+        const currentMembers = await db.characters.where('crewId').equals(crewId).toArray()
+
+        // Buscar navio do crew
+        const ship = await db.ships.where('crewId').equals(crewId).first()
+
+        const shipLevel = ship?.level || 1
+        const maxCapacity = shipLevel * 3 // Assumindo 3 membros por level do navio
+
+        return {
+          currentMembers: currentMembers.length,
+          maxCapacity,
+          hasSpace: currentMembers.length < maxCapacity,
+          shipLevel,
+        }
+      } catch (error) {
+        console.error('❌ Erro ao verificar capacidade do crew:', error)
+        return {
+          currentMembers: 0,
+          maxCapacity: 3,
+          hasSpace: false,
+          shipLevel: 1,
+        }
+      }
     },
 
     async generateBattleResult(
@@ -552,7 +835,7 @@ export const useBattleStore = defineStore('battle', {
           experience: remainingExp,
         }
 
-        updatedCharacter.stats = this.calculateStatIncrease(updatedCharacter)
+        updatedCharacter.stats = GameLogic.calculateStatIncrease(updatedCharacter)
 
         const statIncrease = GameLogic.increaseStats(
           updatedCharacter,
@@ -634,7 +917,7 @@ export const useBattleStore = defineStore('battle', {
               experience: remainingExpMember,
             }
 
-            updatedMember.stats = this.calculateStatIncrease(updatedMember)
+            updatedMember.stats = GameLogic.calculateStatIncrease(updatedMember)
 
             const statIncreaseMember = GameLogic.increaseStats(
               updatedMember,
@@ -672,175 +955,6 @@ export const useBattleStore = defineStore('battle', {
       })
 
       return Promise.all(memberUpdatesPromises)
-    },
-
-    calculateStatIncrease(character: Character): Character['stats'] {
-      // ✅ DEFINIR PONTOS TOTAIS DISPONÍVEIS POR LEVEL
-      const pointsPerLevel = 2 + Math.floor(Math.random() * 3) // 2-4 pontos aleatórios
-
-      // ✅ STATS BASE ATUAIS
-      const currentStats = character.stats || {
-        attack: 0,
-        defense: 0,
-        speed: 0,
-        intelligence: 0,
-        skill: 0,
-        armHaki: 0,
-        obsHaki: 0,
-        kingHaki: 0,
-        devilFruit: 0,
-      }
-
-      // ✅ DEFINIR PRIORIDADES POR TIPO DE PERSONAGEM
-      const typePriorities = this.getTypePriorities(character.type)
-
-      // ✅ CRIAR POOL DE STATS ELEGÍVEIS
-      const eligibleStats = this.getEligibleStats(character)
-
-      // ✅ DISTRIBUIR PONTOS ALEATORIAMENTE
-      const distributedPoints = this.distributePointsRandomly(
-        pointsPerLevel,
-        eligibleStats,
-        typePriorities,
-      )
-
-      // ✅ APLICAR AUMENTOS AOS STATS ATUAIS
-      return {
-        attack: currentStats.attack + (distributedPoints.attack || 0),
-        defense: currentStats.defense + (distributedPoints.defense || 0),
-        speed: currentStats.speed + (distributedPoints.speed || 0),
-        intelligence: currentStats.intelligence + (distributedPoints.intelligence || 0),
-        skill: currentStats.skill + (distributedPoints.skill || 0),
-        armHaki: currentStats.armHaki + (distributedPoints.armHaki || 0),
-        obsHaki: currentStats.obsHaki + (distributedPoints.obsHaki || 0),
-        kingHaki: currentStats.kingHaki + (distributedPoints.kingHaki || 0),
-        devilFruit: currentStats.devilFruit + (distributedPoints.devilFruit || 0),
-      }
-    },
-    // ✅ DEFINIR PRIORIDADES POR TIPO
-    getTypePriorities(type: string): { [key: string]: number } {
-      const priorities = {
-        Swordsman: {
-          attack: 25, // 40% chance de receber pontos
-          defense: 20,
-          speed: 25,
-          armHaki: 15,
-          obsHaki: 10,
-          devilFruit: 5,
-        },
-        Support: {
-          speed: 30,
-          obsHaki: 13,
-          defense: 20,
-          attack: 20,
-          armHaki: 12,
-          devilFruit: 5,
-        },
-        Fighter: {
-          attack: 30,
-          defense: 20,
-          speed: 20,
-          armHaki: 15,
-          obsHaki: 10,
-          devilFruit: 5,
-        },
-        Sniper: {
-          attack: 25,
-          speed: 35,
-          obsHaki: 15,
-          defense: 10,
-          armHaki: 10,
-          devilFruit: 5,
-        },
-      }
-
-      return (
-        priorities[type as keyof typeof priorities] || {
-          attack: 25,
-          defense: 25,
-          speed: 25,
-          armHaki: 15,
-          obsHaki: 15,
-          devilFruit: 10,
-        }
-      )
-    },
-
-    // ✅ DETERMINAR STATS ELEGÍVEIS PARA RECEBER PONTOS
-    getEligibleStats(character: Character): string[] {
-      const eligible: string[] = []
-
-      // Stats básicos sempre elegíveis
-      eligible.push('attack', 'defense', 'speed', 'intelligence', 'skill')
-
-      // Haki só elegível se já tiver ou se for de alto level
-      if (character.stats.armHaki > 0 || character.level >= 50) {
-        eligible.push('armHaki')
-      }
-
-      if (character.stats.obsHaki > 0 || character.level >= 50) {
-        eligible.push('obsHaki')
-      }
-
-      // Devil Fruit só se já tiver ou chance especial
-      if (character.stats.devilFruit > 0) {
-        eligible.push('devilFruit')
-      }
-
-      return eligible
-    },
-
-    // ✅ DISTRIBUIR PONTOS ALEATORIAMENTE COM BASE NAS PRIORIDADES
-    distributePointsRandomly(
-      totalPoints: number,
-      eligibleStats: string[],
-      priorities: { [key: string]: number },
-    ): { [key: string]: number } {
-      const distribution: { [key: string]: number } = {}
-      let remainingPoints = totalPoints
-
-      // Inicializar todos os stats elegíveis com 0
-      eligibleStats.forEach((stat) => {
-        distribution[stat] = 0
-      })
-
-      // ✅ DISTRIBUIR PONTOS UM POR VEZ
-      while (remainingPoints > 0) {
-        // Criar array ponderado baseado nas prioridades
-        const weightedStats: string[] = []
-
-        eligibleStats.forEach((stat) => {
-          const weight = priorities[stat] || 10
-          // Adicionar o stat múltiplas vezes baseado no peso
-          for (let i = 0; i < weight; i++) {
-            weightedStats.push(stat)
-          }
-        })
-
-        // Selecionar stat aleatório do array ponderado
-        const selectedStat = weightedStats[Math.floor(Math.random() * weightedStats.length)]
-
-        // ✅ APLICAR LIMITADORES PARA EVITAR CONCENTRAÇÃO EXCESSIVA
-        const maxPointsPerStat = Math.ceil(totalPoints * 0.6) // Máximo 60% dos pontos em um stat
-
-        if (distribution[selectedStat] < maxPointsPerStat) {
-          distribution[selectedStat]++
-          remainingPoints--
-        } else {
-          // Se o stat atingiu o limite, remover das opções temporariamente
-          const statIndex = eligibleStats.indexOf(selectedStat)
-          if (statIndex > -1 && eligibleStats.length > 1) {
-            eligibleStats.splice(statIndex, 1)
-          }
-
-          // Se todos os stats atingiram o limite, quebrar o loop
-          if (eligibleStats.length === 0) {
-            break
-          }
-        }
-      }
-
-      return distribution
     },
 
     async loadBattleHistory(characterId?: number): Promise<void> {

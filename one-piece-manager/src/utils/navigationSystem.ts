@@ -668,19 +668,8 @@ export class NavigationSystem {
 
       console.log('✅ NavigationSystem - Navegação completada com sucesso!')
 
-      // ✅ DISPARAR MOVIMENTAÇÃO MUNDIAL
-      setTimeout(async () => {
-        console.log('🌍 Iniciando movimentação mundial após navegação do player...')
-        const worldMovement = await AdventureSystem.onPlayerIslandChange()
-
-        if (worldMovement.success) {
-          // Disparar evento para notificar a interface
-          const worldEvent = new CustomEvent('worldMovementCompleted', {
-            detail: worldMovement,
-          })
-          window.dispatchEvent(worldEvent)
-        }
-      }, 1000) // Aguardar 1 segundo para não conflitar
+      // 🌍 ATUALIZAR MUNDO APÓS BATALHA DO JOGADOR
+      const worldUpdate = await AdventureSystem.onPlayerAction()
 
       return {
         success: true,
