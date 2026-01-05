@@ -186,6 +186,7 @@
                 :loading="loadingAdventure"
                 variant="elevated"
                 class="adventure-start-btn"
+                v-if="isDev"
               >
                 <v-icon left>mdi-sail-boat</v-icon>
                 {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA 10X' }}
@@ -199,6 +200,7 @@
                 :loading="loadingAdventure"
                 variant="elevated"
                 class="adventure-start-btn"
+                v-if="isDev"
               >
                 <v-icon left>mdi-sail-boat</v-icon>
                 {{ loadingAdventure ? 'Explorando...' : 'INICIAR AVENTURA 50X' }}
@@ -797,6 +799,7 @@ const characterStore = useCharacterStore()
 const battleStore = useBattleStore()
 const worldStore = useWorldStore()
 const router = useRouter()
+const isDev = import.meta.env.DEV
 
 // 🔄 LOADING STATES
 const playerCharacterLoaded = ref(false)

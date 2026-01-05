@@ -759,7 +759,7 @@
       </v-row>
 
       <!-- SEÇÃO DE DEBUG -->
-      <v-row>
+      <v-row v-if="isDev">
         <v-col cols="12">
           <v-card variant="elevated" color="orange-lighten-5">
             <v-card-title class="text-orange-darken-3">
@@ -1047,6 +1047,8 @@ import { PowerCalculationSystem } from '@/utils/powerCalculationSystem'
 import AdBanner from '@/components/AdBanner.vue'
 
 const router = useRouter()
+const isDev = import.meta.env.DEV
+
 
 const gameStore = useGameStore()
 const characterStore = useCharacterStore()

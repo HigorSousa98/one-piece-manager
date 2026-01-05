@@ -77,7 +77,7 @@ export class WorldEncyclopedia {
         marines: this.getCategoryRanking(enrichedCharacters, 'Marine'),
         bountyHunters: this.getCategoryRanking(enrichedCharacters, 'BountyHunter'),
         government: this.getCategoryRanking(enrichedCharacters, 'Government'),
-        supernovas: await this.getSupernovasRanking(enrichedCaptains, crews, islands),
+        supernovas: await this.getSupernovasRanking(enrichedCharacters, crews, islands),
         playerInfo: playerCharacterId
           ? this.getPlayerRankingInfo(enrichedCharacters, playerCharacterId)
           : null,

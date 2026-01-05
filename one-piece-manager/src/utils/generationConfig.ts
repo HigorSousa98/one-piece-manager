@@ -36,6 +36,7 @@ export interface GenerationSettings {
   battleSimulatedByTurn: number
   islandEncounters: number
   navigationFactor: number
+  crewMovementFactor: number
 }
 
 export class GenerationConfig {
@@ -73,9 +74,10 @@ export class GenerationConfig {
     stepTimeLiberation: 3,
     showAd: false,
     shichibukaiMaxLevel: 75,
-    battleSimulatedByTurn: 250,
-    islandEncounters: 10,
+    battleSimulatedByTurn: 450,
+    islandEncounters: 60,
     navigationFactor: 3,
+    crewMovementFactor: 0.3,
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -264,6 +266,9 @@ export class GenerationConfig {
   }
   get navigationFactor(): number {
     return this.config.navigationFactor
+  }
+  get crewMovementFactor(): number {
+    return this.config.crewMovementFactor
   }
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

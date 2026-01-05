@@ -368,7 +368,7 @@
       </div>
 
       <!-- ✅ DEBUG INFO (EXPANSÍVEL) -->
-      <v-expansion-panels class="mb-4" variant="accordion">
+      <v-expansion-panels class="mb-4" variant="accordion" v-if="isDev">
         <v-expansion-panel>
           <v-expansion-panel-title>
             <v-icon left>mdi-bug</v-icon>
@@ -437,6 +437,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+  const isDev = import.meta.env.DEV
 
 const emit = defineEmits<{
   close: []
