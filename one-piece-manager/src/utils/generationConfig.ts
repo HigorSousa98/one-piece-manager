@@ -75,7 +75,7 @@ export class GenerationConfig {
     showAd: false,
     shichibukaiMaxLevel: 75,
     battleSimulatedByTurn: 450,
-    islandEncounters: 60,
+    islandEncounters: 80,
     navigationFactor: 3,
     crewMovementFactor: 0.3,
   }

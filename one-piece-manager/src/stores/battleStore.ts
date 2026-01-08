@@ -138,7 +138,7 @@ export const useBattleStore = defineStore('battle', {
         await this.saveBattleResult(result)
 
         // 🌍 ATUALIZAR MUNDO APÓS BATALHA DO JOGADOR
-        const worldUpdate = await AdventureSystem.onPlayerAction()
+        //const worldUpdate = await AdventureSystem.onPlayerAction()
 
         this.isSimulating = false
         return result

@@ -1090,6 +1090,7 @@ const startBattle = async () => {
       specialBounty,
       specialExp
     )
+    await AdventureSystem.onPlayerAction()
     
     lastBattleResult.value = result
     

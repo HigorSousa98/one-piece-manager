@@ -744,6 +744,7 @@ import { useTimeRemaining } from '@/composables/useTimeRemaining'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GenerationConfig } from '@/utils/generationConfig'
 import WantedPoster from './WantedPoster.vue'
+import { AdventureSystem } from '@/utils/adventureSystem'
 
 // ✅ PROPS
 interface Props {
@@ -971,6 +972,7 @@ const processCompletedTask = async () => {
     if (!activeTask.value) return
     
     const result = await TerritoryLiberationSystem.completeLiberationTask(activeTask.value.id!)
+    const worldUpdate = await AdventureSystem.onPlayerAction()
     
     lastResult.value = result
     showResultDialog.value = true

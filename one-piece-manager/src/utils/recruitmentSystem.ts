@@ -68,7 +68,7 @@ export class RecruitmentSystem {
     }
 
     // 5. Validar compatibilidade de tipos
-    if (!this.validateTypeCompatibility(recruiter.type, target.type)) {
+    if (!GameLogic.validateTypeCompatibility(recruiter.type, target.type)) {
       return {
         canRecruit: false,
         reason: `${recruiter.type} não pode recrutar ${target.type}`,
@@ -106,19 +106,6 @@ export class RecruitmentSystem {
       }
     }
     return false // Placeholder - implementar contagem real
-  }
-
-  // 🎭 VALIDAR COMPATIBILIDADE DE TIPOS
-  private static validateTypeCompatibility(recruiterType: string, targetType: string): boolean {
-    const compatibilityMatrix: Record<string, string[]> = {
-      Pirate: ['Pirate', 'BountyHunter'],
-      Marine: ['Marine', 'BountyHunter'],
-      BountyHunter: ['BountyHunter', 'Pirate', 'Marine'],
-      Government: ['Government', 'Marine'], // Assumindo que Government pode recrutar Marines
-      Civillian: [], // Civis não recrutam ninguém
-    }
-
-    return compatibilityMatrix[recruiterType]?.includes(targetType) || false
   }
 
   // 🎲 CALCULAR CHANCE DE RECRUTAMENTO E LOYALTY

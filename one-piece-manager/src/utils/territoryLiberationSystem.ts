@@ -292,6 +292,8 @@ export class TerritoryLiberationSystem {
           description: `${task.description} - FALHOU`,
         })
 
+        
+
         return {
           success: false,
           message: `💀 Você foi derrotado! Tente novamente o step ${task.step}.`,

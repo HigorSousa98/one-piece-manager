@@ -57,18 +57,18 @@ interface OptimizedCache {
   territories: any[]
   styleCombats: any[]
   ships: any[]
-  
+
   // ✅ MAPAS PARA ACESSO RÁPIDO O(1)
   islandMap: Map<number, Island>
   crewMap: Map<number, Crew>
   characterMap: Map<number, Character>
   devilFruitMap: Map<number, DevilFruit>
   shipMap: Map<number, any>
-  
+
   // ✅ ÍNDICES PARA QUERIES FREQUENTES
   charactersByCrewId: Map<number, Character[]>
   crewsByIslandId: Map<number, Crew[]>
-  
+
   lastCacheTime: number
   cacheTimeout: number
 }
@@ -97,7 +97,7 @@ class IntelligentBatchManager {
   private characterUpdates: Map<number, Partial<Character>> = new Map()
   private crewUpdates: Map<number, Partial<Crew>> = new Map()
   private battleCreations: Array<any> = []
-  
+
   // ✅ OPERAÇÕES CRÍTICAS QUE PRECISAM SER IMEDIATAS
   private criticalOperations: Promise<any>[] = []
 
@@ -149,7 +149,6 @@ class IntelligentBatchManager {
       await Promise.all(operations)
 
       console.log(`✅ Intelligent batch executado: ${operations.length} operações`)
-
     } catch (error) {
       console.error('❌ Erro ao executar intelligent batch:', error)
       throw error
@@ -168,7 +167,7 @@ class IntelligentBatchManager {
       characterUpdates: this.characterUpdates.size,
       crewUpdates: this.crewUpdates.size,
       battleCreations: this.battleCreations.length,
-      criticalOperations: this.criticalOperations.length
+      criticalOperations: this.criticalOperations.length,
     }
   }
 }
@@ -182,7 +181,7 @@ async function updateOptimizedCache(): Promise<void> {
       console.log('🔄 Atualizando cache otimizado...')
 
       // ✅ BUSCAR TODOS OS DADOS EM PARALELO
-      const [islands, crews, characters, devilFruits, territories, styleCombats, ships] = 
+      const [islands, crews, characters, devilFruits, territories, styleCombats, ships] =
         await Promise.all([
           db.islands.toArray(),
           db.crews.toArray(),
@@ -190,7 +189,7 @@ async function updateOptimizedCache(): Promise<void> {
           db.devilFruits.toArray(),
           db.territories.toArray(),
           db.styleCombats.toArray(),
-          db.ships.toArray()
+          db.ships.toArray(),
         ])
 
       // ✅ ATUALIZAR ARRAYS
@@ -203,18 +202,18 @@ async function updateOptimizedCache(): Promise<void> {
       optimizedCache.ships = ships
 
       // ✅ CRIAR MAPAS PARA ACESSO O(1)
-      optimizedCache.islandMap = new Map(islands.map(i => [i.id!, i]))
-      optimizedCache.crewMap = new Map(crews.map(c => [c.id!, c]))
-      optimizedCache.characterMap = new Map(characters.map(ch => [ch.id!, ch]))
-      optimizedCache.devilFruitMap = new Map(devilFruits.map(df => [df.id!, df]))
-      optimizedCache.shipMap = new Map(ships.map(s => [s.id!, s]))
+      optimizedCache.islandMap = new Map(islands.map((i) => [i.id!, i]))
+      optimizedCache.crewMap = new Map(crews.map((c) => [c.id!, c]))
+      optimizedCache.characterMap = new Map(characters.map((ch) => [ch.id!, ch]))
+      optimizedCache.devilFruitMap = new Map(devilFruits.map((df) => [df.id!, df]))
+      optimizedCache.shipMap = new Map(ships.map((s) => [s.id!, s]))
 
       // ✅ CRIAR ÍNDICES PARA QUERIES FREQUENTES
       optimizedCache.charactersByCrewId = new Map()
       optimizedCache.crewsByIslandId = new Map()
 
       // Indexar characters por crewId
-      characters.forEach(char => {
+      characters.forEach((char) => {
         if (char.crewId) {
           const existing = optimizedCache.charactersByCrewId.get(char.crewId) || []
           existing.push(char)
@@ -223,7 +222,7 @@ async function updateOptimizedCache(): Promise<void> {
       })
 
       // Indexar crews por islandId
-      crews.forEach(crew => {
+      crews.forEach((crew) => {
         const existing = optimizedCache.crewsByIslandId.get(crew.currentIsland) || []
         existing.push(crew)
         optimizedCache.crewsByIslandId.set(crew.currentIsland, existing)
@@ -231,7 +230,6 @@ async function updateOptimizedCache(): Promise<void> {
 
       optimizedCache.lastCacheTime = now
       console.log('✅ Cache otimizado atualizado com sucesso')
-
     } catch (error) {
       console.error('❌ Erro ao atualizar cache otimizado:', error)
     }
@@ -267,7 +265,9 @@ async function simulateEncountersWorkerOptimized(data: any): Promise<any> {
 
       for (const island of islandChunk) {
         const crewsOnIsland = optimizedCache.crewsByIslandId.get(island.id!) || []
-        const dockedCrews = crewsOnIsland.filter(crew => crew.docked === 1 && !playerCrewIds.includes(crew.id))
+        const dockedCrews = crewsOnIsland.filter(
+          (crew) => crew.docked === 1 && !playerCrewIds.includes(crew.id),
+        )
 
         if (dockedCrews.length >= 2) {
           let encounters = []
@@ -279,13 +279,16 @@ async function simulateEncountersWorkerOptimized(data: any): Promise<any> {
 
             if (
               crew1.id === crew2.id ||
-              encounters.filter((enc) => enc.crew1.id == crew1.id || enc.crew2.id == crew1.id).length > 0 ||
-              encounters.filter((enc) => enc.crew1.id == crew2.id || enc.crew2.id == crew2.id).length > 0
-            ) continue
+              encounters.filter((enc) => enc.crew1.id == crew1.id || enc.crew2.id == crew1.id)
+                .length > 0 ||
+              encounters.filter((enc) => enc.crew1.id == crew2.id || enc.crew2.id == crew2.id)
+                .length > 0
+            )
+              continue
 
             const [member1, member2] = [
               optimizedCache.charactersByCrewId.get(crew1.id!) || [],
-              optimizedCache.charactersByCrewId.get(crew2.id!) || []
+              optimizedCache.charactersByCrewId.get(crew2.id!) || [],
             ]
 
             if (member1.length === 0 || member2.length === 0) continue
@@ -294,7 +297,7 @@ async function simulateEncountersWorkerOptimized(data: any): Promise<any> {
             encounters.push({ crew1, crew2 })
 
             // ✅ DETERMINAR TIPO DE ENCONTRO
-            const encounterType = AdventureSystem.determineEncounterTypeOnly(crew1.type, crew2.type)
+            const encounterType = GameLogic.determineEncounterTypeOnly(crew1.type, crew2.type)
 
             if (encounterType === 'hostile' || encounterType === 'neutral') {
               // ✅ SIMULAR BATALHA COM BATCH INTELIGENTE
@@ -331,7 +334,6 @@ async function simulateEncountersWorkerOptimized(data: any): Promise<any> {
     console.log('✅ Encounters otimizados:', results)
 
     return results
-
   } catch (error) {
     console.error('❌ Erro na simulação de encontros otimizada:', error)
     return {
@@ -347,7 +349,7 @@ async function simulateEncountersWorkerOptimized(data: any): Promise<any> {
 async function simulateCrewBattleHybrid(
   crew1: Crew,
   crew2: Crew,
-  batchManager: IntelligentBatchManager
+  batchManager: IntelligentBatchManager,
 ): Promise<{ winnerCrew: Crew; loserCrew: Crew; casualties: number } | null> {
   try {
     // ✅ BUSCAR DADOS DO CACHE (O(1))
@@ -356,8 +358,8 @@ async function simulateCrewBattleHybrid(
 
     if (crew1Members.length === 0 || crew2Members.length === 0) return null
 
-    const captain1 = crew1Members.find(char => char.id === crew1.captainId)
-    const captain2 = crew2Members.find(char => char.id === crew2.captainId)
+    const captain1 = crew1Members.find((char) => char.id === crew1.captainId)
+    const captain2 = crew2Members.find((char) => char.id === crew2.captainId)
 
     if (!captain1 || !captain2) return null
 
@@ -374,11 +376,22 @@ async function simulateCrewBattleHybrid(
     const bountyGain = GameLogic.calculateBountyGain(winnerCaptain, loserCaptain)
 
     // ✅ PROCESSAR UPDATES EM BATCH
-    const captainUpdates = await processCaptainUpdatesOptimized(winnerCaptain, expGain, bountyGain, true)
-    const memberUpdates = await processCrewMemberUpdatesOptimized(winnerMembers, expGain, bountyGain, true, 0.3 + Math.random() * 0.2)
+    const captainUpdates = await processCaptainUpdatesOptimized(
+      winnerCaptain,
+      expGain,
+      bountyGain,
+      true,
+    )
+    const memberUpdates = await processCrewMemberUpdatesOptimized(
+      winnerMembers,
+      expGain,
+      bountyGain,
+      true,
+      0.3 + Math.random() * 0.2,
+    )
 
     batchManager.addCharacterUpdate(winnerCaptain.id!, captainUpdates)
-    memberUpdates.forEach(update => {
+    memberUpdates.forEach((update) => {
       batchManager.addCharacterUpdate(update.id, update.updates)
     })
 
@@ -387,21 +400,22 @@ async function simulateCrewBattleHybrid(
       winnerCrew.id!,
       loserCrew.id!,
       false,
-      batchManager
+      batchManager,
     )
 
     // ✅ VERIFICAR CREW VAZIO (CRÍTICO - EXECUTAR IMEDIATAMENTE)
     const remainingLoserMembers = optimizedCache.charactersByCrewId.get(loserCrew.id!) || []
     const actualRemainingMembers = remainingLoserMembers.filter(
-      char => !recruitmentResult.recruited.find(rec => rec.id === char.id) &&
-              !recruitmentResult.removed.find(rem => rem.id === char.id)
+      (char) =>
+        !recruitmentResult.recruited.find((rec) => rec.id === char.id) &&
+        !recruitmentResult.removed.find((rem) => rem.id === char.id),
     )
 
     if (actualRemainingMembers.length === 0) {
       // ✅ OPERAÇÃO CRÍTICA - EXECUTAR IMEDIATAMENTE
       batchManager.addCriticalOperation(db.crews.delete(loserCrew.id!))
-      
-      const loserShip = optimizedCache.ships.find(s => s.crewId === loserCrew.id)
+
+      const loserShip = optimizedCache.ships.find((s) => s.crewId === loserCrew.id)
       if (loserShip) {
         batchManager.addCriticalOperation(db.ships.delete(loserShip.id!))
       }
@@ -410,13 +424,16 @@ async function simulateCrewBattleHybrid(
     // ✅ CRIAR CREW PARA ÓRFÃOS (CRÍTICO - EXECUTAR IMEDIATAMENTE)
     if (recruitmentResult.removed.length >= 1) {
       batchManager.addCriticalOperation(
-        createCrewForOrphanMembersOptimized(recruitmentResult.removed, loserCrew.currentIsland)
+        createCrewForOrphanMembersOptimized(recruitmentResult.removed, loserCrew.currentIsland),
       )
     }
 
     // ✅ ATUALIZAR REPUTAÇÃO (BATCH)
     const newWinnerReputation = winnerCrew.reputation + Math.floor(loserCrew.reputation * 0.1)
-    const newLoserReputation = Math.max(0, loserCrew.reputation - Math.floor(loserCrew.reputation * 0.05))
+    const newLoserReputation = Math.max(
+      0,
+      loserCrew.reputation - Math.floor(loserCrew.reputation * 0.05),
+    )
 
     batchManager.addCrewUpdate(winnerCrew.id!, { reputation: newWinnerReputation })
     batchManager.addCrewUpdate(loserCrew.id!, { reputation: newLoserReputation })
@@ -430,7 +447,9 @@ async function simulateCrewBattleHybrid(
       loser: loserCaptain.id!,
       experienceGained: expGain,
       bountyGained: bountyGain,
-      battleLog: [`${winnerCaptain.name} derrotou ${loserCaptain.name} em uma batalha entre crews!`],
+      battleLog: [
+        `${winnerCaptain.name} derrotou ${loserCaptain.name} em uma batalha entre crews!`,
+      ],
       challengerCrewId: winnerCrew.id!,
       opponentCrewId: loserCrew.id!,
     })
@@ -438,7 +457,6 @@ async function simulateCrewBattleHybrid(
     const casualties = Math.floor(Math.random() * 3)
 
     return { winnerCrew, loserCrew, casualties }
-
   } catch (error) {
     console.error('❌ Erro na batalha híbrida:', error)
     return null
@@ -501,8 +519,10 @@ async function processCaptainUpdatesOptimized(
     const newLevel = levelCheck.newLevel!
     const remainingExp = newExp - levelCheck.expNeeded!
 
-    const devilFruit = character.devilFruitId ? optimizedCache.devilFruitMap.get(character.devilFruitId) : null
-    const styleCombat = optimizedCache.styleCombats.find(sc => sc.id === character.styleCombatId)
+    const devilFruit = character.devilFruitId
+      ? optimizedCache.devilFruitMap.get(character.devilFruitId)
+      : null
+    const styleCombat = optimizedCache.styleCombats.find((sc) => sc.id === character.styleCombatId)
 
     if (!styleCombat) {
       throw new Error(`Style Combat não encontrado para o personagem ${character.name}`)
@@ -511,7 +531,12 @@ async function processCaptainUpdatesOptimized(
     const updatedCharacter = { ...character, level: newLevel, experience: remainingExp }
     updatedCharacter.stats = GameLogic.calculateStatIncrease(updatedCharacter)
 
-    const statIncrease = GameLogic.increaseStats(updatedCharacter, newLevel, styleCombat, devilFruit)
+    const statIncrease = GameLogic.increaseStats(
+      updatedCharacter,
+      newLevel,
+      styleCombat,
+      devilFruit,
+    )
 
     updates.level = newLevel
     updates.experience = remainingExp
@@ -535,13 +560,17 @@ async function processCrewMemberUpdatesOptimized(
   percentage: number,
 ): Promise<Array<{ id: number; updates: Partial<Character> }>> {
   const memberUpdatesPromises = members
-    .filter(member => member.position !== 'Captain')
+    .filter((member) => member.position !== 'Captain')
     .map(async (member) => {
       const updates: Partial<Character> = {}
 
       if (isWinner) {
-        const memberExpGain = Math.floor((expGained * percentage * GameLogic.randomBetween(100, 120)) / 100)
-        const memberBountyGain = Math.floor((bountyGained * percentage * GameLogic.randomBetween(100, 120)) / 100)
+        const memberExpGain = Math.floor(
+          (expGained * percentage * GameLogic.randomBetween(100, 120)) / 100,
+        )
+        const memberBountyGain = Math.floor(
+          (bountyGained * percentage * GameLogic.randomBetween(100, 120)) / 100,
+        )
 
         const newExpMember = member.experience + memberExpGain
         const tempMember = { ...member, experience: newExpMember }
@@ -551,8 +580,12 @@ async function processCrewMemberUpdatesOptimized(
           const newLevelMember = levelCheckMember.newLevel!
           const remainingExpMember = newExpMember - levelCheckMember.expNeeded!
 
-          const devilFruitMember = member.devilFruitId ? optimizedCache.devilFruitMap.get(member.devilFruitId) : null
-          const styleCombatMember = optimizedCache.styleCombats.find(sc => sc.id === member.styleCombatId)
+          const devilFruitMember = member.devilFruitId
+            ? optimizedCache.devilFruitMap.get(member.devilFruitId)
+            : null
+          const styleCombatMember = optimizedCache.styleCombats.find(
+            (sc) => sc.id === member.styleCombatId,
+          )
 
           if (!styleCombatMember) {
             throw new Error(`Style Combat não encontrado para o personagem ${member.name}`)
@@ -561,7 +594,12 @@ async function processCrewMemberUpdatesOptimized(
           const updatedMember = { ...member, level: newLevelMember, experience: remainingExpMember }
           updatedMember.stats = GameLogic.calculateStatIncrease(updatedMember)
 
-          const statIncreaseMember = GameLogic.increaseStats(updatedMember, newLevelMember, styleCombatMember, devilFruitMember)
+          const statIncreaseMember = GameLogic.increaseStats(
+            updatedMember,
+            newLevelMember,
+            styleCombatMember,
+            devilFruitMember,
+          )
 
           updates.level = newLevelMember
           updates.experience = remainingExpMember
@@ -590,7 +628,7 @@ async function processCrewRecruitmentAndRemovalHybrid(
   winnerCrewId: number,
   loserCrewId: number,
   isPlayerInvolved: boolean,
-  batchManager: IntelligentBatchManager
+  batchManager: IntelligentBatchManager,
 ): Promise<CrewRecruitmentResult> {
   const result: CrewRecruitmentResult = {
     recruited: [],
@@ -609,14 +647,18 @@ async function processCrewRecruitmentAndRemovalHybrid(
   const winnerCapacity = getCrewCapacityInfoOptimized(winnerCrewId)
 
   // ✅ PROCESSAR RECRUTAMENTO (CRÍTICO - EXECUTAR IMEDIATAMENTE)
-  if (winnerCapacity.hasSpace) {
-    const recruitmentResult = await processRecruitmentImmediate(winnerCrewId, loserCrewId, winnerCapacity)
+  if (winnerCapacity.hasSpace && GameLogic.validateTypeCompatibility(winnerCrew.type, loserCrew.type)) {
+    const recruitmentResult = await processRecruitmentImmediate(
+      winnerCrewId,
+      loserCrewId,
+      winnerCapacity,
+    )
     result.recruited = recruitmentResult.recruited
     result.recruitmentAttempts = recruitmentResult.attempts
   }
 
   // ✅ PROCESSAR REMOÇÃO (CRÍTICO - EXECUTAR IMEDIATAMENTE)
-  const removalResult = await processCrewMemberRemovalImmediate(loserCrewId)
+  const removalResult = await processCrewMemberRemovalImmediate(loserCrewId, result.recruited)
   result.removed = removalResult.removed
   result.removalAttempts = removalResult.attempts
 
@@ -625,7 +667,7 @@ async function processCrewRecruitmentAndRemovalHybrid(
 
 function getCrewCapacityInfoOptimized(crewId: number): CrewCapacityInfo {
   const currentMembers = optimizedCache.charactersByCrewId.get(crewId) || []
-  const ship = optimizedCache.ships.find(s => s.crewId === crewId)
+  const ship = optimizedCache.ships.find((s) => s.crewId === crewId)
 
   const shipLevel = ship?.level || 1
   const maxCapacity = shipLevel * 3
@@ -647,8 +689,10 @@ async function processRecruitmentImmediate(
   const recruited: Character[] = []
   let attempts = 0
 
+  const winnerCrew = optimizedCache.crewMap.get(winnerCrewId)
+
   const eligibleMembers = (optimizedCache.charactersByCrewId.get(loserCrewId) || [])
-    .filter(char => char.isPlayer !== 1)
+    .filter((char) => char.isPlayer !== 1)
     .sort((a, b) => a.loyalty - b.loyalty)
 
   for (const member of eligibleMembers) {
@@ -659,7 +703,7 @@ async function processRecruitmentImmediate(
     const recruitmentChance = 0.2 + (1 - member.loyalty / 100) * 0.1
     if (Math.random() <= recruitmentChance) {
       // ✅ EXECUTAR IMEDIATAMENTE PARA MANTER CONSISTÊNCIA
-      await db.characters.update(member.id!, { crewId: winnerCrewId })
+      await db.characters.update(member.id!, { crewId: winnerCrewId, type: winnerCrew.type, position: 'Crew Member' })
       recruited.push(member)
 
       if (Math.random() < 0.6) break
@@ -672,22 +716,28 @@ async function processRecruitmentImmediate(
 // ✅ REMOÇÃO IMEDIATA (PARA MANTER CONSISTÊNCIA)
 async function processCrewMemberRemovalImmediate(
   loserCrewId: number,
+  recruited: Character[],
 ): Promise<{ removed: Character[]; attempts: number }> {
   const removed: Character[] = []
   let attempts = 0
 
-  const eligibleMembers = (optimizedCache.charactersByCrewId.get(loserCrewId) || [])
-    .filter(char => char.isPlayer !== 1)
+  const eligibleMembers = (optimizedCache.charactersByCrewId.get(loserCrewId) || []).filter(
+    (char) => char.isPlayer !== 1 && !recruited.find((rec) => rec.id == char.id),
+  )
 
-  for (const member of eligibleMembers) {
-    attempts++
+  if (eligibleMembers.length > 1) {
+    for (const member of eligibleMembers) {
+      if (removed.length + 1 < eligibleMembers.length) {
+        attempts++
 
-    if (Math.random() <= 0.1) {
-      // ✅ EXECUTAR IMEDIATAMENTE PARA MANTER CONSISTÊNCIA
-      await db.characters.update(member.id!, { crewId: 0 })
-      removed.push(member)
+        if (Math.random() <= 0.1) {
+          // ✅ EXECUTAR IMEDIATAMENTE PARA MANTER CONSISTÊNCIA
+          await db.characters.update(member.id!, { crewId: 0 })
+          removed.push(member)
 
-      if (Math.random() < 0.7) break
+          if (Math.random() < 0.7) break
+        }
+      }
     }
   }
 
@@ -702,22 +752,25 @@ async function createCrewForOrphanMembersOptimized(
   if (orphanMembers.length === 0) return null
 
   const captain = orphanMembers.reduce((highest, current) =>
-    current.level > highest.level ? current : highest
+    current.level > highest.level ? current : highest,
   )
 
-  const crewName = CrewNameGenerator.generateCrewName(captain.type as 'Pirate' | 'Marine' | 'BountyHunter')
+  const crewName = CrewNameGenerator.generateCrewName(
+    captain.type as 'Pirate' | 'Marine' | 'BountyHunter' | 'Government',
+  )
 
   // ✅ EXECUTAR IMEDIATAMENTE PARA MANTER CONSISTÊNCIA
   const newCrewId = await db.crews.add({
     name: crewName,
-    type: captain.type as 'Pirate' | 'Marine' | 'BountyHunter',
+    type: captain.type as 'Pirate' | 'Marine' | 'BountyHunter' | 'Government',
     captainId: captain.id!,
     currentIsland: originalIslandId,
     docked: 1,
     reputation: Math.floor(captain.level * 10),
-    treasury: captain.type === 'Marine' 
-      ? GameLogic.randomBetween(1000000, 50000000)
-      : GameLogic.randomBetween(captain.bounty * 0.5, captain.bounty * 10),
+    treasury:
+      captain.type === 'Marine'
+        ? GameLogic.randomBetween(1000000, 50000000)
+        : GameLogic.randomBetween(captain.bounty * 0.5, captain.bounty * 10),
     foundedAt: new Date(),
   })
 
@@ -769,10 +822,10 @@ async function processMovementWorkerOptimized(data: any): Promise<any> {
     }
 
     const playerCrewIds = data.playerCrewIds || []
-    const territoriesCrewIds = optimizedCache.territories.map(territory => territory.crewId)
+    const territoriesCrewIds = optimizedCache.territories.map((territory) => territory.crewId)
 
     const availableCrews = optimizedCache.crews.filter(
-      crew => !playerCrewIds.includes(crew.id) && !territoriesCrewIds.includes(crew.id)
+      (crew) => !playerCrewIds.includes(crew.id) && !territoriesCrewIds.includes(crew.id),
     )
 
     // ✅ PROCESSAR DOCKED STATUS EM BATCH
@@ -796,26 +849,26 @@ async function processMovementWorkerOptimized(data: any): Promise<any> {
 
     const crewMovementFactor = GenerationConfig.createEpic().crewMovementFactor
     const crewByIslandPower = new Map()
-    
+
     // ✅ CRIAR MAPA DE CREWS POR ILHA (COM PODER CALCULADO)
-    optimizedCache.islands.forEach(island => {
+    optimizedCache.islands.forEach((island) => {
       const crewsInThisIsland = optimizedCache.crewsByIslandId.get(island.id!) || []
-      const crewsWithPower = crewsInThisIsland.map(crew => {
+      const crewsWithPower = crewsInThisIsland.map((crew) => {
         const crewMembers = optimizedCache.charactersByCrewId.get(crew.id!) || []
         const power = GameLogic.calculateCrewPower(crewMembers, optimizedCache.devilFruits)
         return { crew, power }
       })
-      
+
       crewsWithPower.sort((a, b) => b.power - a.power)
       crewByIslandPower.set(island.id!, crewsWithPower)
     })
 
     const movableCrews = optimizedCache.crews.filter(
-      crew =>
+      (crew) =>
         crew.docked === 1 &&
         crew.captainId > 0 &&
         !playerCrewIds.includes(crew.id) &&
-        !territoriesCrewIds.includes(crew.id)
+        !territoriesCrewIds.includes(crew.id),
     )
 
     result.totalCrews = movableCrews.length
@@ -833,11 +886,14 @@ async function processMovementWorkerOptimized(data: any): Promise<any> {
           const currentIsland = optimizedCache.islandMap.get(crew.currentIsland)
           if (currentIsland) {
             const crewsWithPower = crewByIslandPower.get(crew.currentIsland) || []
-            const currentIndex = crewsWithPower.findIndex(item => item.crew.id === crew.id) || 0
+            const currentIndex = crewsWithPower.findIndex((item) => item.crew.id === crew.id) || 0
             const totalCrewsOnIsland = crewsWithPower.length || 1
             const percent = currentIndex / totalCrewsOnIsland
 
-            const destinationDecision = await selectDestinationIslandOptimized(currentIsland, percent)
+            const destinationDecision = await selectDestinationIslandOptimized(
+              currentIsland,
+              percent,
+            )
 
             if (destinationDecision) {
               movementDecisions.push({
@@ -868,11 +924,11 @@ async function processMovementWorkerOptimized(data: any): Promise<any> {
     }
 
     // ✅ EXECUTAR MOVIMENTOS EM BATCH
-    const movementPromises = movementDecisions.map((decision) => 
+    const movementPromises = movementDecisions.map((decision) =>
       db.crews.update(decision.crewId, {
         currentIsland: decision.toIslandId,
         docked: 1,
-      })
+      }),
     )
 
     await Promise.all(movementPromises)
@@ -894,7 +950,6 @@ async function processMovementWorkerOptimized(data: any): Promise<any> {
     console.log('✅ Movimento otimizado:', result)
 
     return result
-
   } catch (error) {
     console.error('❌ Erro no processamento de movimento otimizado:', error)
     return {
@@ -912,20 +967,22 @@ async function selectDestinationIslandOptimized(
   percent: number,
 ): Promise<{ island: Island; type: 'easier' | 'same' | 'harder' } | null> {
   try {
-    const availableIslands = optimizedCache.islands.filter(island => island.id !== currentIsland.id)
+    const availableIslands = optimizedCache.islands.filter(
+      (island) => island.id !== currentIsland.id,
+    )
 
     if (availableIslands.length === 0) return null
 
     const easierIslands = availableIslands.filter(
-      island => island.difficulty === currentIsland.difficulty - 1
+      (island) => island.difficulty === currentIsland.difficulty - 1,
     )
 
     const sameIslands = availableIslands.filter(
-      island => island.difficulty === currentIsland.difficulty
+      (island) => island.difficulty === currentIsland.difficulty,
     )
 
     const harderIslands = availableIslands.filter(
-      island => island.difficulty === currentIsland.difficulty + 1
+      (island) => island.difficulty === currentIsland.difficulty + 1,
     )
 
     let selectedIslands: Island[]
@@ -961,23 +1018,22 @@ async function selectDestinationIslandOptimized(
       island: selectedIsland,
       type: movementType,
     }
-
   } catch (error) {
     console.error('❌ Erro ao selecionar ilha de destino otimizada:', error)
     return null
   }
 }
 
-async function generateIslandMovementReportOptimized(
-  movements: CrewMovementDecision[],
-): Promise<Array<{
-  islandId: number
-  islandName: string
-  initialCrews: number
-  finalCrews: number
-  crewsLeft: number
-  crewsArrived: number
-}>> {
+async function generateIslandMovementReportOptimized(movements: CrewMovementDecision[]): Promise<
+  Array<{
+    islandId: number
+    islandName: string
+    initialCrews: number
+    finalCrews: number
+    crewsLeft: number
+    crewsArrived: number
+  }>
+> {
   try {
     const reports: Array<{
       islandId: number
@@ -988,12 +1044,13 @@ async function generateIslandMovementReportOptimized(
       crewsArrived: number
     }> = []
 
-    optimizedCache.islands.forEach(island => {
-      const crewsLeft = movements.filter(m => m.fromIslandId === island.id).length
-      const crewsArrived = movements.filter(m => m.toIslandId === island.id).length
+    optimizedCache.islands.forEach((island) => {
+      const crewsLeft = movements.filter((m) => m.fromIslandId === island.id).length
+      const crewsArrived = movements.filter((m) => m.toIslandId === island.id).length
 
-      const currentCrews = (optimizedCache.crewsByIslandId.get(island.id!) || [])
-        .filter(c => c.docked === 1).length
+      const currentCrews = (optimizedCache.crewsByIslandId.get(island.id!) || []).filter(
+        (c) => c.docked === 1,
+      ).length
 
       const initialCrews = currentCrews + crewsLeft - crewsArrived
 
@@ -1010,7 +1067,6 @@ async function generateIslandMovementReportOptimized(
     })
 
     return reports.sort((a, b) => b.crewsLeft + b.crewsArrived - (a.crewsLeft + a.crewsArrived))
-
   } catch (error) {
     console.error('❌ Erro ao gerar relatório de movimento otimizado:', error)
     return []
@@ -1034,27 +1090,29 @@ async function updateTerritoriesWorkerOptimized(data: any): Promise<any> {
       return { success: false }
     }
 
-    const allCrews = optimizedCache.crews.filter(crew => crew.docked === 1)
-    const occupiedTerritories = optimizedCache.territories.filter(territory => territory.crewId !== 0)
+    const allCrews = optimizedCache.crews.filter((crew) => crew.docked === 1)
+    const occupiedTerritories = optimizedCache.territories.filter(
+      (territory) => territory.crewId !== 0,
+    )
 
     // ✅ CALCULAR CREW MAIS FORTE POR ILHA EM PARALELO
-    const territoryUpdatePromises = occupiedTerritories.map(async territory => {
-      const crewsOnIsland = allCrews.filter(crew => 
-        crew.currentIsland === territory.islandId && crew.id !== playerCrewId
+    const territoryUpdatePromises = occupiedTerritories.map(async (territory) => {
+      const crewsOnIsland = allCrews.filter(
+        (crew) => crew.currentIsland === territory.islandId && crew.id !== playerCrewId,
       )
 
       if (crewsOnIsland.length === 0) {
         return db.territories.update(territory.id!, { crewId: 0 })
       }
 
-      const crewPowers = crewsOnIsland.map(crew => {
+      const crewPowers = crewsOnIsland.map((crew) => {
         const crewMembers = optimizedCache.charactersByCrewId.get(crew.id!) || []
         const power = GameLogic.calculateCrewPower(crewMembers, optimizedCache.devilFruits)
         return { crew, power }
       })
 
-      const strongestCrew = crewPowers.reduce((strongest, current) => 
-        current.power > strongest.power ? current : strongest
+      const strongestCrew = crewPowers.reduce((strongest, current) =>
+        current.power > strongest.power ? current : strongest,
       )
 
       return db.territories.update(territory.id!, { crewId: strongestCrew.crew.id! })
@@ -1069,7 +1127,6 @@ async function updateTerritoriesWorkerOptimized(data: any): Promise<any> {
     })
 
     return { success: true }
-
   } catch (error) {
     console.error('❌ Erro na atualização de territórios otimizada:', error)
     return { success: false }
@@ -1090,7 +1147,9 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
     const config = GenerationConfig.createEpic()
 
     const calculatePowerSafe = (character: Character) => {
-      const devilFruit = character.devilFruitId ? optimizedCache.devilFruitMap.get(character.devilFruitId) : undefined
+      const devilFruit = character.devilFruitId
+        ? optimizedCache.devilFruitMap.get(character.devilFruitId)
+        : undefined
       return GameLogic.calculatePower(character, devilFruit)
     }
 
@@ -1098,19 +1157,19 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
     const [pirates, marines, government] = await Promise.all([
       Promise.resolve(
         optimizedCache.characters
-          .filter(char => char.type === 'Pirate' && char.position === 'Captain')
-          .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
+          .filter((char) => char.type === 'Pirate' && char.position === 'Captain')
+          .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a)),
       ),
       Promise.resolve(
         optimizedCache.characters
-          .filter(char => char.type === 'Marine' && char.position === 'Captain')
-          .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
+          .filter((char) => char.type === 'Marine' && char.position === 'Captain')
+          .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a)),
       ),
       Promise.resolve(
         optimizedCache.characters
-          .filter(char => char.type === 'Government')
-          .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a))
-      )
+          .filter((char) => char.type === 'Government')
+          .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a)),
+      ),
     ])
 
     // ✅ LIMPAR TABELAS EM PARALELO
@@ -1149,7 +1208,7 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
           captainId: pirate.id!,
           baseIsland: getBaseIsland(pirate),
           foundedAt: new Date(),
-        })
+        }),
       )
     }
 
@@ -1163,7 +1222,7 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
           captainId: pirate.id!,
           baseIsland: getBaseIsland(pirate),
           foundedAt: new Date(),
-        })
+        }),
       )
     }
 
@@ -1175,7 +1234,7 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
           marineId: marine.id!,
           baseIsland: getBaseIsland(marine),
           foundedAt: new Date(),
-        })
+        }),
       )
     }
 
@@ -1187,7 +1246,7 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
           govId: gov.id!,
           currentIsland: getBaseIsland(gov),
           foundedAt: new Date(),
-        })
+        }),
       )
     }
 
@@ -1206,7 +1265,7 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
           reputation: GameLogic.randomBetween(1000, 10000),
           currentIsland: randomIsland.id!,
           foundedAt: new Date(),
-        })
+        }),
       )
     }
 
@@ -1226,7 +1285,6 @@ async function redistributeCharactersWorkerOptimized(data: any): Promise<any> {
     })
 
     return { success: true }
-
   } catch (error) {
     console.error('❌ Erro na redistribuição de personagens otimizada:', error)
     return { success: false }
@@ -1244,7 +1302,7 @@ async function createNewCharactersWorkerOptimized(data: any): Promise<any> {
       progress: 30,
     })
 
-    const count = Math.floor(Math.random() * 0) + 1
+    const count = Math.floor(Math.random() * 3) + 1
     let created = 0
 
     // ✅ PROCESSAR CADA PERSONAGEM SEQUENCIALMENTE PARA LIDAR COM DEPENDÊNCIAS DE ID
@@ -1263,11 +1321,9 @@ async function createNewCharactersWorkerOptimized(data: any): Promise<any> {
           type = 'Government'
         }
 
-        let crewId = 0
         let characterId = 0
 
         // ✅ CRIAR CREW PRIMEIRO (SE NECESSÁRIO) E OBTER ID REAL
-        if (type !== 'Government') {
           const newCrew: Omit<Crew, 'id'> = {
             name: CrewNameGenerator.generateCrewName(type as 'Pirate' | 'Marine' | 'BountyHunter'),
             type: type as 'Pirate' | 'Marine' | 'BountyHunter',
@@ -1279,12 +1335,14 @@ async function createNewCharactersWorkerOptimized(data: any): Promise<any> {
             treasury: 0,
           }
 
-          crewId = await db.crews.add(newCrew)
-        }
+          const crewId = await db.crews.add(newCrew)
 
-        const styleCombatId = optimizedCache.styleCombats.length > 0
-          ? optimizedCache.styleCombats[GameLogic.randomBetween(0, optimizedCache.styleCombats.length - 1)].id || 0
-          : 1
+        const styleCombatId =
+          optimizedCache.styleCombats.length > 0
+            ? optimizedCache.styleCombats[
+                GameLogic.randomBetween(0, optimizedCache.styleCombats.length - 1)
+              ].id || 0
+            : 1
 
         const potentialToHaveKngHaki = Math.random()
 
@@ -1328,16 +1386,19 @@ async function createNewCharactersWorkerOptimized(data: any): Promise<any> {
 
         // ✅ ATUALIZAR CREW COM ID DO CAPITÃO E ILHA (SE CREW FOI CRIADO)
         if (crewId !== 0) {
-          const selectedIsland = optimizedCache.islands.length > 0
-            ? GameLogic.selectIslandForCrew(newCharacter, optimizedCache.islands)
-            : 1
+          const selectedIsland =
+            optimizedCache.islands.length > 0
+              ? GameLogic.selectIslandForCrew(newCharacter, optimizedCache.islands)
+              : 1
 
           await db.crews.update(crewId, {
             captainId: characterId,
             currentIsland: selectedIsland,
-            treasury: type === 'Marine' 
-              ? GameLogic.randomBetween(1000000, 50000000)
-              : GameLogic.randomBetween(100000, 1000000)
+            treasury:
+              type === 'Marine'
+                ? GameLogic.randomBetween(1000000, 50000000)
+                : GameLogic.randomBetween(100000, 1000000),
+                type: type as 'Pirate' | 'Marine' | 'BountyHunter' | 'Government'
           })
 
           // ✅ CRIAR NAVIO PARA O CREW COM ID REAL
@@ -1361,8 +1422,7 @@ async function createNewCharactersWorkerOptimized(data: any): Promise<any> {
           progress: Math.round(progress),
         })
 
-        await new Promise(resolve => setTimeout(resolve, 100))
-
+        await new Promise((resolve) => setTimeout(resolve, 100))
       } catch (error) {
         console.error('❌ Erro ao criar personagem individual:', error)
       }
@@ -1379,7 +1439,6 @@ async function createNewCharactersWorkerOptimized(data: any): Promise<any> {
       created: created,
       attempted: count,
     }
-
   } catch (error) {
     console.error('❌ Erro na criação de novos personagens otimizada:', error)
     return {
@@ -1415,7 +1474,7 @@ async function executeFullWorldUpdateOptimized(data: any): Promise<any> {
       // 1. Simular encontros (30%)
       simulateEncountersWorkerOptimized({ ...data, id: `${data.id}_encounters` }),
       // 2. Processar movimento (25%) - pode ser paralelo aos encontros
-      processMovementWorkerOptimized({ ...data, id: `${data.id}_movement` })
+      processMovementWorkerOptimized({ ...data, id: `${data.id}_movement` }),
     ])
 
     results.encounters = encountersResult
@@ -1428,7 +1487,10 @@ async function executeFullWorldUpdateOptimized(data: any): Promise<any> {
     })
 
     // 3. Atualizar territórios (20%) - depende do movimento
-    results.territories = await updateTerritoriesWorkerOptimized({ ...data, id: `${data.id}_territories` })
+    results.territories = await updateTerritoriesWorkerOptimized({
+      ...data,
+      id: `${data.id}_territories`,
+    })
     self.postMessage({
       type: 'PROGRESS',
       id: data.id,
@@ -1440,7 +1502,7 @@ async function executeFullWorldUpdateOptimized(data: any): Promise<any> {
       // 4. Redistribuir personagens (15%)
       redistributeCharactersWorkerOptimized({ ...data, id: `${data.id}_characters` }),
       // 5. Criar novos personagens (10%) - pode ser paralelo
-      createNewCharactersWorkerOptimized({ ...data, id: `${data.id}_newchars` })
+      createNewCharactersWorkerOptimized({ ...data, id: `${data.id}_newchars` }),
     ])
 
     results.characters = charactersResult
@@ -1457,7 +1519,6 @@ async function executeFullWorldUpdateOptimized(data: any): Promise<any> {
     console.log(`✅ Update completo otimizado em ${results.totalTime}ms`)
 
     return results
-
   } catch (error) {
     console.error('❌ Erro na atualização completa do mundo otimizada:', error)
     return {
@@ -1530,7 +1591,6 @@ self.onmessage = async function (e: MessageEvent<WorkerMessage>) {
       success: true,
       data: result,
     } as WorkerResponse)
-
   } catch (error) {
     // Enviar erro
     self.postMessage({

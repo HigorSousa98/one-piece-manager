@@ -304,6 +304,82 @@ export class GameLogic {
     return Math.floor(bountyGain)
   }
 
+  static determineEncounterTypeOnly(
+    player: String,
+    opponent: String,
+  ): 'hostile' | 'neutral' | 'friendly' {
+    // Piratas vs Marines = sempre hostil
+    if (
+      (player === 'Pirate' && opponent === 'Marine') ||
+      (player === 'Marine' && opponent === 'Pirate')
+    ) {
+      return 'hostile'
+    }
+
+    // BountyHunters vs Piratas = sempre hostil
+    if (
+      (player === 'BountyHunter' && opponent === 'Pirate') ||
+      (player === 'Pirate' && opponent === 'BountyHunter')
+    ) {
+      return 'hostile'
+    }
+
+    // Government vs Piratas = sempre hostil
+    if (
+      (player === 'Government' && opponent === 'Pirate') ||
+      (player === 'Pirate' && opponent === 'Government')
+    ) {
+      return 'hostile'
+    }
+
+    // Marines vs Government = geralmente neutro/amigável (mesma facção)
+    if (
+      (player === 'Marine' && opponent === 'Government') ||
+      (player === 'Government' && opponent === 'Marine')
+    ) {
+      return Math.random() < 0.7 ? 'neutral' : 'friendly'
+    }
+
+    // BountyHunter vs Marine = neutro (podem cooperar contra piratas)
+    if (
+      (player === 'BountyHunter' && opponent === 'Marine') ||
+      (player === 'Marine' && opponent === 'BountyHunter')
+    ) {
+      return Math.random() < 0.6 ? 'neutral' : 'hostile'
+    }
+
+    // BountyHunter vs Government = neutro (podem cooperar)
+    if (
+      (player === 'BountyHunter' && opponent === 'Government') ||
+      (player === 'Government' && opponent === 'BountyHunter')
+    ) {
+      return Math.random() < 0.5 ? 'neutral' : 'hostile'
+    }
+
+    // Civillian sempre tenta ser pacífico
+    if (player === 'Civillian' || opponent=== 'Civillian') {
+      return Math.random() < 0.8 ? 'friendly' : 'neutral'
+    }
+
+    // Mesmo tipo = geralmente neutro
+    if (player === opponent) {
+      return Math.random() < 0.7 ? 'neutral' : 'friendly'
+    }
+
+  }
+
+  static validateTypeCompatibility(recruiterType: string, targetType: string): boolean {
+    const compatibilityMatrix: Record<string, string[]> = {
+      Pirate: ['Pirate', 'BountyHunter'],
+      Marine: ['Marine', 'Government'],
+      BountyHunter: ['BountyHunter', 'Pirate',],
+      Government: ['Government', 'Marine'], // Assumindo que Government pode recrutar Marines
+      Civillian: [], // Civis não recrutam ninguém
+    }
+
+    return compatibilityMatrix[recruiterType]?.includes(targetType) || false
+  }
+
   // 🎮 Função auxiliar para calcular redução de bounty (para Marines)
   static calculateBountyReduction(marine: Character, defeatedPirate: Character): number {
     if (marine.type !== 'Marine') return 0
