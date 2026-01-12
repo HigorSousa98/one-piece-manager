@@ -434,23 +434,31 @@
                 <div class="text-h6 mb-3">🎁 Recompensas Obtidas:</div>
                 
                 <v-row>
-                  <v-col cols="12" md="4">
+                  <v-col cols="12" md="3">
                     <div class="text-center">
                       <v-icon size="30" class="mb-2">mdi-star</v-icon>
                       <div class="text-h6">+{{ lastBattleResult.experienceGained }}</div>
                       <div class="text-body-2">Experiência</div>
                     </div>
                   </v-col>
-                  
-                  <v-col cols="12" md="4">
+
+                  <v-col cols="12" md="3">
                     <div class="text-center">
                       <v-icon size="30" class="mb-2">mdi-treasure-chest</v-icon>
                       <div class="text-h6">+{{ formatBounty(lastBattleResult.bountyChange) }}</div>
                       <div class="text-body-2">Bounty</div>
                     </div>
                   </v-col>
+
+                  <v-col cols="12" md="3">
+                    <div class="text-center">
+                      <v-icon size="30" class="mb-2">mdi-cash-multiple</v-icon>
+                      <div class="text-h6">+{{ formatBounty(lastBattleResult.treasuryStole) }}</div>
+                      <div class="text-body-2">Treasury</div>
+                    </div>
+                  </v-col>
                   
-                  <v-col cols="12" md="4" v-if="currentEncounter?.specialReward">
+                  <v-col cols="12" md="3" v-if="currentEncounter?.specialReward">
                     <div class="text-center">
                       <v-icon size="30" class="mb-2">mdi-star-circle</v-icon>
                       <div class="text-h6">+{{ formatSpecialReward(currentEncounter.specialReward) }}</div>

@@ -45,6 +45,10 @@
           <span class="font-semibold">Bounty:</span>
           <span class="text-yellow-600 ml-2">+{{ battleRewards.bountyGained.toLocaleString() }}</span>
         </div>
+        <div>
+          <span class="font-semibold">Treasury:</span>
+          <span class="text-yellow-600 ml-2">+{{ battleRewards.treasuryStole.toLocaleString() }}</span>
+        </div>
       </div>
     </div>
     
@@ -112,6 +116,7 @@ interface BattleResult {
 interface BattleRewards {
   expGained: number
   bountyGained: number
+  treasuryStole: number
   leveledUp?: boolean
   newLevel?: number
 }

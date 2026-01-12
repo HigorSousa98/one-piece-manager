@@ -420,6 +420,18 @@ async function simulateCrewBattleHybrid(
         batchManager.addCriticalOperation(db.ships.delete(loserShip.id!))
       }
     }
+    else if(actualRemainingMembers.filter(char => char.position == 'Captain').length == 0){
+      const newCaptain = actualRemainingMembers.reduce((highest, current) =>
+        current.level > highest.level ? current : highest,
+      )
+        batchManager.addCriticalOperation(db.characters.update(newCaptain.id!, { crewId: loserCrew.id, position: 'Captain' }))
+
+      for (const member of actualRemainingMembers) {
+        if (member.id !== newCaptain.id) {
+          batchManager.addCriticalOperation(db.characters.update(member.id!, { crewId: loserCrew.id, position: 'Crew Member' }))
+        }
+      }
+    }
 
     // ✅ CRIAR CREW PARA ÓRFÃOS (CRÍTICO - EXECUTAR IMEDIATAMENTE)
     if (recruitmentResult.removed.length >= 1) {
@@ -430,13 +442,17 @@ async function simulateCrewBattleHybrid(
 
     // ✅ ATUALIZAR REPUTAÇÃO (BATCH)
     const newWinnerReputation = winnerCrew.reputation + Math.floor(loserCrew.reputation * 0.1)
+    const treasuryFoundPercentage = GameLogic.randomBetween(5,15) / 100
+    const amount = isNaN(Math.floor(loserCrew.treasury * treasuryFoundPercentage)) ? 0 : Math.floor(loserCrew.treasury * treasuryFoundPercentage)
+    const newWinnerTreasury = winnerCrew.treasury + amount
+    const newLoserTreasury = loserCrew.treasury - amount
     const newLoserReputation = Math.max(
       0,
       loserCrew.reputation - Math.floor(loserCrew.reputation * 0.05),
     )
 
-    batchManager.addCrewUpdate(winnerCrew.id!, { reputation: newWinnerReputation })
-    batchManager.addCrewUpdate(loserCrew.id!, { reputation: newLoserReputation })
+    batchManager.addCrewUpdate(winnerCrew.id!, { reputation: newWinnerReputation, treasury: newWinnerTreasury })
+    batchManager.addCrewUpdate(loserCrew.id!, { reputation: newLoserReputation, treasury: newLoserTreasury })
 
     // ✅ REGISTRAR BATALHA (BATCH)
     batchManager.addBattleCreation({
@@ -795,6 +811,8 @@ async function createCrewForOrphanMembersOptimized(
   const newCrew = await db.crews.get(newCrewId)
   return newCrew || null
 }
+
+
 
 // ✅ OUTRAS FUNÇÕES OTIMIZADAS (MANTENDO LÓGICA ORIGINAL)
 

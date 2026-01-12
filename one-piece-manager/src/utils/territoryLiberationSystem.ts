@@ -362,9 +362,10 @@ export class TerritoryLiberationSystem {
     stepBonus: number
   }> {
     // Base rewards aumentam com o step
+    const captain = await db.characters.get(captainEnemy)
     const baseExp = this.calculateExperienceReward(step, maxSteps)
     const baseBounty = await this.calculateBountyReward(captainEnemy, character, step, maxSteps)
-    const baseTreasury = 5000 + step * 2500
+    const baseTreasury = 5000 + Math.floor(captain.bounty / maxSteps / 10);
 
     // Bonus progressivo
     const stepBonus = step / maxSteps

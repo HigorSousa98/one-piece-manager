@@ -17,6 +17,7 @@ interface BattleResult {
   opponent: Character
   experienceGained: number
   bountyChange: number
+  treasuryStole: number
   battleLog: string[]
   canShowRecruitment: boolean
   recruitmentData?: RecruitmentAttempt
@@ -136,9 +137,6 @@ export const useBattleStore = defineStore('battle', {
 
         // Salva no banco local
         await this.saveBattleResult(result)
-
-        // 🌍 ATUALIZAR MUNDO APÓS BATALHA DO JOGADOR
-        //const worldUpdate = await AdventureSystem.onPlayerAction()
 
         this.isSimulating = false
         return result
@@ -644,8 +642,13 @@ export const useBattleStore = defineStore('battle', {
 
       let canShowRecruitment = false
       let recruitmentData: RecruitmentAttempt | undefined
+      
 
+        
+      const winnerCrew = await db.crews.get(winner.crewId!)
       const loserCrew = await db.crews.get(loser.crewId!)
+
+      const treasuryStole = await this.updateCrewsBattle(winnerCrew, loserCrew)
 
       if (loserCrew) {
         recruitmentData = await RecruitmentSystem.validateRecruitment(
@@ -664,6 +667,7 @@ export const useBattleStore = defineStore('battle', {
         opponent: char2,
         experienceGained,
         bountyChange,
+        treasuryStole,
         battleLog,
         canShowRecruitment,
         recruitmentData,
@@ -750,6 +754,35 @@ export const useBattleStore = defineStore('battle', {
         )
       } catch (error) {
         console.error('Erro ao salvar resultado da batalha:', error)
+        throw error
+      }
+    },
+
+    async updateCrewsBattle(
+      winner: Crew,
+      loser: Crew,
+    ): Promise<number> {
+      try {
+        const treasuryFoundPercentage = GameLogic.randomBetween(5,15) / 100
+        const amount = isNaN(Math.floor(loser.treasury * treasuryFoundPercentage)) ? 0 : Math.floor(loser.treasury * treasuryFoundPercentage)
+        const updateWinner: Partial<Crew> = {}
+        updateWinner.treasury = winner.treasury + amount
+        const updateLoser: Partial<Crew> = {}
+        updateLoser.treasury = loser.treasury - amount
+        // ✅ Aplicar todas as atualizações em paralelo
+        const allUpdates = [
+          db.crews.update(winner.id!, updateWinner),
+          db.crews.update(loser.id!, updateLoser),
+        ]
+
+        await Promise.all(allUpdates)
+
+        console.log(
+          `✅ ${winner.name} e ${loser.name} atualizados com sucesso. ${winner.name} roubou um total de ${Math.floor(loser.treasury * treasuryFoundPercentage)} berries!`,
+        )
+        return Math.floor(loser.treasury * treasuryFoundPercentage)
+      } catch (error) {
+        console.error('❌ Erro ao atualizar personagem após batalha:', error)
         throw error
       }
     },

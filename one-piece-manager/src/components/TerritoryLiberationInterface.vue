@@ -364,7 +364,7 @@
                 <v-card-text class="text-center pa-3">
                   <v-icon size="30" color="blue-darken-2">mdi-star</v-icon>
                   <div class="text-h6 mt-1 text-blue-darken-3">
-                    {{ estimatedRewards.experience }} XP
+                    + de {{ estimatedRewards.experience }} XP
                   </div>
                   <div class="text-caption text-blue-darken-3">Experiência</div>
                 </v-card-text>
@@ -376,7 +376,7 @@
                 <v-card-text class="text-center pa-3">
                   <v-icon size="30" color="purple-darken-2">mdi-currency-usd</v-icon>
                   <div class="text-h6 mt-1 text-purple-darken-3">
-                    {{ formatBounty(estimatedRewards.bounty/10) }} - {{ formatBounty(estimatedRewards.bounty * 10) }}
+                    {{ formatBounty(estimatedRewards.bounty) }} - {{ formatBounty(estimatedRewards.bounty * 10) }}
                   </div>
                   <div class="text-caption text-purple-darken-3">Bounty</div>
                 </v-card-text>
@@ -388,7 +388,7 @@
                 <v-card-text class="text-center pa-3">
                   <v-icon size="30" color="orange-darken-2">mdi-treasure-chest</v-icon>
                   <div class="text-h6 mt-1 text-orange-darken-3">
-                    {{ formatBounty(estimatedRewards.treasury) }}
+                    + de {{ formatBounty(estimatedRewards.treasury) }}
                   </div>
                   <div class="text-caption text-orange-darken-3">Tesouro</div>
                 </v-card-text>

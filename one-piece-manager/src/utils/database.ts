@@ -21,6 +21,11 @@ export const FIELD_CONSTRAINTS = {
   island: {
     difficulty: { min: 1, max: 30 },
   },
+  item: {
+    durability: {
+      min: 0, max: 100
+    }
+  }
 } as const
 
 export interface AvatarComponents {
@@ -138,6 +143,11 @@ export interface Character {
   defendingBase: 0 | 1
   kindness: number
   loyalty: number
+  weapon?: number | null      // ID do item equipado como arma
+  clothing?: number | null    // ID do item equipado como vestimenta
+  helmet?: number | null      // ID do item equipado como elmo
+  gloves?: number | null      // ID do item equipado como manoplas
+  boots?: number | null       // ID do item equipado como botas
 }
 
 export interface Avatar {
@@ -329,6 +339,56 @@ export interface BossFight {
   battleOrder: number[]
 }
 
+export interface Item {
+  id?: number
+  name: string
+  description: string
+  type: 'weapon' | 'clothing' | 'helmet' | 'gloves' | 'boots' 
+  subtype?: string // 'sword', 'gun', 'marine_uniform', 'pirate_coat', etc.
+  class: 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+  rarity: number
+  
+  statsInfluence: {
+    attack?: number
+    defense?: number
+    speed?: number
+    skill?: number
+    intelligence?: number
+  }
+  
+  // ✅ REQUISITOS PARA USAR
+  requirements: {
+    level: number
+    characterType?: ('Pirate' | 'Marine' | 'Government' | 'BountyHunter')[]
+    styleCombatId?: number[]
+  }
+  
+  // ✅ PROPRIEDADES GERAIS
+  isStackable: boolean
+  maxStack?: number
+  weight?: number
+  imageUrl?: string
+  unique: boolean
+  lore?: string
+  isBreakable: boolean
+  durability?: number // Para itens que se desgastam (0-100)
+  createdAt: Date
+}
+
+export interface Store {
+  id?: number
+  currentIslandId: number
+  itemId: number
+  price: number
+}
+
+export interface Inventory {
+  id?: number
+  characterId: number
+  itemId: number
+  acquiredAt: Date
+}
+
 class OnePieceGameDB extends Dexie {
   characters!: Table<Character>
   devilFruits!: Table<DevilFruit>
@@ -348,6 +408,9 @@ class OnePieceGameDB extends Dexie {
   tasks!: Table<Task>
   avatars!: Table<Avatar>
   bossFights!: Table<BossFight>
+  items!: Table<Item>
+  inventories!: Table<Inventory>
+  stores!: Table<Store>
 
   constructor() {
     super('OnePieceGameDB')
@@ -372,6 +435,9 @@ class OnePieceGameDB extends Dexie {
       tasks: '++id, characterId, targetId, startTime, endTime, isCompleted, type, helpType, crewId',
       avatars: '++id, characterId, createdAt',
       bossFights: '++id, playerCrewId, bossType, bossId, bossCrewId, isCompleted, startedAt',
+      items: '++id, name, class, type, subtype, rarity, unique, isBreakable',
+      inventories: '++id, characterId, itemId, acquiredAt',
+      stores: '++id, currentIslandId, itemId'
     })
 
     // Hook para CREATE (add)

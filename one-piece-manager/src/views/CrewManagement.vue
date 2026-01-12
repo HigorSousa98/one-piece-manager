@@ -97,7 +97,7 @@
               
               <!-- ESTATÍSTICAS GERAIS -->
               <v-row class="mb-4">
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                   <v-card variant="outlined" color="green-darken-1">
                     <v-card-text class="text-center pa-3">
                       <v-icon size="30" color="green-darken-2">mdi-account-multiple</v-icon>
@@ -115,7 +115,7 @@
                     </v-card-text>
                   </v-card>
                 </v-col>
-                <v-col cols="12" md="3">
+                <v-col cols="12" md="2">
                   <v-card variant="outlined" color="orange-darken-1">
                     <v-card-text class="text-center pa-3">
                       <v-icon size="30" color="orange-darken-2">mdi-chart-line</v-icon>
@@ -130,6 +130,15 @@
                       <v-icon size="30" color="red-darken-2">mdi-treasure-chest</v-icon>
                       <div class="text-h6 mt-1 text-red-darken-3">{{ formatBounty(totalBounty) }}</div>
                       <div class="text-caption">Bounty Total</div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+                <v-col cols="12" md="2">
+                  <v-card variant="outlined" color="amber-darken-1">
+                    <v-card-text class="text-center pa-3">
+                      <v-icon size="30" color="amber-darken-2">mdi-cash-multiple</v-icon>
+                      <div class="text-h6 mt-1 text-amber-darken-3">{{ formatBounty(playerCrew.treasury) }}</div>
+                      <div class="text-caption">Treasure Total</div>
                     </v-card-text>
                   </v-card>
                 </v-col>
