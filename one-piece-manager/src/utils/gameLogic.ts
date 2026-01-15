@@ -301,7 +301,7 @@ export class GameLogic {
     bountyGain = Math.min(bountyGain, maxBountyGain)
     bountyGain = Math.max(bountyGain, minBountyGain)
 
-    return Math.floor(bountyGain)
+    return GameLogic.adjustBounty(bountyGain)
   }
 
   static determineEncounterTypeOnly(
@@ -337,7 +337,7 @@ export class GameLogic {
       (player === 'Marine' && opponent === 'Government') ||
       (player === 'Government' && opponent === 'Marine')
     ) {
-      return Math.random() < 0.7 ? 'neutral' : 'friendly'
+      return Math.random() < 0.7 ? 'neutral' : 'hostile'
     }
 
     // BountyHunter vs Marine = neutro (podem cooperar contra piratas)
@@ -363,7 +363,7 @@ export class GameLogic {
 
     // Mesmo tipo = geralmente neutro
     if (player === opponent) {
-      return Math.random() < 0.7 ? 'neutral' : 'friendly'
+      return Math.random() < 0.7 ? 'neutral' : 'hostile'
     }
 
   }
@@ -854,11 +854,6 @@ export class GameLogic {
             character.stats.kingHaki == 0) ||
           character.stats.kingHaki > 0
         ) {
-          if (character.stats.kingHaki == 0) {
-            console.log(
-              character.name + '(' + character.id + ') despertou Haki do Rei! Os mares tremem!!!',
-            )
-          }
           unlockHaki = true
           statsAvailable += 1
         }
@@ -922,6 +917,10 @@ export class GameLogic {
 
   static calculatePower(character: Character, fruit: DevilFruit | null = null): number {
     return PowerCalculationSystem.calculatePower(character, fruit)
+  }
+
+  static adjustBounty(bounty: number): number {
+    return Math.ceil(bounty / 10000) * 10000
   }
 
   static generateStats(

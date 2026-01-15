@@ -193,7 +193,7 @@ export const useBattleStore = defineStore('battle', {
             expGain,
             bountyGain,
             true,
-            0.3 + Math.random() * 0.2,
+            GenerationConfig.createEpic().regularCrewSharedGain,
           ),
         ])
 
@@ -920,7 +920,7 @@ export const useBattleStore = defineStore('battle', {
             (expGained * percentage * GameLogic.randomBetween(100, 120)) / 100,
           )
           const memberBountyGain = Math.floor(
-            (bountyGained * percentage * GameLogic.randomBetween(100, 120)) / 100,
+            GameLogic.adjustBounty((bountyGained * percentage * GameLogic.randomBetween(100, 120)) / 100)
           )
 
           // ✅ Calcular nova experiência SEM mutar o objeto original

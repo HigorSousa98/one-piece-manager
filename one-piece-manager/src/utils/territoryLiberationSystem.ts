@@ -145,12 +145,12 @@ export class TerritoryLiberationSystem {
         description: `Liberando ${island.name} - Step ${currentStep}/${island.difficulty}`,
         kindnessReward: 0,
         experienceReward: this.calculateExperienceReward(currentStep, island.difficulty),
-        bountyReward: await this.calculateBountyReward(
+        bountyReward: GameLogic.adjustBounty(await this.calculateBountyReward(
           occupyingCrew.captainId,
           character,
           currentStep,
           island.difficulty,
-        ),
+        )),
         duration: duration,
         helpType: 'liberation',
         difficulty: this.getDifficultyFromStep(currentStep, island.difficulty),
@@ -375,7 +375,7 @@ export class TerritoryLiberationSystem {
 
     return {
       experience: Math.floor(baseExp * (1 + stepBonus)),
-      bounty: Math.floor(baseBounty * (1 + stepBonus)),
+      bounty: GameLogic.adjustBounty(Math.floor(baseBounty * (1 + stepBonus))),
       treasury: Math.floor(baseTreasury * (1 + stepBonus)),
       stepBonus: Math.round(stepBonus * 100),
     }
@@ -414,7 +414,7 @@ export class TerritoryLiberationSystem {
           rewards.experience,
           rewards.bounty,
           true,
-          0.3 + Math.random() * 0.2,
+          GenerationConfig.createEpic().regularCrewSharedGain
         ),
       ])
 
@@ -705,7 +705,17 @@ export class TerritoryLiberationSystem {
   ): Promise<number> {
     const captain = await db.characters.get(captainEnemy)
     const bountySuggested = GameLogic.calculateBountyGain(character, captain)
-    return (bountySuggested * step) / maxSteps
+    return GameLogic.adjustBounty(bountySuggested * step / maxSteps)
+  }
+
+  public static instaCalculateBountyReward(
+    captainEnemy: Character,
+    character: Character,
+    step: number,
+    maxSteps: number,
+  ): number {
+    const bountySuggested = GameLogic.calculateBountyGain(character, captainEnemy)
+    return GameLogic.adjustBounty(bountySuggested * step / maxSteps)
   }
 
   private static getDifficultyFromStep(step: number, maxSteps: number): 'easy' | 'medium' | 'hard' {

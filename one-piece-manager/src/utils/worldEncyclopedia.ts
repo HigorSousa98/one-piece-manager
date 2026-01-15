@@ -30,6 +30,7 @@ export interface WorldRankings {
   supernovas: RankingCharacter[]
   playerInfo: PlayerRankingInfo | null
   allDevilFruits: DevilFruit[]
+  devilFruitsUser: RankingCharacter[]
 }
 
 export class WorldEncyclopedia {
@@ -77,11 +78,12 @@ export class WorldEncyclopedia {
         marines: this.getCategoryRanking(enrichedCharacters, 'Marine'),
         bountyHunters: this.getCategoryRanking(enrichedCharacters, 'BountyHunter'),
         government: this.getCategoryRanking(enrichedCharacters, 'Government'),
-        supernovas: await this.getSupernovasRanking(enrichedCharacters, crews, islands),
+        supernovas: await this.getSupernovasRanking(enrichedCaptains, crews, islands),
         playerInfo: playerCharacterId
           ? this.getPlayerRankingInfo(enrichedCharacters, playerCharacterId)
           : null,
         allDevilFruits: await db.devilFruits.toArray(),
+        devilFruitsUser: this.getDFUsers(enrichedCharacters)
       }
 
       return rankings
@@ -208,6 +210,18 @@ export class WorldEncyclopedia {
   ): RankingCharacter[] {
     return captains
       .filter((captain) => captain.type === type)
+      .sort((a, b) => (b.bounty || 0) - (a.bounty || 0))
+      .map((captain, index) => ({
+        ...captain,
+        rank: index + 1,
+      }))
+  }
+
+  private static getDFUsers(
+    users: RankingCharacter[]
+  ): RankingCharacter[] {
+    return users
+      .filter((user) => user.devilFruitId)
       .sort((a, b) => (b.bounty || 0) - (a.bounty || 0))
       .map((captain, index) => ({
         ...captain,

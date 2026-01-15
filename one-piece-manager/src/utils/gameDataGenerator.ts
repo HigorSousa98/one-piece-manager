@@ -307,7 +307,7 @@ export class GameDataGenerator {
         name: NameGenerator.generateRandomName('Pirate'),
         level,
         experience: 0,
-        bounty: this.calculateBounty(level, 'Pirate'),
+        bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'Pirate')),
         type: 'Pirate',
         stats: GameLogic.generateStats(
           level,
@@ -347,7 +347,7 @@ export class GameDataGenerator {
         name: NameGenerator.generateRandomName('BountyHunter'),
         level,
         experience: 0,
-        bounty: this.calculateBounty(level, 'BountyHunter'),
+        bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'BountyHunter')),
         type: 'BountyHunter',
         stats: GameLogic.generateStats(
           level,
@@ -392,7 +392,7 @@ export class GameDataGenerator {
         name: NameGenerator.generateRandomName('Marine'),
         level,
         experience: 0,
-        bounty: this.calculateBounty(level, 'Marine'),
+        bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'Marine')),
         type: 'Marine',
         stats: GameLogic.generateStats(
           level,
@@ -432,7 +432,7 @@ export class GameDataGenerator {
         name: NameGenerator.generateRandomName('Government'),
         level,
         experience: 0,
-        bounty: this.calculateBounty(level, 'Government'),
+        bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'Government')),
         type: 'Government',
         stats: GameLogic.generateStats(
           level,
@@ -1016,21 +1016,25 @@ export class GameDataGenerator {
     try {
       // Buscar todas as tripulações
       const allCrews = await db.crews.toArray()
+      const allCharacters = await db.characters.toArray()
+      const allCaptains = []
       console.log(`🎯 Encontradas ${allCrews.length} tripulações para gerar navios`)
 
       const ships: Omit<Ship, 'id'>[] = []
+      const captainsUpdate = []
       let shipsGenerated = 0
       let legendaryShips = 0
 
       for (const crew of allCrews) {
         try {
           // Buscar o capitão da tripulação
-          const captain = await db.characters.get(crew.captainId)
+          const captain = allCharacters.find(char => char.id == crew.captainId)
 
           if (!captain) {
             console.warn(`⚠️ Capitão não encontrado para crew ${crew.id}`)
             continue
           }
+          allCaptains.push(captain)
 
           // Determinar nível do navio baseado no capitão
           const shipLevel = this.determineShipLevel(captain.level)
@@ -1068,6 +1072,18 @@ export class GameDataGenerator {
           console.error(`❌ Erro ao gerar navio para crew ${crew.id}:`, error)
         }
       }
+
+      await Promise.all(
+          allCharacters.map((update) =>
+            db.characters.update(update.id, { position: 'Crew Member' }),
+          ),
+        )
+
+      await Promise.all(
+          allCaptains.map((update) =>
+            db.characters.update(update.id, { position: 'Captain' }),
+          ),
+        )
 
       // Inserir todos os navios no banco de dados
       if (ships.length > 0) {

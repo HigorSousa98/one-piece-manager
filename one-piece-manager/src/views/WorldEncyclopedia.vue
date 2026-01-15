@@ -380,6 +380,10 @@
                 <v-icon class="me-2">mdi-star-shooting</v-icon>
                 <span class="tab-text">Supernovas</span>
               </v-tab>
+              <v-tab value="devilFruits" class="tab-item">
+                <v-icon class="me-2">mdi-fruit-grapes</v-icon>
+                <span class="tab-text">Devil Fruits</span>
+              </v-tab>
             </v-tabs>
           </v-card>
         </v-col>
@@ -592,6 +596,27 @@
             </v-card-text>
           </v-card>
         </v-window-item>
+
+        <v-window-item value="devilFruits">
+          <v-card variant="elevated" color="orange-lighten-5">
+            <v-card-title class="text-orange-darken-3">
+              <v-icon left color="orange-darken-3">mdi-fruit-grapes</v-icon>
+              Usuário de Devil Fruit no Mundo
+            </v-card-title>
+            <v-card-subtitle class="text-orange-darken-2">
+              Todos os usuário de Devil Fruit hoje
+            </v-card-subtitle>
+            <v-card-text class="pa-4">
+              <RankingSection
+                :characters="rankings.devilFruitsUser"
+                special-badge="Devil Fruit User"
+                badge-color="orange"
+                show-pagination
+                @character-click="showCharacterDetails"
+              />
+            </v-card-text>
+          </v-card>
+        </v-window-item>
       </v-window>
     </div>
 
@@ -634,7 +659,8 @@ const rankings = ref<WorldRankings>({
   government: [],
   supernovas: [],
   playerInfo: null,
-  allDevilFruits: []
+  allDevilFruits: [],
+  devilFruitsUser: []
 })
 const worldStats = ref(null)
 const playerInfo = ref<PlayerRankingInfo | null>(null)

@@ -359,7 +359,7 @@ export class AdventureSystem {
       case 'bounty':
         return {
           type: 'bounty',
-          value: Math.ceil(opponent.level * 50000 * difficultyMultiplier),
+          value: GameLogic.adjustBounty(Math.ceil(opponent.level * 50000 * difficultyMultiplier)),
         }
       case 'experience':
         return {
@@ -1661,6 +1661,7 @@ export class AdventureSystem {
   static async onPlayerAction(): Promise<void> {
     await this.updateWorldAfterPlayerActionAsync()
   }
+
 
   static async forceWorldUpdate(): Promise<{
     success: boolean

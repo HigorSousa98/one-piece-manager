@@ -376,7 +376,7 @@
                 <v-card-text class="text-center pa-3">
                   <v-icon size="30" color="purple-darken-2">mdi-currency-usd</v-icon>
                   <div class="text-h6 mt-1 text-purple-darken-3">
-                    {{ formatBounty(estimatedRewards.bounty) }} - {{ formatBounty(estimatedRewards.bounty * 10) }}
+                    {{ formatBounty(estimatedRewards.bounty) }}
                   </div>
                   <div class="text-caption text-purple-darken-3">Bounty</div>
                 </v-card-text>
@@ -388,7 +388,7 @@
                 <v-card-text class="text-center pa-3">
                   <v-icon size="30" color="orange-darken-2">mdi-treasure-chest</v-icon>
                   <div class="text-h6 mt-1 text-orange-darken-3">
-                    + de {{ formatBounty(estimatedRewards.treasury) }}
+                    {{ formatBounty(estimatedRewards.treasury) }}
                   </div>
                   <div class="text-caption text-orange-darken-3">Tesouro</div>
                 </v-card-text>
@@ -816,15 +816,17 @@ const estimatedRewards = computed(() => {
   const isLastStep = step === maxSteps
   
   const baseExp = TerritoryLiberationSystem.calculateExperienceReward(step, maxSteps)
-  const baseBounty = 10000 + (step * 5000)
-  const baseTreasury = 5000 + (step * 2500)
+  const baseBounty = TerritoryLiberationSystem.instaCalculateBountyReward(liberationProgress.value.occupyingCaptain, props.playerCharacter, step, maxSteps)
+  const baseTreasury = (5000 + liberationProgress.value.occupyingCaptain.bounty /maxSteps / 10) * (1 + (step + 1) / maxSteps)
   
   const stepBonus = step / maxSteps
   const finalBonus = isLastStep ? 2 : 1
   
   return {
-    experience: baseExp,
-    bounty: Math.floor(baseBounty * (1 + stepBonus) * finalBonus),
+    experience: (1 + maxSteps) * 100 +
+      (step * baseExp) / maxSteps +
+      (step === maxSteps ? baseExp / maxSteps : 0),
+    bounty: baseBounty,
     treasury: Math.floor(baseTreasury * (1 + stepBonus) * finalBonus)
   }
 })

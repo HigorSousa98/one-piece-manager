@@ -446,7 +446,7 @@ async function simulateCrewBattleOptimized(
 
     // ✅ PROCESSAR UPDATES EM MEMÓRIA (SEM DB)
     const captainUpdates = await processCaptainUpdatesOptimized(winnerCaptain, expGain, bountyGain, true)
-    const memberUpdates = await processCrewMemberUpdatesOptimized(winnerMembers, expGain, bountyGain, true, 0.3 + Math.random() * 0.2)
+    const memberUpdates = await processCrewMemberUpdatesOptimized(winnerMembers, expGain, bountyGain, true, GenerationConfig.createEpic().regularCrewSharedGain)
 
     // ✅ ADICIONAR AO BATCH (SEM EXECUTAR AINDA)
     batchManager.addCharacterUpdate(winnerCaptain.id!, captainUpdates)
