@@ -1,7 +1,7 @@
 // src/workers/worldUpdateWorkerUltraOptimized.ts
 
 import { db } from '../utils/database'
-import { Crew, Character, DevilFruit, Island } from '../utils/database'
+import { Crew, Character, DevilFruit, Island, Ship } from '../utils/database'
 import { GenerationConfig } from '../utils/generationConfig'
 import { GameLogic } from '../utils/gameLogic'
 import { ShipNameGenerator } from '../data/shipNameGenerator'
@@ -232,7 +232,6 @@ class UltraOptimizedBatchManager {
 
       // ✅ EXECUTAR TODOS OS CHUNKS EM PARALELO
       await Promise.all(operations)
-
     } catch (error) {
       console.error('❌ Erro ao executar ultra batch:', error)
       throw error
@@ -392,14 +391,37 @@ export class UltraOptimizedWorldUpdateWorker {
         .filter((ship) => crewsToDeleteSet.has(ship.crewId))
         .map((ship) => ship.id!)
 
+      const updateShips = []
+
+      ships.forEach((ship) => {
+        if (!crewsToDeleteSet.has(ship.crewId)) {
+          const crew = crews.find((crew) => crew.id == ship.crewId)
+          const members = characters.filter((char) => char.crewId === crew.id)
+          const captainLevel = characters.find((char) => char.id === crew.captainId).level
+          const highestLevel = members.reduce((highest, current) =>
+            current.level > highest.level ? current : highest,
+          ).level
+          let shipLevel = GameLogic.determineShipLevel(captainLevel | highestLevel)
+          if (shipLevel > ship.level) {
+            const updates: Partial<Ship> = {}
+            updates.level = shipLevel as 1 | 2 | 3 | 4 | 5
+            updateShips.push({ id: ship.id!, updates })
+          }
+        }
+      })
+
       // ✅ EXECUTAR OPERAÇÕES EM TRANSAÇÃO
-      if (newCaptains.length > 0 || toDeleteCrews.length > 0 || toDeleteShips.length > 0) {
+      if (
+        newCaptains.length > 0 ||
+        toDeleteCrews.length > 0 ||
+        toDeleteShips.length > 0 ||
+        updateShips.length > 0
+      ) {
         await db.transaction('rw', [db.characters, db.crews, db.ships], async () => {
           const promises: Promise<any>[] = []
 
           // Promover novos capitães
           if (newCaptains.length > 0) {
-
             newCaptains.forEach(({ character, crewId }) => {
               promises.push(db.characters.update(character.id!, { position: 'Captain' }))
               promises.push(db.crews.update(crewId, { captainId: character.id! }))
@@ -416,6 +438,13 @@ export class UltraOptimizedWorldUpdateWorker {
           if (toDeleteShips.length > 0) {
             console.log(`🚢 Deletando ${toDeleteShips.length} ships órfãos`)
             promises.push(db.ships.bulkDelete(toDeleteShips))
+          }
+
+          if (updateShips.length > 0) {
+            console.log(`🚢 Editando ${updateShips.length} ships`)
+            updateShips.forEach((shipUpdate) => {
+              promises.push(db.ships.update(shipUpdate.id, shipUpdate.updates))
+            })
           }
 
           await Promise.all(promises)
@@ -935,7 +964,8 @@ export class UltraOptimizedWorldUpdateWorker {
           )
           const memberBountyGain = Math.floor(
             GameLogic.adjustBounty(
-              (bountyGained * percentage * GameLogic.randomBetween(100, 120)) / 100),
+              (bountyGained * percentage * GameLogic.randomBetween(100, 120)) / 100,
+            ),
           )
 
           const newExpMember = member.experience + memberExpGain
@@ -1162,7 +1192,7 @@ export class UltraOptimizedWorldUpdateWorker {
 
     await db.ships.add({
       crewId: newCrewId,
-      level: 1,
+      level: GameLogic.determineShipLevel(captain.level) as 1 | 2 | 3 | 4 | 5,
       needRepair: false,
       destroyed: false,
       name: ShipNameGenerator.generateShipNameByCrewType(captain.type),
@@ -1201,7 +1231,10 @@ export class UltraOptimizedWorldUpdateWorker {
       )
 
       const availableCrews = this.cache.crews.filter(
-        (crew) => !playerCrewIds.has(crew.id!) && !territoriesCrewIds.has(crew.id!) && !this.cache.crewsUsed.has(crew.id!),
+        (crew) =>
+          !playerCrewIds.has(crew.id!) &&
+          !territoriesCrewIds.has(crew.id!) &&
+          !this.cache.crewsUsed.has(crew.id!),
       )
 
       // ✅ PROCESSAR DOCKED STATUS EM BATCH
@@ -1257,10 +1290,7 @@ export class UltraOptimizedWorldUpdateWorker {
         const crewChunk = movableCrews.slice(i, i + chunkSize)
 
         for (const crew of crewChunk) {
-          if (
-            Math.random() <= crewMovementFactor &&
-            !this.cache.crewsUsed.has(crew.id)
-          ) {
+          if (Math.random() <= crewMovementFactor && !this.cache.crewsUsed.has(crew.id)) {
             const currentIsland = this.cache.islandMap.get(crew.currentIsland)
             if (currentIsland) {
               const crewsWithPower = crewByIslandPower.get(crew.currentIsland) || []
@@ -1665,14 +1695,13 @@ export class UltraOptimizedWorldUpdateWorker {
   // ✅ CRIAR NOVOS PERSONAGENS ULTRA-OTIMIZADO
   async createNewCharacters(data: any): Promise<any> {
     try {
-
       self.postMessage({
         type: 'PROGRESS',
         id: data.id,
         progress: 30,
       })
 
-      const count = Math.floor(Math.random() * 3) + 1
+      const count = Math.floor(Math.random() * GenerationConfig.createEpic().maxNewCharacters) + 1
       let created = 0
 
       // ✅ PROCESSAR CADA PERSONAGEM SEQUENCIALMENTE PARA LIDAR COM DEPENDÊNCIAS DE ID

@@ -37,6 +37,7 @@ export interface GenerationSettings {
   islandEncounters: number
   navigationFactor: number
   crewMovementFactor: number
+  maxNewCharacters: number
 }
 
 export class GenerationConfig {
@@ -78,6 +79,7 @@ export class GenerationConfig {
     islandEncounters: 50,
     navigationFactor: 3,
     crewMovementFactor: 0.3,
+    maxNewCharacters: 4
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -126,11 +128,11 @@ export class GenerationConfig {
     // Configuração épica para mundo completo
     EPIC: {
       ...GenerationConfig.DEFAULT_CONFIG,
-      totalPirates: 9000,
-      totalMarines: 9000,
-      totalGovernment: 9000,
-      totalBountyHunter: 9000,
-      totalCivillians: 4000,
+      totalPirates: 4000,
+      totalMarines: 4000,
+      totalGovernment: 4000,
+      totalBountyHunter: 4000,
+      totalCivillians: 2000,
       totalIslands: 200,
       difficultyLevels: 30,
       islandsPerLevel: 4,
@@ -139,7 +141,7 @@ export class GenerationConfig {
       shipFactor: 3,
       lastCombats: 20,
       allowKingHakiFor: 0.9,
-      dockedFactor: 0.8,
+      dockedFactor: 0.9,
     } as GenerationSettings,
   }
 
@@ -269,6 +271,9 @@ export class GenerationConfig {
   }
   get crewMovementFactor(): number {
     return this.config.crewMovementFactor
+  }
+  get maxNewCharacters(): number {
+    return this.config.maxNewCharacters
   }
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

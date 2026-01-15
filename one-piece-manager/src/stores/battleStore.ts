@@ -503,7 +503,7 @@ export const useBattleStore = defineStore('battle', {
         // Criar navio básico para o novo crew
         await db.ships.add({
           crewId: newCrewId,
-          level: 1,
+          level: GameLogic.determineShipLevel(captain.level) as 1 | 2 | 3 | 4 | 5,
           needRepair: false,
           destroyed: false,
           name: ShipNameGenerator.generateShipNameByCrewType(captain.type),

@@ -1037,7 +1037,7 @@ export class GameDataGenerator {
           allCaptains.push(captain)
 
           // Determinar nível do navio baseado no capitão
-          const shipLevel = this.determineShipLevel(captain.level)
+          const shipLevel = GameLogic.determineShipLevel(captain.level)
 
           // Gerar nome do navio baseado no tipo da tripulação
           let shipName: string
@@ -1111,18 +1111,6 @@ export class GameDataGenerator {
       console.error('❌ Erro ao gerar navios para as tripulações:', error)
       throw error
     }
-  }
-
-  // 🎯 DETERMINAR NÍVEL DO NAVIO BASEADO NO CAPITÃO
-  private determineShipLevel(captainLevel: number): number {
-    if (captainLevel >= 0 && captainLevel < 10) return 1
-    if (captainLevel >= 10 && captainLevel < 30) return 2
-    if (captainLevel >= 30 && captainLevel < 60) return 3
-    if (captainLevel >= 60 && captainLevel < 80) return 4
-    if (captainLevel >= 80 && captainLevel <= 100) return 5
-
-    // Fallback para níveis fora do range
-    return Math.min(5, Math.max(1, Math.floor(captainLevel / 20) + 1))
   }
 
   // 🌟 VERIFICAR SE DEVE GERAR NAVIO LENDÁRIO
@@ -1237,7 +1225,7 @@ export class GameDataGenerator {
 
   // 👥 CALCULAR TAMANHO DA TRIPULAÇÃO BASEADO NO LEVEL
   private calculateCrewSize(captainLevel: number): number {
-    return this.determineShipLevel(captainLevel) * this.config.shipFactor
+    return GameLogic.determineShipLevel(captainLevel) * this.config.shipFactor
   }
 
   // 🎯 SELECIONAR MEMBROS DA TRIPULAÇÃO
@@ -1399,7 +1387,7 @@ export class GameDataGenerator {
       }
 
       // Gerar navio
-      const shipLevel = this.determineShipLevel(captain.level)
+      const shipLevel = GameLogic.determineShipLevel(captain.level)
       const isLegendary = this.shouldGenerateLegendaryShip(captain, crew)
 
       let shipName: string

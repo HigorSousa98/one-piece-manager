@@ -923,6 +923,17 @@ export class GameLogic {
     return Math.ceil(bounty / 10000) * 10000
   }
 
+  static determineShipLevel(captainLevel: number): number {
+    if (captainLevel >= 0 && captainLevel < 10) return 1
+    if (captainLevel >= 10 && captainLevel < 30) return 2
+    if (captainLevel >= 30 && captainLevel < 60) return 3
+    if (captainLevel >= 60 && captainLevel < 80) return 4
+    if (captainLevel >= 80 && captainLevel <= 100) return 5
+
+    // Fallback para níveis fora do range
+    return Math.min(5, Math.max(1, Math.floor(captainLevel / 20) + 1))
+  }
+
   static generateStats(
     level: number,
     styleCombat: string,
