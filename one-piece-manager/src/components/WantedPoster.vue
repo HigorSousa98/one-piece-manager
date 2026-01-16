@@ -536,30 +536,38 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
+/* ===== BASE STYLES (MOBILE FIRST) ===== */
 .wanted-poster-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
+  gap: 12px;
+  padding: 12px;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
 }
 
 .wanted-poster {
   position: relative;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 4px 16px rgba(0, 0, 0, 0.2);
+    0 4px 16px rgba(0, 0, 0, 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.15);
   overflow: hidden;
-  transform: rotate(-1deg);
+  transform: rotate(-0.5deg);
   transition: all 0.3s ease;
+  width: 100%;
+  max-width: 320px; /* Tamanho máximo para mobile */
+  margin: 0 auto;
 }
 
 .wanted-poster:hover {
-  transform: rotate(0deg) scale(1.02);
+  transform: rotate(0deg) scale(1.01);
   box-shadow: 
-    0 12px 48px rgba(0, 0, 0, 0.4),
-    0 6px 24px rgba(0, 0, 0, 0.3);
+    0 8px 24px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .poster-background {
@@ -582,23 +590,22 @@ onMounted(async () => {
   pointer-events: none;
 }
 
-/* ✅ ÁREA DA FOTO COM TAMANHO DINÂMICO */
+/* ===== ÁREA DA FOTO (MOBILE FIRST) ===== */
 .photo-area {
   position: absolute;
-  top: 28%;
+  top: 30%;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-  /* Tamanho será definido dinamicamente via :style */
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
-/* ✅ AVATAR COM TAMANHO COMPLETO DO CONTAINER */
+/* ===== AVATAR ===== */
 .character-photo {
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   pointer-events: none;
   width: 100% !important;
   height: 100% !important;
@@ -609,53 +616,158 @@ onMounted(async () => {
 .character-photo :deep(.avataaars-avatar) {
   width: 100% !important;
   height: 100% !important;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .character-photo :deep(.avataaars-avatar svg) {
   width: 100% !important;
   height: 100% !important;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .character-photo :deep(.avataaars-avatar img) {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
-/* ✅ AJUSTES ESPECÍFICOS POR TAMANHO */
-.wanted-poster-small .photo-area {
-  top: 21.2%;
-}
-
-.wanted-poster-medium .photo-area {
-  top: 21.2%;
-}
-
-.wanted-poster-large .photo-area {
-  top: 21.2%;
-}
-
-.wanted-poster-xl .photo-area {
-  top: 21.2%;
-}
-
+/* ===== ÁREA DO NOME (MOBILE FIRST) ===== */
 .name-area {
   position: absolute;
-  top: 75%;
+  top: 76%;
   left: 50%;
   transform: translateX(-50%);
   text-align: center;
   z-index: 2;
-  width: 90%; /* ✅ Aumentado para dar mais espaço */
+  width: 95%;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0 8px;
+  box-sizing: border-box;
 }
 
-/* ✅ AJUSTES DO NOME POR TAMANHO */
+.character-name {
+  font-family: 'Rye', 'Playfair Display', serif;
+  font-weight: bold;
+  color: #4a381f;
+  text-align: center;
+  margin: 0;
+  
+  /* ✅ Valores base para mobile */
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+  transform: scaleY(2.2);
+  transform-origin: center bottom;
+  display: inline-block;
+  line-height: 0.8;
+  
+  /* ✅ Quebra inteligente de texto */
+  word-break: break-word;
+  hyphens: auto;
+  overflow-wrap: break-word;
+  
+  /* ✅ Transição suave */
+  transition: all 0.3s ease;
+  
+  /* ✅ Sombra para legibilidade em mobile */
+
+}
+
+/* ===== ÁREA DA BOUNTY (MOBILE FIRST) ===== */
+.bounty-area {
+  position: absolute;
+  top: 84%;
+  left: 55%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 2;
+  width: 95%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 8px;
+  box-sizing: border-box;
+}
+
+.bounty-amount {
+  font-family: 'Pirata One', cursive;
+  font-weight: bold;
+  color: #4a381f;
+  text-align: center;
+  margin: 0;
+  
+  /* ✅ Valores base para mobile */
+  font-size: 1rem;
+  letter-spacing: 1px;
+  
+  /* ✅ Quebra inteligente de texto */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  
+  /* ✅ Transição suave */
+  transition: all 0.3s ease;
+  
+
+}
+
+/* ===== CONTROLES E AÇÕES (MOBILE FIRST) ===== */
+.poster-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  padding: 0 12px;
+  box-sizing: border-box;
+}
+
+.action-btn {
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  min-height: 40px; /* ✅ Área de toque adequada para mobile */
+}
+
+.size-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(244, 228, 188, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+/* ===== AJUSTES ESPECÍFICOS POR TAMANHO (MOBILE) ===== */
+.wanted-poster-small .photo-area {
+  top: 21%;
+}
+
+.wanted-poster-medium .photo-area {
+  top: 21%;
+}
+
+.wanted-poster-large .photo-area {
+  top: 21%;
+}
+
+.wanted-poster-xl .photo-area {
+  top: 21%;
+}
+
 .wanted-poster-small .name-area {
   top: 77%;
 }
@@ -672,173 +784,474 @@ onMounted(async () => {
   top: 77%;
 }
 
-/* ✅ NOME COM ESTILOS DINÂMICOS APLICADOS VIA :style */
-.character-name {
-  font-family: 'Rye', 'Playfair Display', serif;
-  font-weight: bold;
-  color: #4a381f;
-  text-align: center;
-  margin: 0;
-  
-  /* ✅ Propriedades que serão sobrescritas dinamicamente */
-  /* Os valores abaixo são fallbacks caso o JS falhe */
-  font-size: 1.8rem;
-  letter-spacing: 2px;
-  transform: scaleY(2.5);
-  transform-origin: center bottom;
-  display: inline-block;
-  line-height: 0;
-  
-  /* ✅ Quebra inteligente de texto */
-  word-break: break-word;
-  hyphens: auto;
-  overflow-wrap: break-word;
-  
-  /* ✅ Transição suave para mudanças */
-  transition: all 0.3s ease;
-}
-
-.bounty-area {
-  position: absolute;
-  top: 82.5%;
-  left: 55%;
-  transform: translateX(-50%);
-  text-align: center;
-  z-index: 2;
-  width: 90%; /* ✅ Aumentado para dar mais espaço */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* ✅ AJUSTES DA BOUNTY POR TAMANHO */
 .wanted-poster-small .bounty-area {
-  top: 82.5%;
+  top: 82%;
 }
 
 .wanted-poster-medium .bounty-area {
-  top: 82.5%;
+  top: 82%;
 }
 
 .wanted-poster-large .bounty-area {
-  top: 82.5%;
+  top: 82%;
 }
 
 .wanted-poster-xl .bounty-area {
-  top: 82.5%;
+  top: 82%;
 }
 
-/* ✅ BOUNTY COM ESTILOS DINÂMICOS APLICADOS VIA :style */
-.bounty-amount {
-  font-family: 'Pirata One', cursive;
-  font-weight: bold;
-  color: #4a381f;
-  text-align: center;
-  margin: 0;
-  
-  /* ✅ Propriedades que serão sobrescritas dinamicamente */
-  /* Os valores abaixo são fallbacks caso o JS falhe */
-  font-size: 1.5rem;
-  letter-spacing: 2px;
-  
-  /* ✅ Quebra inteligente de texto */
-  word-break: break-word;
-  overflow-wrap: break-word;
-  
-  /* ✅ Transição suave para mudanças */
-  transition: all 0.3s ease;
-}
-
-.loading-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(244, 228, 188, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
-}
-
-.poster-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.action-btn {
-  font-weight: 600;
-  border-radius: 8px;
-}
-
-.size-controls {
-  display: flex;
-  justify-content: center;
-}
-
-/* ✅ EFEITOS DE HOVER MELHORADOS */
-.photo-area:hover {
-  transform: translateX(-50%) scale(1.05);
-}
-
-.wanted-poster:hover .photo-area {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-}
-
-@import url('https://fonts.googleapis.com/css2?family=Creepster&family=Pirata+One&family=Open+Sans:wght@300;400;500;600;700&display=swap&family=Rye&family=Playfair+Display:wght@400;700;900&display=swap');
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(-1deg); }
-  50% { transform: translateY(-5px) rotate(1deg); }
+/* ===== ANIMAÇÕES (REDUZIDAS PARA MOBILE) ===== */
+@keyframes float-mobile {
+  0%, 100% { transform: translateY(0px) rotate(-0.5deg); }
+  50% { transform: translateY(-2px) rotate(0.5deg); }
 }
 
 .wanted-poster:hover {
-  animation: float 3s ease-in-out infinite;
+  animation: float-mobile 2s ease-in-out infinite;
 }
 
-/* ✅ RESPONSIVIDADE PARA MOBILE */
-@media (max-width: 768px) {
+/* ===== EFEITOS DE HOVER (REDUZIDOS PARA MOBILE) ===== */
+.photo-area:hover {
+  transform: translateX(-50%) scale(1.02);
+}
+
+.wanted-poster:hover .photo-area {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== TABLET PORTRAIT (481px - 767px) ===== */
+@media screen and (min-width: 481px) and (max-width: 767px) {
+  .wanted-poster-container {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .wanted-poster {
+    max-width: 400px;
+    border-radius: 8px;
+    transform: rotate(-0.8deg);
+  }
+
+  .wanted-poster:hover {
+    transform: rotate(0deg) scale(1.015);
+  }
+
   .photo-area {
-    top: 32% !important;
+    top: 28%;
+    border-radius: 10px;
   }
-  
+
+  .character-photo {
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+  }
+
   .name-area {
-    top: 78% !important;
-    width: 95%; /* ✅ Mais espaço em mobile */
+    top: 75%;
+    width: 92%;
   }
-  
-  .bounty-area {
-    top: 85% !important;
-    width: 95%; /* ✅ Mais espaço em mobile */
-  }
-  
-  /* ✅ Ajustes específicos para mobile */
+
   .character-name {
-    font-size: 1.2rem !important;
-    letter-spacing: 1px !important;
+    font-size: 1.5rem;
+    letter-spacing: 1.5px;
+    transform: scaleY(2.3);
+    line-height: 0.9;
   }
-  
+
+  .bounty-area {
+    top: 83%;
+    width: 92%;
+  }
+
   .bounty-amount {
-    font-size: 1rem !important;
-    letter-spacing: 1px !important;
+    font-size: 1.2rem;
+    letter-spacing: 1.5px;
+  }
+
+  .action-btn {
+    padding: 10px 16px;
+    font-size: 15px;
+  }
+
+  /* ✅ Ajustes específicos por tamanho para tablet */
+  .wanted-poster-small .photo-area,
+  .wanted-poster-medium .photo-area,
+  .wanted-poster-large .photo-area,
+  .wanted-poster-xl .photo-area {
+    top: 21.5%;
+  }
+
+  .wanted-poster-small .name-area,
+  .wanted-poster-medium .name-area,
+  .wanted-poster-large .name-area,
+  .wanted-poster-xl .name-area {
+    top: 77%;
+  }
+
+  .wanted-poster-small .bounty-area,
+  .wanted-poster-medium .bounty-area,
+  .wanted-poster-large .bounty-area,
+  .wanted-poster-xl .bounty-area {
+    top: 82.5%;
   }
 }
 
-/* ✅ AJUSTES PARA TEXTOS MUITO LONGOS */
+/* ===== TABLET LANDSCAPE / LAPTOP (768px - 1023px) ===== */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  .wanted-poster-container {
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .wanted-poster {
+    max-width: 500px;
+    border-radius: 8px;
+    transform: rotate(-1deg);
+    box-shadow: 
+      0 6px 24px rgba(0, 0, 0, 0.25),
+      0 3px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .wanted-poster:hover {
+    transform: rotate(0deg) scale(1.02);
+    box-shadow: 
+      0 10px 36px rgba(0, 0, 0, 0.35),
+      0 5px 18px rgba(0, 0, 0, 0.25);
+  }
+
+  .photo-area {
+    top: 28%;
+    border-radius: 12px;
+  }
+
+  .character-photo {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .name-area {
+    top: 75%;
+    width: 90%;
+  }
+
+  .character-name {
+    font-size: 1.6rem;
+    letter-spacing: 1.8px;
+    transform: scaleY(2.4);
+    line-height: 0.95;
+  }
+
+  .bounty-area {
+    top: 82.5%;
+    width: 90%;
+  }
+
+  .bounty-amount {
+    font-size: 1.3rem;
+    letter-spacing: 1.8px;
+  }
+
+  .poster-actions {
+    gap: 12px;
+  }
+
+  .action-btn {
+    padding: 12px 20px;
+    font-size: 16px;
+  }
+
+  /* ✅ Animação melhorada para tablet */
+  @keyframes float-tablet {
+    0%, 100% { transform: translateY(0px) rotate(-1deg); }
+    50% { transform: translateY(-3px) rotate(0.5deg); }
+  }
+
+  .wanted-poster:hover {
+    animation: float-tablet 2.5s ease-in-out infinite;
+  }
+
+  /* ✅ Ajustes específicos por tamanho para tablet landscape */
+  .wanted-poster-small .photo-area,
+  .wanted-poster-medium .photo-area,
+  .wanted-poster-large .photo-area,
+  .wanted-poster-xl .photo-area {
+    top: 21.2%;
+  }
+
+  .wanted-poster-small .name-area,
+  .wanted-poster-medium .name-area,
+  .wanted-poster-large .name-area,
+  .wanted-poster-xl .name-area {
+    top: 77%;
+  }
+
+  .wanted-poster-small .bounty-area,
+  .wanted-poster-medium .bounty-area,
+  .wanted-poster-large .bounty-area,
+  .wanted-poster-xl .bounty-area {
+    top: 82.5%;
+  }
+}
+
+/* ===== DESKTOP (1024px+) ===== */
+@media screen and (min-width: 1024px) {
+  .wanted-poster-container {
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .wanted-poster {
+    max-width: none; /* ✅ Remover limitação de tamanho */
+    border-radius: 8px;
+    transform: rotate(-1deg);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.3),
+      0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .wanted-poster:hover {
+    transform: rotate(0deg) scale(1.02);
+    box-shadow: 
+      0 12px 48px rgba(0, 0, 0, 0.4),
+      0 6px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .photo-area {
+    top: 28%;
+    border-radius: 12px;
+  }
+
+  .character-photo {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .name-area {
+    top: 75%;
+    width: 90%;
+  }
+
+  .character-name {
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    transform: scaleY(2.5);
+    line-height: 0;
+  }
+
+  .bounty-area {
+    top: 82.5%;
+    width: 90%;
+  }
+
+  .bounty-amount {
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+  }
+
+  .poster-actions {
+    gap: 12px;
+  }
+
+  .action-btn {
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    min-height: auto;
+  }
+
+  /* ✅ Animação completa para desktop */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(-1deg); }
+    50% { transform: translateY(-5px) rotate(1deg); }
+  }
+
+  .wanted-poster:hover {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* ✅ Efeitos de hover melhorados para desktop */
+  .photo-area:hover {
+    transform: translateX(-50%) scale(1.05);
+  }
+
+  .wanted-poster:hover .photo-area {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  /* ✅ Ajustes específicos por tamanho para desktop (valores originais) */
+  .wanted-poster-small .photo-area,
+  .wanted-poster-medium .photo-area,
+  .wanted-poster-large .photo-area,
+  .wanted-poster-xl .photo-area {
+    top: 21.2%;
+  }
+
+  .wanted-poster-small .name-area,
+  .wanted-poster-medium .name-area,
+  .wanted-poster-large .name-area,
+  .wanted-poster-xl .name-area {
+    top: 77%;
+  }
+
+  .wanted-poster-small .bounty-area,
+  .wanted-poster-medium .bounty-area,
+  .wanted-poster-large .bounty-area,
+  .wanted-poster-xl .bounty-area {
+    top: 82.5%;
+  }
+}
+
+/* ===== LARGE DESKTOP (1440px+) ===== */
+@media screen and (min-width: 1440px) {
+  .wanted-poster-container {
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .character-name {
+    font-size: 2rem;
+    letter-spacing: 2.5px;
+  }
+
+  .bounty-amount {
+    font-size: 1.7rem;
+    letter-spacing: 2.5px;
+  }
+}
+
+/* ===== ORIENTAÇÃO LANDSCAPE PARA MOBILE ===== */
+@media screen and (max-width: 767px) and (orientation: landscape) {
+  .wanted-poster-container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .wanted-poster {
+    max-width: 280px;
+    transform: rotate(-0.3deg);
+  }
+
+  .photo-area {
+    top: 32%;
+  }
+
+  .name-area {
+    top: 78%;
+  }
+
+  .bounty-area {
+    top: 86%;
+  }
+
+  .character-name {
+    font-size: 1rem;
+    letter-spacing: 0.8px;
+    transform: scaleY(2);
+  }
+
+  .bounty-amount {
+    font-size: 0.9rem;
+    letter-spacing: 0.8px;
+  }
+
+  .action-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  /* ✅ Desabilitar animações em landscape mobile para performance */
+  .wanted-poster:hover {
+    animation: none;
+  }
+}
+
+/* ===== TELAS MUITO PEQUENAS (até 375px) ===== */
+@media screen and (max-width: 375px) {
+  .wanted-poster-container {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .wanted-poster {
+    max-width: 280px;
+    border-radius: 4px;
+  }
+
+  .photo-area {
+    border-radius: 6px;
+  }
+
+  .character-photo {
+    border-radius: 4px;
+  }
+
+  .character-name {
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    transform: scaleY(2);
+  }
+
+  .bounty-amount {
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+  }
+
+  .action-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+    border-radius: 4px;
+  }
+}
+
+/* ===== AJUSTES PARA TEXTOS LONGOS (TODOS OS DISPOSITIVOS) ===== */
 .character-name[style*="font-size: 0.8rem"],
 .bounty-amount[style*="font-size: 0.7rem"] {
   line-height: 1.1 !important;
   word-spacing: -2px;
 }
 
-/* ✅ AJUSTES PARA TEXTOS MUITO CURTOS */
-.character-name[style*="font-size: 2.5rem"],
-.bounty-amount[style*="font-size: 2.2rem"] {
-  text-shadow: 
-    2px 2px 0px rgba(255, 255, 255, 0.8),
-    1px 1px 3px rgba(0, 0, 0, 0.7);
+/* ===== AJUSTES PARA TEXTOS CURTOS (DESKTOP APENAS) ===== */
+@media screen and (min-width: 1024px) {
+  .character-name[style*="font-size: 2.5rem"],
+  .bounty-amount[style*="font-size: 2.2rem"] {
+    text-shadow: 
+  }
 }
+
+/* ===== OTIMIZAÇÕES DE PERFORMANCE PARA MOBILE ===== */
+@media screen and (max-width: 767px) {
+  /* ✅ Reduzir transições para melhor performance */
+  .wanted-poster,
+  .photo-area,
+  .character-name,
+  .bounty-amount {
+    transition: all 0.2s ease;
+  }
+  
+  /* ✅ Simplificar sombras para mobile */
+  .wanted-poster {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .wanted-poster:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* ===== ACESSIBILIDADE ===== */
+@media (prefers-reduced-motion: reduce) {
+  .wanted-poster,
+  .photo-area,
+  .character-name,
+  .bounty-amount {
+    transition: none;
+    animation: none !important;
+  }
+  
+  .wanted-poster:hover {
+    animation: none !important;
+  }
+}
+
 </style>
