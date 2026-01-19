@@ -168,7 +168,7 @@ import CharacterRankCard from '@/components/CharacterRankCard.vue'
 // Props
 interface Props {
   title: string
-  subtitle: string
+  subtitle?: string
   characters: RankingCharacter[]
   maxItems?: number
   specialBadge?: string

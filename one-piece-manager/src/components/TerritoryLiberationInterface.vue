@@ -974,7 +974,9 @@ const processCompletedTask = async () => {
     if (!activeTask.value) return
     
     const result = await TerritoryLiberationSystem.completeLiberationTask(activeTask.value.id!)
-    const worldUpdate = await AdventureSystem.onPlayerAction()
+    for(let i = 0; i <= 5; i++){
+      const worldUpdate = await AdventureSystem.onPlayerAction()
+    }
     
     lastResult.value = result
     showResultDialog.value = true

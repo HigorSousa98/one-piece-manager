@@ -344,6 +344,10 @@
         <v-col cols="12">
           <v-card variant="elevated" class="mb-4">
             <v-tabs v-model="activeTab" bg-color="transparent" color="primary" show-arrows>
+              <v-tab value="legends" class="tab-item">
+                <v-icon class="me-2">mdi-star</v-icon>
+                <span class="tab-text">Legends</span>
+              </v-tab>
               <v-tab value="yonkou" class="tab-item">
                 <v-icon class="me-2">mdi-crown</v-icon>
                 <span class="tab-text">Yonkou</span>
@@ -408,6 +412,28 @@
 
       <!-- RANKINGS CONTENT -->
       <v-window v-else v-model="activeTab">
+        <!-- Legends Tab -->
+        <v-window-item value="legends">
+          <v-card variant="elevated" color="red-lighten-5">
+            <v-card-title class="text-red-darken-3">
+              <v-icon left color="red-darken-3">mdi-star</v-icon>
+              👑 As lendas dos mares
+            </v-card-title>
+            <v-card-subtitle class="text-red-darken-2">
+              Os personagens mais poderosos do mundo
+            </v-card-subtitle>
+            <v-card-text class="pa-4">
+              <RankingSection
+                :characters="rankings.legends"
+                :max-items="20"
+                special-badge="Legend"
+                badge-color="amber"
+                @character-click="showCharacterDetails"
+              />
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+
         <!-- Yonkou Tab -->
         <v-window-item value="yonkou">
           <v-card variant="elevated" color="red-lighten-5">
@@ -649,6 +675,7 @@ const loadingStep = ref(0)
 const activeTab = ref('yonkou')
 const showStats = ref(false)
 const rankings = ref<WorldRankings>({
+  legends: [],
   yonkou: [],
   shichibukai: [],
   admirals: [],

@@ -1,4 +1,5 @@
 import { db, DevilFruit, type Character, type Crew, type Island } from '@/utils/database'
+import { GameLogic } from './gameLogic'
 
 export interface RankingCharacter extends Character {
   crewName: string
@@ -19,6 +20,7 @@ export interface PlayerRankingInfo {
 }
 
 export interface WorldRankings {
+  legends: RankingCharacter[]
   yonkou: RankingCharacter[]
   shichibukai: RankingCharacter[]
   admirals: RankingCharacter[]
@@ -40,7 +42,7 @@ export class WorldEncyclopedia {
   static async generateWorldRankings(playerCharacterId?: number): Promise<WorldRankings> {
     try {
       // Buscar dados base
-      const [characters, crews, islands, yonkous, shichibukais, admirals, gorouseis] =
+      const [characters, crews, islands, yonkous, shichibukais, admirals, gorouseis, devilFruits] =
         await Promise.all([
           db.characters.toArray(),
           db.crews.toArray(),
@@ -49,6 +51,7 @@ export class WorldEncyclopedia {
           db.shichibukais.toArray(),
           db.admirals.toArray(),
           db.gorouseis.toArray(),
+          db.devilFruits.toArray()
         ])
 
       // Filtrar apenas capitães
@@ -70,6 +73,7 @@ export class WorldEncyclopedia {
 
       // Gerar rankings específicos
       const rankings: WorldRankings = {
+        legends: await this.getLegendsRanking(enrichedCharacters, devilFruits),
         yonkou: await this.getYonkouRanking(enrichedCaptains, yonkous),
         shichibukai: await this.getShichibukaiRanking(enrichedCaptains, shichibukais),
         admirals: await this.getAdmiralRanking(enrichedCaptains, admirals),
@@ -136,6 +140,20 @@ export class WorldEncyclopedia {
         ...captain,
         rank: index + 1,
         specialTitle: 'Yonkou',
+      }))
+  }
+
+  private static async getLegendsRanking(
+    characters: RankingCharacter[],
+    devilFruits: DevilFruit[],
+  ): Promise<RankingCharacter[]> {
+    return characters
+      .sort((a, b) => (GameLogic.calculatePower(b, b.devilFruitId ? devilFruits.find(df => df.id == b.devilFruitId) : null) - GameLogic.calculatePower(a, a.devilFruitId ? devilFruits.find(df => df.id == a.devilFruitId) : null)))
+      .slice(0, 20)
+      .map((legend, index) => ({
+        ...legend,
+        rank: index + 1,
+        specialTitle: 'Legend',
       }))
   }
 

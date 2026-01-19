@@ -51,6 +51,7 @@ export const useBattleStore = defineStore('battle', {
       extraReward?: number,
       extraExp?: number,
       withoutHelp?: boolean,
+      fromLiberation?: true
     ): Promise<BattleResult> {
       this.isSimulating = true
 

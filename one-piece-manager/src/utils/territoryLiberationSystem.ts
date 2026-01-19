@@ -329,7 +329,7 @@ export class TerritoryLiberationSystem {
       const playerDevilFruit = allDevilFruits.find((df) => df.id == player.devilFruitId)
       const opponentDevilFruit = allDevilFruits.find((df) => df.id == opponent.devilFruitId)
 
-      const battle = await battleStore.simulateBattle(player, opponent, null, null, isLastStep)
+      const battle = await battleStore.simulateBattle(player, opponent, null, null, isLastStep, true)
 
       const playerWins = battle.winner.id == player.id
 

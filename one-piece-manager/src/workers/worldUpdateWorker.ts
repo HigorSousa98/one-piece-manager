@@ -351,7 +351,8 @@ export class UltraOptimizedWorldUpdateWorker {
       // ✅ EXTRAIR DADOS COM TIPAGEM CORRETA
       const crews = results[0].status === 'fulfilled' ? (results[0].value as Crew[]) : []
       const characters = results[1].status === 'fulfilled' ? (results[1].value as Character[]) : []
-      const ships = results[2].status === 'fulfilled' ? (results[2].value as any[]) : []
+      const ships = results[2].status === 'fulfilled' ? (results[2].value as Ship[]) : []
+      const playerShip = ships.find(ship => ship.crewId == crews.find(crew => crew.id == (characters.find(char => char.isPlayer == 1).crewId)).id)
 
       // ✅ CRIAR MAPS PARA PERFORMANCE O(1)
       const crewsWithCharacters = new Set(
@@ -394,14 +395,15 @@ export class UltraOptimizedWorldUpdateWorker {
       const updateShips = []
 
       ships.forEach((ship) => {
-        if (!crewsToDeleteSet.has(ship.crewId)) {
+        if (!crewsToDeleteSet.has(ship.crewId) && ship.id != playerShip.id) {
           const crew = crews.find((crew) => crew.id == ship.crewId)
           const members = characters.filter((char) => char.crewId === crew.id)
-          const captainLevel = characters.find((char) => char.id === crew.captainId).level
+          const captainLevel = characters.find((char) => char.id === crew.captainId) ? characters.find((char) => char.id === crew.captainId).level : 0
           const highestLevel = members.reduce((highest, current) =>
             current.level > highest.level ? current : highest,
           ).level
-          let shipLevel = GameLogic.determineShipLevel(captainLevel | highestLevel)
+          let level = captainLevel > 0 ? captainLevel : highestLevel
+          let shipLevel = GameLogic.determineShipLevel(level)
           if (shipLevel > ship.level) {
             const updates: Partial<Ship> = {}
             updates.level = shipLevel as 1 | 2 | 3 | 4 | 5
@@ -660,9 +662,11 @@ export class UltraOptimizedWorldUpdateWorker {
               // ✅ SELECIONAR DOIS CREWS E REMOVER DA LISTA
               const crew1Index = Math.floor(Math.random() * availableCrews.length)
               const crew1 = availableCrews.splice(crew1Index, 1)[0]
+              const prioritizedCrews2 = this.filterByLevel(crew1, availableCrews)
 
               const crew2Index = Math.floor(Math.random() * availableCrews.length)
-              const crew2 = availableCrews.splice(crew2Index, 1)[0]
+              const crew2IndexPrioritized = Math.floor(Math.random() * prioritizedCrews2.length)
+              const crew2 = prioritizedCrews2.splice(crew2IndexPrioritized, 1)[0] || availableCrews.splice(crew2Index, 1)[0]
 
               // ✅ USAR CACHE PARA MEMBROS
               const [member1, member2] = [
@@ -1559,17 +1563,17 @@ export class UltraOptimizedWorldUpdateWorker {
         Promise.resolve(
           this.cache.characters
             .filter((char) => char.type === 'Pirate' && char.position === 'Captain')
-            .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a)),
+            .sort((a, b) => GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == b.crewId), this.cache.devilFruits) - GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == a.crewId), this.cache.devilFruits)),
         ),
         Promise.resolve(
           this.cache.characters
             .filter((char) => char.type === 'Marine' && char.position === 'Captain')
-            .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a)),
+            .sort((a, b) => GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == b.crewId), this.cache.devilFruits) - GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == a.crewId), this.cache.devilFruits)),
         ),
         Promise.resolve(
           this.cache.characters
-            .filter((char) => char.type === 'Government')
-            .sort((a, b) => calculatePowerSafe(b) - calculatePowerSafe(a)),
+            .filter((char) => char.type === 'Government' && char.position === 'Captain')
+            .sort((a, b) => GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == b.crewId), this.cache.devilFruits) - GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == a.crewId), this.cache.devilFruits)),
         ),
       ])
 
@@ -1689,6 +1693,27 @@ export class UltraOptimizedWorldUpdateWorker {
     } catch (error) {
       console.error('❌ Erro na redistribuição de personagens ultra-otimizada:', error)
       return { success: false }
+    }
+  }
+
+  filterByLevel(crew1: Crew, opponents: Crew[]): Crew[] {
+    const crew1Captain = this.cache.characterMap.get(crew1.captainId)
+    const levelRange = this.calculateLevelRange(crew1Captain.level)
+    const opponentsCaptains = opponents.map(crew => {
+      return this.cache.characterMap.get(crew.captainId)
+    })
+    const fittableCaptains = opponentsCaptains.filter(
+      (opponent) => opponent.level >= levelRange.min && opponent.level <= levelRange.max,
+    )
+    return opponents.filter(crew => fittableCaptains.find(char => crew.captainId == char.id)).filter(crew => crew.id != crew1.id)
+  }
+
+  calculateLevelRange(level: number): { min: number; max: number } {
+    const variance = Math.max(5, Math.floor(level * 0.2)) // 20% de variação, mínimo 3
+
+    return {
+      min: Math.max(1, level - variance),
+      max: level + variance,
     }
   }
 

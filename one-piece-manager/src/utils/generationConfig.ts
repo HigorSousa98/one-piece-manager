@@ -72,12 +72,12 @@ export class GenerationConfig {
     regularCrewSharedGain: 0.8,
     lossGain: 15,
     upgradeShipTime: 10,
-    stepTimeLiberation: 3,
+    stepTimeLiberation: 1,
     showAd: false,
     shichibukaiMaxLevel: 75,
     battleSimulatedByTurn: 450,
     islandEncounters: 50,
-    navigationFactor: 3,
+    navigationFactor: 1,
     crewMovementFactor: 0.3,
     maxNewCharacters: 4
   }
@@ -139,7 +139,7 @@ export class GenerationConfig {
       avgCrewSize: 10,
       styleCombatCount: 100,
       shipFactor: 3,
-      lastCombats: 20,
+      lastCombats: 10,
       allowKingHakiFor: 0.9,
       dockedFactor: 0.9,
     } as GenerationSettings,
