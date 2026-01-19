@@ -148,9 +148,9 @@
 
               <!-- Bounty/Rank Details -->
               <div class="info-item">
-                <v-icon class="info-icon">{{ getBountyIcon(character.type) }}</v-icon>
+                <v-icon class="info-icon">{{ GameLogic.getBountyIcon(character.type) }}</v-icon>
                 <div>
-                  <div class="info-label">{{ getBountyLabel(character.type) }}</div>
+                  <div class="info-label">{{ GameLogic.getBountyLabel(character.type) }}</div>
                   <CharacterBountyDisplay
                     :character="character"
                     size="default"
@@ -268,6 +268,7 @@ import type { RankingCharacter } from '@/utils/worldEncyclopedia'
 import WantedPoster from '@/components/WantedPoster.vue'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 import { DevilFruit } from '@/utils/database'
+import { GameLogic } from '@/utils/gameLogic'
 
 // Props
 interface Props {
@@ -365,26 +366,6 @@ const getDifficultyColor = (difficulty: number): string => {
 
 const formatType = (type: string): string => {
   return type.replace(/([A-Z])/g, ' $1').trim()
-}
-
-const getBountyIcon = (type: string): string => {
-  const icons: Record<string, string> = {
-    Pirate: 'mdi-currency-usd',
-    Marine: 'mdi-star',
-    BountyHunter: 'mdi-trophy',
-    Government: 'mdi-shield-crown'
-  }
-  return icons[type] || 'mdi-help'
-}
-
-const getBountyLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    Pirate: 'Recompensa',
-    Marine: 'Patente Marine',
-    BountyHunter: 'Rank de Caçador',
-    Government: 'Rank Governamental'
-  }
-  return labels[type] || 'Rank'
 }
 
 const closeDialog = () => {

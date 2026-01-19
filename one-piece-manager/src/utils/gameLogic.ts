@@ -357,7 +357,7 @@ export class GameLogic {
     }
 
     // Civillian sempre tenta ser pacífico
-    if (player === 'Civillian' || opponent=== 'Civillian') {
+    if (player === 'Civillian' || opponent === 'Civillian') {
       return Math.random() < 0.8 ? 'friendly' : 'neutral'
     }
 
@@ -365,14 +365,13 @@ export class GameLogic {
     if (player === opponent) {
       return Math.random() < 0.7 ? 'neutral' : 'hostile'
     }
-
   }
 
   static validateTypeCompatibility(recruiterType: string, targetType: string): boolean {
     const compatibilityMatrix: Record<string, string[]> = {
       Pirate: ['Pirate', 'BountyHunter'],
       Marine: ['Marine', 'Government'],
-      BountyHunter: ['BountyHunter', 'Pirate',],
+      BountyHunter: ['BountyHunter', 'Pirate'],
       Government: ['Government', 'Marine'], // Assumindo que Government pode recrutar Marines
       Civillian: [], // Civis não recrutam ninguém
     }
@@ -749,79 +748,79 @@ export class GameLogic {
   }
 
   static getEligibleStats(character: Character): string[] {
-      const eligible: string[] = []
+    const eligible: string[] = []
 
-      // Stats básicos sempre elegíveis
-      eligible.push('attack', 'defense', 'speed', 'intelligence', 'skill')
+    // Stats básicos sempre elegíveis
+    eligible.push('attack', 'defense', 'speed', 'intelligence', 'skill')
 
-      // Haki só elegível se já tiver ou se for de alto level
-      if (character.stats.armHaki > 0 || character.level >= 50) {
-        eligible.push('armHaki')
-      }
-
-      if (character.stats.obsHaki > 0 || character.level >= 50) {
-        eligible.push('obsHaki')
-      }
-
-      // Devil Fruit só se já tiver ou chance especial
-      if (character.stats.devilFruit > 0) {
-        eligible.push('devilFruit')
-      }
-
-      return eligible
+    // Haki só elegível se já tiver ou se for de alto level
+    if (character.stats.armHaki > 0 || character.level >= 50) {
+      eligible.push('armHaki')
     }
 
-    static distributePointsRandomly(
-      totalPoints: number,
-      eligibleStats: string[],
-      priorities: { [key: string]: number },
-    ): { [key: string]: number } {
-      const distribution: { [key: string]: number } = {}
-      let remainingPoints = totalPoints
+    if (character.stats.obsHaki > 0 || character.level >= 50) {
+      eligible.push('obsHaki')
+    }
 
-      // Inicializar todos os stats elegíveis com 0
+    // Devil Fruit só se já tiver ou chance especial
+    if (character.stats.devilFruit > 0) {
+      eligible.push('devilFruit')
+    }
+
+    return eligible
+  }
+
+  static distributePointsRandomly(
+    totalPoints: number,
+    eligibleStats: string[],
+    priorities: { [key: string]: number },
+  ): { [key: string]: number } {
+    const distribution: { [key: string]: number } = {}
+    let remainingPoints = totalPoints
+
+    // Inicializar todos os stats elegíveis com 0
+    eligibleStats.forEach((stat) => {
+      distribution[stat] = 0
+    })
+
+    // ✅ DISTRIBUIR PONTOS UM POR VEZ
+    while (remainingPoints > 0) {
+      // Criar array ponderado baseado nas prioridades
+      const weightedStats: string[] = []
+
       eligibleStats.forEach((stat) => {
-        distribution[stat] = 0
+        const weight = priorities[stat] || 10
+        // Adicionar o stat múltiplas vezes baseado no peso
+        for (let i = 0; i < weight; i++) {
+          weightedStats.push(stat)
+        }
       })
 
-      // ✅ DISTRIBUIR PONTOS UM POR VEZ
-      while (remainingPoints > 0) {
-        // Criar array ponderado baseado nas prioridades
-        const weightedStats: string[] = []
+      // Selecionar stat aleatório do array ponderado
+      const selectedStat = weightedStats[Math.floor(Math.random() * weightedStats.length)]
 
-        eligibleStats.forEach((stat) => {
-          const weight = priorities[stat] || 10
-          // Adicionar o stat múltiplas vezes baseado no peso
-          for (let i = 0; i < weight; i++) {
-            weightedStats.push(stat)
-          }
-        })
+      // ✅ APLICAR LIMITADORES PARA EVITAR CONCENTRAÇÃO EXCESSIVA
+      const maxPointsPerStat = Math.ceil(totalPoints * 0.6) // Máximo 60% dos pontos em um stat
 
-        // Selecionar stat aleatório do array ponderado
-        const selectedStat = weightedStats[Math.floor(Math.random() * weightedStats.length)]
+      if (distribution[selectedStat] < maxPointsPerStat) {
+        distribution[selectedStat]++
+        remainingPoints--
+      } else {
+        // Se o stat atingiu o limite, remover das opções temporariamente
+        const statIndex = eligibleStats.indexOf(selectedStat)
+        if (statIndex > -1 && eligibleStats.length > 1) {
+          eligibleStats.splice(statIndex, 1)
+        }
 
-        // ✅ APLICAR LIMITADORES PARA EVITAR CONCENTRAÇÃO EXCESSIVA
-        const maxPointsPerStat = Math.ceil(totalPoints * 0.6) // Máximo 60% dos pontos em um stat
-
-        if (distribution[selectedStat] < maxPointsPerStat) {
-          distribution[selectedStat]++
-          remainingPoints--
-        } else {
-          // Se o stat atingiu o limite, remover das opções temporariamente
-          const statIndex = eligibleStats.indexOf(selectedStat)
-          if (statIndex > -1 && eligibleStats.length > 1) {
-            eligibleStats.splice(statIndex, 1)
-          }
-
-          // Se todos os stats atingiram o limite, quebrar o loop
-          if (eligibleStats.length === 0) {
-            break
-          }
+        // Se todos os stats atingiram o limite, quebrar o loop
+        if (eligibleStats.length === 0) {
+          break
         }
       }
-
-      return distribution
     }
+
+    return distribution
+  }
 
   static increaseStats(
     character: Character,
@@ -1088,4 +1087,181 @@ export class GameLogic {
     }
     return success
   }
+
+  // ✅ MÉTODOS PRINCIPAIS
+  static getBountyDisplay(character: Character): string {
+    switch (character.type) {
+      case 'Pirate':
+        return this.formatPirateBounty(character.bounty)
+
+      case 'Marine':
+        return this.formatMarineRank(character.bounty)
+
+      case 'BountyHunter':
+        return this.formatPirateBounty(character.bounty)
+
+      case 'Government':
+        return this.formatGovernmentRank(character.bounty)
+
+      case 'Civillian':
+        return 'Civil'
+
+      default:
+        return this.formatPirateBounty(character.bounty)
+    }
+  }
+
+  static getBountyColor(type: string): string {
+    switch (type) {
+      case 'Pirate':
+        return 'red-darken-2'
+
+      case 'Marine':
+        return 'blue-darken-2'
+
+      case 'BountyHunter':
+        return 'green-darken-2'
+
+      case 'Government':
+        return 'orange-darken-2'
+
+      case 'Civillian':
+        return 'grey-darken-1'
+
+      default:
+        return 'grey-darken-2'
+    }
+  }
+
+  static getBountyIcon(type: string): string {
+    switch (type) {
+      case 'Pirate':
+        return 'mdi-currency-usd'
+
+      case 'Marine':
+        return 'mdi-sail-boat'
+
+      case 'BountyHunter':
+        return 'mdi-trophy'
+
+      case 'Government':
+        return 'mdi-shield-crown'
+
+      case 'Civillian':
+        return 'mdi-account'
+
+      default:
+        return 'mdi-help'
+    }
+  }
+
+  // ✅ FORMATAÇÃO PARA PIRATAS (BOUNTY NORMAL)
+  static formatPirateBounty(bounty: number): string {
+    if (bounty === 0) return 'Sem Recompensa'
+
+    if (bounty >= 1000000000) {
+      return `${(bounty / 1000000000).toFixed(2)}B B$`
+    } else if (bounty >= 1000000) {
+      return `${(bounty / 1000000).toFixed(2)}M B$`
+    } else if (bounty >= 1000) {
+      return `${(bounty / 1000).toFixed(2)}K B$`
+    }
+    return `${bounty} B$`
+  }
+
+  // ✅ FORMATAÇÃO PARA MARINES (ESTRELAS)
+  static formatMarineRank(bounty: number): string {
+    if (bounty === 0) return 'Recruta'
+
+    // Dividir por 100 milhões para ter escala de 0-5 estrelas
+    const starValue = bounty / 200000000
+
+    // Limitar entre 0 e 5
+    const clampedValue = Math.min(Math.max(starValue, 0), 5)
+
+    // Arredondar para 0.5
+    const roundedValue = Math.round(clampedValue * 2) / 2
+
+    return this.formatStars(roundedValue)
+  }
+
+  static formatStars(value: number): string {
+    if (value === 0) return 'Recruta'
+    if (value <= 0.5) return '☆'
+    if (value <= 1) return '★'
+    if (value <= 1.5) return '★☆'
+    if (value <= 2) return '★★'
+    if (value <= 2.5) return '★★☆'
+    if (value <= 3) return '★★★'
+    if (value <= 3.5) return '★★★☆'
+    if (value <= 4) return '★★★★'
+    if (value <= 4.5) return '★★★★☆'
+    return '★★★★★'
+  }
+
+  // ✅ FORMATAÇÃO PARA BOUNTY HUNTERS (RANKING)
+  static formatBountyHunterRank(bounty: number): string {
+    if (bounty === 0) return 'Iniciante'
+
+    // Dividir por 1 bilhão para ter escala similar
+    const rankValue = bounty / 1000000000
+
+    // 5 níveis de ranking
+    if (rankValue < 0.5) return 'Iniciante'
+    if (rankValue < 1.5) return 'Renomado'
+    if (rankValue < 2.5) return 'Experiente'
+    if (rankValue < 4) return 'Veterano'
+    return 'Mundial'
+  }
+
+  // ✅ FORMATAÇÃO PARA GOVERNO (HIERARQUIA)
+  static formatGovernmentRank(bounty: number): string {
+    if (bounty === 0) return 'Agente'
+
+    // Dividir por 100 milhões para ter escala similar
+    const rankValue = bounty / 100000000
+
+    // 5 níveis hierárquicos
+    if (rankValue < 0.5) return 'Agente'
+    if (rankValue < 1.5) return 'Oficial'
+    if (rankValue < 2.5) return 'Comandante'
+    if (rankValue < 4) return 'Diretor'
+    return 'Alto Comando'
+  }
+
+  static getBountyLabel(type: string): string{
+    const labels: Record<string, string> = {
+      Pirate: 'Recompensa',
+      Marine: 'Patente Marine',
+      BountyHunter: 'Rank de Caçador',
+      Government: 'Rank Governamental',
+    }
+    return labels[type] || 'Rank'
+  }
+
+  static getTypeIcon(type: string): string{
+  switch (type) {
+    case 'Pirate': return 'mdi-pirate'
+    case 'Marine': return 'mdi-anchor'
+    case 'Government': return 'mdi-bank'
+    case 'BountyHunter': return 'mdi-target'
+    default: return 'mdi-account'
+  }
+}
+
+static getTypeColor(type: string): string {
+  const colors: Record<string, string> = {
+    Pirate: 'red-darken-1',
+    Marine: 'blue-darken-1',
+    BountyHunter: 'green-darken-1',
+    Government: 'purple-darken-1',
+    Revolutionary: 'orange-darken-1',
+    Civilian: 'grey-darken-1'
+  }
+  return colors[type] || 'grey'
+}
+
+static formatType(type: string): string{
+  return type.replace(/([A-Z])/g, ' $1').trim()
+}
 }

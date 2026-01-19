@@ -49,7 +49,7 @@
               variant="elevated"
               class="type-badge"
             >
-              <v-icon size="small" class="mr-1">{{ getTypeIcon(member.type) }}</v-icon>
+              <v-icon size="small" class="mr-1">{{ GameLogic.getTypeIcon(member.type) }}</v-icon>
               {{ member.type.toUpperCase() }}
             </v-chip>
           </div>
@@ -172,23 +172,7 @@
           </v-col>
         </v-row>
       </div>
-      
-      <!-- BOUNTY SECTION -->
-      <!--
-      <div class="bounty-section mb-3">
-        <div class="bounty-header">
-          <span class="text-subtitle-2 font-weight-bold">
-            <v-icon size="16" class="mr-1">{{ getBountyIcon(member.type) }}</v-icon>
-            {{ getBountyLabel(member.type) }}
-          </span>
-        </div>
-        <CharacterBountyDisplay 
-          :character="member" 
-          size="default" 
-          variant="elevated" 
-          class="bounty-display"
-        />
-      </div>-->
+  
       
       <!-- DEVIL FRUIT INFO (se tiver) -->
       <div v-if="member.devilFruitId != 0 && devilFruit" class="devil-fruit-section mb-3">
@@ -328,26 +312,6 @@ const getTypeIcon = (type: string): string => {
     case 'BountyHunter': return 'mdi-target'
     default: return 'mdi-account'
   }
-}
-
-const getBountyIcon = (type: string): string => {
-  const icons: Record<string, string> = {
-    Pirate: 'mdi-currency-usd',
-    Marine: 'mdi-star',
-    BountyHunter: 'mdi-trophy',
-    Government: 'mdi-shield-crown'
-  }
-  return icons[type] || 'mdi-help'
-}
-
-const getBountyLabel = (type: string): string => {
-  const labels: Record<string, string> = {
-    Pirate: 'Recompensa',
-    Marine: 'Patente',
-    BountyHunter: 'Ranking',
-    Government: 'Posição'
-  }
-  return labels[type] || 'Rank'
 }
 
 const getLoyaltyColor = (loyalty: number): string => {

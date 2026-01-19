@@ -117,13 +117,13 @@
       <!-- Character Type & Additional Info -->
       <div class="character-details">
         <v-chip
-          :color="getTypeColor(character.type)"
+          :color="GameLogic.getTypeColor(character.type)"
           size="x-small"
           variant="tonal"
-          :prepend-icon="getTypeIcon(character.type)"
+          :prepend-icon="GameLogic.getTypeIcon(character.type)"
           class="type-chip"
         >
-          {{ formatType(character.type) }}
+          {{ GameLogic.formatType(character.type) }}
         </v-chip>
         
         <!-- Devil Fruit Indicator -->
@@ -180,6 +180,7 @@ import { computed } from 'vue'
 import type { RankingCharacter } from '@/utils/worldEncyclopedia'
 import WantedPoster from '@/components/WantedPoster.vue'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
+import { GameLogic } from '@/utils/gameLogic'
 
 // Props
 interface Props {
@@ -218,31 +219,6 @@ const highlightedName = computed(() => {
   const regex = new RegExp(`(${props.highlightSearch.trim()})`, 'gi')
   return props.character.name.replace(regex, '<mark class="search-highlight">$1</mark>')
 })
-
-// Helper functions
-const getTypeColor = (type: string): string => {
-  const colors: Record<string, string> = {
-    Pirate: 'red-darken-1',
-    Marine: 'blue-darken-1',
-    BountyHunter: 'green-darken-1',
-    Government: 'purple-darken-1',
-    Revolutionary: 'orange-darken-1',
-    Civilian: 'grey-darken-1'
-  }
-  return colors[type] || 'grey'
-}
-
-const getTypeIcon = (type: string): string => {
-  const icons: Record<string, string> = {
-    Pirate: 'mdi-skull',
-    Marine: 'mdi-anchor',
-    BountyHunter: 'mdi-target',
-    Government: 'mdi-shield-crown',
-    Revolutionary: 'mdi-fist-raised',
-    Civilian: 'mdi-account'
-  }
-  return icons[type] || 'mdi-account'
-}
 
 const getRankColor = (rank: number): string => {
   if (rank === 1) return 'amber-darken-2'

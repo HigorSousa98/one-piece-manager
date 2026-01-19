@@ -1373,64 +1373,217 @@ export class UltraOptimizedWorldUpdateWorker {
 
   // ✅ SELECIONAR ILHA DE DESTINO
   private async selectDestinationIsland(
-    currentIsland: Island,
-    percent: number,
-  ): Promise<{ island: Island; type: 'easier' | 'same' | 'harder' } | null> {
-    try {
-      const availableIslands = this.cache.islands.filter((island) => island.id !== currentIsland.id)
+  currentIsland: Island,
+  percent: number,
+): Promise<{ island: Island; type: 'easier' | 'same' | 'harder' } | null> {
+  try {
+    const availableIslands = this.cache.islands.filter((island) => island.id !== currentIsland.id)
 
-      if (availableIslands.length === 0) return null
+    if (availableIslands.length === 0) return null
 
-      const easierIslands = availableIslands.filter(
-        (island) => island.difficulty === currentIsland.difficulty - 1,
-      )
+    // ✅ SEPARAR ILHAS POR DIFICULDADE
+    const easierIslands = availableIslands.filter(
+      (island) => island.difficulty === currentIsland.difficulty - 1,
+    )
+    const sameIslands = availableIslands.filter(
+      (island) => island.difficulty === currentIsland.difficulty,
+    )
+    const harderIslands = availableIslands.filter(
+      (island) => island.difficulty === currentIsland.difficulty + 1,
+    )
 
-      const sameIslands = availableIslands.filter(
-        (island) => island.difficulty === currentIsland.difficulty,
-      )
+    // ✅ CALCULAR POPULAÇÃO ATUAL DAS ILHAS PARA BALANCEAMENTO
+    const getIslandPopulation = (islands: Island[]) => {
+      return islands.map(island => ({
+        island,
+        population: (this.cache.crewsByIslandId.get(island.id!) || []).length
+      }))
+    }
 
-      const harderIslands = availableIslands.filter(
-        (island) => island.difficulty === currentIsland.difficulty + 1,
-      )
+    const easierPopulation = getIslandPopulation(easierIslands)
+    const samePopulation = getIslandPopulation(sameIslands)
+    const harderPopulation = getIslandPopulation(harderIslands)
 
-      let selectedIslands: Island[]
-      let movementType: 'easier' | 'same' | 'harder'
+    // ✅ CALCULAR PESO DE BALANCEAMENTO (MENOS POPULAÇÃO = MAIOR PESO)
+    const calculateBalanceWeight = (population: number, maxPop: number) => {
+      if (maxPop === 0) return 1
+      return Math.max(0.1, 1 - (population / (maxPop + 1)))
+    }
 
-      if (percent >= 0.8 && easierIslands.length > 0) {
-        selectedIslands = easierIslands
-        movementType = 'easier'
-      } else if (percent >= 0.1 && sameIslands.length > 0) {
-        selectedIslands = sameIslands
-        movementType = 'same'
-      } else if (harderIslands.length > 0) {
-        selectedIslands = harderIslands
-        movementType = 'harder'
-      } else {
-        if (sameIslands.length > 0) {
-          selectedIslands = sameIslands
-          movementType = 'same'
-        } else if (harderIslands.length > 0) {
-          selectedIslands = harderIslands
-          movementType = 'harder'
-        } else if (easierIslands.length > 0) {
-          selectedIslands = easierIslands
-          movementType = 'easier'
-        } else {
-          return null
+    const allPopulations = [
+      ...easierPopulation.map(p => p.population),
+      ...samePopulation.map(p => p.population),
+      ...harderPopulation.map(p => p.population)
+    ]
+    const maxPopulation = Math.max(...allPopulations, 1)
+
+    // ✅ NOVA LÓGICA DE SELEÇÃO EQUILIBRADA
+    let selectedIslands: { island: Island; weight: number }[] = []
+    let movementType: 'easier' | 'same' | 'harder'
+
+    // ✅ CREWS FRACOS (percent >= 0.7) - Preferem mais fácil, mas com balanceamento
+    if (percent >= 0.7) {
+      const easierWeighted = easierPopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.5 // 50% de peso para easier
+      }))
+      
+      const sameWeighted = samePopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.35 // 35% de peso para same
+      }))
+      
+      const harderWeighted = harderPopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.15 // 15% de peso para harder
+      }))
+
+      const allOptions = [...easierWeighted, ...sameWeighted, ...harderWeighted]
+      
+      if (allOptions.length > 0) {
+        const selected = this.weightedRandomSelection(allOptions)
+        if (selected) {
+          if (easierIslands.some(i => i.id === selected.id)) {
+            movementType = 'easier'
+          } else if (sameIslands.some(i => i.id === selected.id)) {
+            movementType = 'same'
+          } else {
+            movementType = 'harder'
+          }
+          return { island: selected, type: movementType }
         }
       }
+    }
+    
+    // ✅ CREWS MÉDIOS (percent 0.3 - 0.69) - Distribuição equilibrada
+    else if (percent >= 0.3) {
+      const easierWeighted = easierPopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.25 // 25% easier
+      }))
+      
+      const sameWeighted = samePopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.5 // 50% same
+      }))
+      
+      const harderWeighted = harderPopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.25 // 25% harder
+      }))
 
-      const selectedIsland = selectedIslands[Math.floor(Math.random() * selectedIslands.length)]
-
-      return {
-        island: selectedIsland,
-        type: movementType,
+      const allOptions = [...easierWeighted, ...sameWeighted, ...harderWeighted]
+      
+      if (allOptions.length > 0) {
+        const selected = this.weightedRandomSelection(allOptions)
+        if (selected) {
+          if (easierIslands.some(i => i.id === selected.id)) {
+            movementType = 'easier'
+          } else if (sameIslands.some(i => i.id === selected.id)) {
+            movementType = 'same'
+          } else {
+            movementType = 'harder'
+          }
+          return { island: selected, type: movementType }
+        }
       }
-    } catch (error) {
-      console.error('❌ Erro ao selecionar ilha de destino ultra-otimizada:', error)
-      return null
+    }
+    
+    // ✅ CREWS FORTES (percent < 0.3) - Preferem mais difícil, mas com balanceamento
+    else {
+      const easierWeighted = easierPopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.15 // 15% easier
+      }))
+      
+      const sameWeighted = samePopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.35 // 35% same
+      }))
+      
+      const harderWeighted = harderPopulation.map(p => ({
+        island: p.island,
+        weight: calculateBalanceWeight(p.population, maxPopulation) * 0.5 // 50% harder
+      }))
+
+      const allOptions = [...easierWeighted, ...sameWeighted, ...harderWeighted]
+      
+      if (allOptions.length > 0) {
+        const selected = this.weightedRandomSelection(allOptions)
+        if (selected) {
+          if (easierIslands.some(i => i.id === selected.id)) {
+            movementType = 'easier'
+          } else if (sameIslands.some(i => i.id === selected.id)) {
+            movementType = 'same'
+          } else {
+            movementType = 'harder'
+          }
+          return { island: selected, type: movementType }
+        }
+      }
+    }
+
+    // ✅ FALLBACK - Se não conseguir selecionar com peso, usar distribuição simples
+    const allAvailable = [...easierIslands, ...sameIslands, ...harderIslands]
+    if (allAvailable.length === 0) return null
+
+    // ✅ Selecionar ilha com menor população como fallback
+    const islandPopulations = allAvailable.map(island => ({
+      island,
+      population: (this.cache.crewsByIslandId.get(island.id!) || []).length
+    }))
+
+    // ✅ Ordenar por população (menor primeiro) e pegar uma das 3 menos populosas
+    islandPopulations.sort((a, b) => a.population - b.population)
+    const leastPopulated = islandPopulations.slice(0, Math.min(3, islandPopulations.length))
+    const selectedFallback = leastPopulated[Math.floor(Math.random() * leastPopulated.length)]
+
+    // ✅ Determinar tipo de movimento para fallback
+    if (easierIslands.some(i => i.id === selectedFallback.island.id)) {
+      movementType = 'easier'
+    } else if (sameIslands.some(i => i.id === selectedFallback.island.id)) {
+      movementType = 'same'
+    } else {
+      movementType = 'harder'
+    }
+
+    return {
+      island: selectedFallback.island,
+      type: movementType,
+    }
+
+  } catch (error) {
+    console.error('❌ Erro ao selecionar ilha de destino equilibrada:', error)
+    return null
+  }
+}
+
+// ✅ FUNÇÃO AUXILIAR PARA SELEÇÃO PONDERADA
+private weightedRandomSelection(options: { island: Island; weight: number }[]): Island | null {
+  if (options.length === 0) return null
+
+  // ✅ Calcular peso total
+  const totalWeight = options.reduce((sum, option) => sum + option.weight, 0)
+  
+  if (totalWeight === 0) {
+    // ✅ Se todos os pesos são 0, selecionar aleatoriamente
+    return options[Math.floor(Math.random() * options.length)].island
+  }
+
+  // ✅ Gerar número aleatório
+  let random = Math.random() * totalWeight
+  
+  // ✅ Selecionar baseado no peso
+  for (const option of options) {
+    random -= option.weight
+    if (random <= 0) {
+      return option.island
     }
   }
+
+  // ✅ Fallback - retornar o último
+  return options[options.length - 1].island
+}
 
   // ✅ GERAR RELATÓRIO DE MOVIMENTO
   private async generateIslandMovementReport(movements: CrewMovementDecision[]): Promise<

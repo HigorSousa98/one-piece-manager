@@ -405,7 +405,7 @@ const formatMarineRank = (bounty: number): string => {
   if (bounty === 0) return 'Recruta'
   
   // Dividir por 100 milhões para ter escala de 0-5 estrelas
-  const starValue = bounty / 100000000
+  const starValue = bounty / 200000000
   
   // Limitar entre 0 e 5
   const clampedValue = Math.min(Math.max(starValue, 0), 5)
@@ -418,7 +418,7 @@ const formatMarineRank = (bounty: number): string => {
 
 const formatStars = (value: number): string => {
   if (value === 0) return 'Recruta'
-  if (value <= 0.5) return '★'
+  if (value <= 0.5) return '☆'
   if (value <= 1) return '★'
   if (value <= 1.5) return '★☆'
   if (value <= 2) return '★★'
@@ -427,7 +427,6 @@ const formatStars = (value: number): string => {
   if (value <= 3.5) return '★★★☆'
   if (value <= 4) return '★★★★'
   if (value <= 4.5) return '★★★★☆'
-  if (value <= 5) return '★★★★★'
   return '★★★★★'
 }
 
