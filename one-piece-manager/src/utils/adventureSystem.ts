@@ -187,6 +187,15 @@ export class AdventureSystem {
         return null
       }
 
+      const lastCombats = player.crewId
+        ? await db.battles
+            .where('challengerCrewId')
+            .equals(player.crewId)
+            .reverse()
+            .limit(GenerationConfig.createEpic().lastCombats)
+            .toArray()
+        : null
+
       const allCharacters = await db.characters.toArray();
 
       // Buscar personagens desses crews (exceto o do jogador)
@@ -196,7 +205,7 @@ export class AdventureSystem {
         if (crew.id === player.crewId) continue // Pular o próprio crew
 
         // Buscar membros deste crew
-        const crewMembers = allCharacters.filter(char => char.crewId == crew.id!)
+        const crewMembers = allCharacters.filter(char => char.crewId == crew.id! && !lastCombats?.find((battle) => battle.opponentCrewId === char.crewId))
 
         // Filtrar por tipo compatível
         const compatibleMembers = this.filterCompatibleOpponents(player, crewMembers)
