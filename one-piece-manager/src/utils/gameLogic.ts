@@ -906,10 +906,10 @@ export class GameLogic {
     return members.reduce((total, member) => {
       return (
         total +
-        GameLogic.calculatePower(
+        this.calculatePower(
           member,
           allFruits.find((fruit) => member.devilFruitId === fruit.id),
-        )
+        ) * (0.8 + 0.4 * (member.loyalty + 100 / 200))
       )
     }, 0)
   }

@@ -7,6 +7,7 @@ import { GameLogic } from '../utils/gameLogic'
 import { ShipNameGenerator } from '../data/shipNameGenerator'
 import { CrewNameGenerator } from '../data/crewNames'
 import { NameGenerator } from '../data/characterNames'
+import { config } from 'node:process'
 
 // ✅ INTERFACES (mantidas iguais)
 interface WorkerMessage {
@@ -763,6 +764,8 @@ export class UltraOptimizedWorldUpdateWorker {
       const winnerCaptain = crew1Wins ? captain1 : captain2
       const loserCaptain = crew1Wins ? captain2 : captain1
       const winnerMembers = crew1Wins ? crew1Members : crew2Members
+      const loserMembers = crew1Wins ? crew2Members : crew1Members
+
 
       // ✅ CALCULAR RECOMPENSAS
       const expGain = GameLogic.calculateExperienceGain(winnerCaptain, loserCaptain)
@@ -783,8 +786,34 @@ export class UltraOptimizedWorldUpdateWorker {
         GenerationConfig.createEpic().regularCrewSharedGain,
       )
 
+      const captainUpdatesLoser = await this.processCaptainUpdates(
+        loserCaptain,
+        Math.ceil(
+            (expGain *
+              GameLogic.randomBetween(1, GenerationConfig.createEpic().lossGain)) /
+              100,
+          ),
+        0,
+        false,
+      )
+      const memberUpdatesLoser = await this.processCrewMemberUpdates(
+        loserMembers,
+        Math.ceil(
+            (expGain *
+              GameLogic.randomBetween(1, GenerationConfig.createEpic().lossGain)) /
+              100,
+          ),
+        0,
+        false,
+        GenerationConfig.createEpic().regularCrewSharedGain,
+      )
+
       batchManager.addCharacterUpdate(winnerCaptain.id!, captainUpdates)
+      batchManager.addCharacterUpdate(loserCaptain.id!, captainUpdatesLoser)
       memberUpdates.forEach((update) => {
+        batchManager.addCharacterUpdate(update.id, update.updates)
+      })
+      memberUpdatesLoser.forEach((update) => {
         batchManager.addCharacterUpdate(update.id, update.updates)
       })
 
@@ -810,6 +839,7 @@ export class UltraOptimizedWorldUpdateWorker {
           this.createCrewForOrphanMembers(recruitmentResult.removed, loserCrew.currentIsland),
         )
       }
+
 
       // ✅ ATUALIZAR REPUTAÇÃO
       const newWinnerReputation = winnerCrew.reputation + Math.floor(loserCrew.reputation * 0.1)
@@ -1018,7 +1048,7 @@ export class UltraOptimizedWorldUpdateWorker {
 
           updates.loyalty = Math.min(100, member.loyalty + (1 + Math.random() * 3))
         } else {
-          updates.loyalty = Math.max(-100, member.loyalty - (1 + Math.random() * 2))
+          updates.loyalty = Math.max(-100, member.loyalty - (1 + Math.random() * 3))
         }
 
         return { id: member.id!, updates }
@@ -1117,6 +1147,7 @@ export class UltraOptimizedWorldUpdateWorker {
           crewId: winnerCrewId,
           type: winnerCrew!.type,
           position: 'Crew Member',
+          loyalty: 0
         })
         recruited.push(member)
 
@@ -1186,11 +1217,11 @@ export class UltraOptimizedWorldUpdateWorker {
       foundedAt: new Date(),
     })
 
-    await db.characters.update(captain.id!, { crewId: newCrewId, position: 'Captain' })
+    await db.characters.update(captain.id!, { crewId: newCrewId, position: 'Captain', loyalty: 100 })
 
     for (const member of orphanMembers) {
       if (member.id !== captain.id) {
-        await db.characters.update(member.id!, { crewId: newCrewId, position: 'Crew Member' })
+        await db.characters.update(member.id!, { crewId: newCrewId, position: 'Crew Member', loyalty: 0 })
       }
     }
 
