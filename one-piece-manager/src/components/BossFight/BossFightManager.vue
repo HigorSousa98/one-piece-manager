@@ -186,213 +186,59 @@ watch(() => props.currentIslandId, async (newIslandId) => {
 </script>
 
 <style scoped>
-.boss-fight-manager {
-  max-width: 1200px;
+/* ============================================================
+   BossFightManager - Boss fight coordinator
+   ============================================================ */
+
+.boss-manager-container {
+  max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
 }
 
-.loading-state, .error-state {
-  text-align: center;
-  padding: 60px 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  color: white;
-}
-
-.loading-spinner {
-  font-size: 48px;
-  margin-bottom: 16px;
-  animation: spin 1s linear infinite;
-}
-
-.error-icon {
-  font-size: 48px;
-  margin-bottom: 16px;
-}
-
-.retry-btn {
-  background: #667eea;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-  margin-top: 16px;
-  font-weight: bold;
-  transition: all 0.3s ease;
-}
-
-.retry-btn:hover {
-  background: #5a6fd8;
-  transform: translateY(-2px);
-}
-
-.boss-detection {
-  color: white;
-}
-
-.detection-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.detection-header h2 {
-  margin: 0 0 16px 0;
-  font-size: 32px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.no-bosses {
-  color: #888;
-  font-style: italic;
-  font-size: 18px;
-}
-
-.detected-bosses {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.detection-actions {
-  text-align: center;
-}
-
-.refresh-btn {
-  background: linear-gradient(135deg, #26de81, #20bf6b);
-  border: none;
-  padding: 16px 32px;
+.boss-list-header {
+  background: linear-gradient(135deg, rgba(198,40,40,0.12), rgba(139,0,0,0.08));
+  border: 1px solid rgba(198,40,40,0.3);
   border-radius: 12px;
-  color: white;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.refresh-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(38, 222, 129, 0.3);
-}
-
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  padding: 14px 18px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  gap: 10px;
 }
 
-.confirm-modal {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 16px;
-  padding: 32px;
-  max-width: 500px;
-  width: 90%;
-  color: white;
-  border: 2px solid #333;
+.boss-list-title {
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #FF5252;
+  letter-spacing: 0.04em;
 }
 
-.confirm-modal h3 {
-  margin: 0 0 16px 0;
+.boss-count-badge {
+  background: rgba(198,40,40,0.15);
+  border: 1px solid rgba(198,40,40,0.35);
+  color: #FF5252;
+  font-weight: 700;
+  font-size: 0.8rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.no-boss-state {
   text-align: center;
-  color: #ff6b6b;
-  font-size: 24px;
+  padding: 48px 24px;
+  color: #546E7A;
 }
 
-.warning-info {
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid #ff6b6b;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
+.no-boss-icon {
+  font-size: 3.5rem;
+  opacity: 0.3;
+  margin-bottom: 12px;
+  display: block;
 }
 
-.warning-info ul {
-  margin: 8px 0 0 20px;
-  color: #ccc;
-}
-
-.warning-info li {
-  margin-bottom: 4px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-.cancel-btn, .confirm-btn {
-  flex: 1;
-  padding: 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 16px;
-}
-
-.cancel-btn {
-  background: #ff4757;
-  color: white;
-}
-
-.cancel-btn:hover {
-  background: #ff3742;
-}
-
-.confirm-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-}
-
-.confirm-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
-}
-
-.confirm-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@media (max-width: 768px) {
-  .detected-bosses {
-    grid-template-columns: 1fr;
-  }
-  
-  .confirm-modal {
-    padding: 24px;
-    margin: 20px;
-  }
-  
-  .modal-actions {
-    flex-direction: column;
-  }
+.no-boss-text {
+  font-family: Georgia, serif;
+  font-size: 1rem;
 }
 </style>

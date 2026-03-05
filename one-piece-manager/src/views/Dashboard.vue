@@ -285,95 +285,57 @@
               <!-- STATS PRINCIPAIS -->
               <div class="stats-section mb-4">
                 <h3 class="text-h6 mb-3 stats-title">
-                  <v-icon left color="primary">mdi-chart-line</v-icon>
+                  <v-icon left color="primary">mdi-sword-cross</v-icon>
                   Estatísticas de Combate
                 </h3>
-                
-                <v-row class="mb-4">
-                  <v-col cols="12" md="3">
-                    <v-card variant="outlined" color="red-darken-1" class="stat-card">
-                      <v-card-text class="text-center pa-3">
-                        <v-icon size="35" color="red-darken-2">mdi-sword</v-icon>
-                        <div class="text-h5 mt-2 text-red-darken-3 font-weight-bold">{{ playerCharacter.stats.attack }}</div>
-                        <div class="text-subtitle-2 text-red-darken-2">Ataque</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                  <v-col cols="12" md="3">
-                    <v-card variant="outlined" color="blue-darken-1" class="stat-card">
-                      <v-card-text class="text-center pa-3">
-                        <v-icon size="35" color="blue-darken-2">mdi-shield</v-icon>
-                        <div class="text-h5 mt-2 text-blue-darken-3 font-weight-bold">{{ playerCharacter.stats.defense }}</div>
-                        <div class="text-subtitle-2 text-blue-darken-2">Defesa</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                  <v-col cols="12" md="2">
-                    <v-card variant="outlined" color="green-darken-1" class="stat-card">
-                      <v-card-text class="text-center pa-3">
-                        <v-icon size="35" color="green-darken-2">mdi-run-fast</v-icon>
-                        <div class="text-h5 mt-2 text-green-darken-3 font-weight-bold">{{ playerCharacter.stats.speed }}</div>
-                        <div class="text-subtitle-2 text-green-darken-2">Velocidade</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                  <v-col cols="12" md="2">
-                    <v-card variant="outlined" color="blue-grey-darken-1" class="stat-card">
-                      <v-card-text class="text-center pa-3">
-                        <v-icon size="35" color="blue-grey-darken-2">mdi-brain</v-icon>
-                        <div class="text-h5 mt-2 text-blue-grey-darken-3 font-weight-bold">{{ playerCharacter.stats.intelligence }}</div>
-                        <div class="text-subtitle-2 text-blue-grey-darken-2">Inteligência</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                  <v-col cols="12" md="2">
-                    <v-card variant="outlined" color="purple-darken-1" class="stat-card">
-                      <v-card-text class="text-center pa-3">
-                        <v-icon size="35" color="purple-darken-2">mdi-feather</v-icon>
-                        <div class="text-h5 mt-2 text-purple-darken-3 font-weight-bold">{{ playerCharacter.stats.skill }}</div>
-                        <div class="text-subtitle-2 text-purple-darken-2">Habilidade</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                </v-row>
+                <div class="ds-stats-list">
+                  <div
+                    v-for="stat in playerCombatStats"
+                    :key="stat.key"
+                    class="ds-stat-row"
+                  >
+                    <v-icon :color="stat.color" size="17" class="ds-stat-icon">{{ stat.icon }}</v-icon>
+                    <span class="ds-stat-name">{{ stat.label }}</span>
+                    <div class="ds-stat-bar-wrap">
+                      <div class="ds-stat-bar" :style="{ width: dsStatPercent(stat.value) + '%', background: stat.bg }" />
+                    </div>
+                    <span class="ds-stat-val" :style="{ color: stat.color }">{{ stat.value }}</span>
+                  </div>
+                </div>
               </div>
-              
+
               <!-- HAKI STATS -->
               <div class="haki-section mb-4" v-if="hasHakiStats">
                 <h3 class="text-h6 mb-3 stats-title">
-                  <v-icon left color="orange-darken-2">mdi-meditation</v-icon>
-                  Habilidades Haki
+                  <v-icon left color="blue-grey-lighten-2">mdi-wave</v-icon>
+                  Haki
                 </h3>
-                
-                <v-row>
-                  <v-col cols="4" v-if="playerCharacter.stats.armHaki > 0">
-                    <v-card variant="outlined" color="orange-darken-1" class="haki-card">
-                      <v-card-text class="text-center pa-2">
-                        <v-icon size="25" color="orange-darken-2">mdi-arm-flex</v-icon>
-                        <div class="text-h6 mt-1 text-orange-darken-3 font-weight-bold">{{ playerCharacter.stats.armHaki }}</div>
-                        <div class="text-caption text-orange-darken-2">Busoshoku</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                  <v-col cols="4" v-if="playerCharacter.stats.obsHaki > 0">
-                    <v-card variant="outlined" color="purple-darken-1" class="haki-card">
-                      <v-card-text class="text-center pa-2">
-                        <v-icon size="25" color="purple-darken-2">mdi-eye</v-icon>
-                        <div class="text-h6 mt-1 text-purple-darken-3 font-weight-bold">{{ playerCharacter.stats.obsHaki }}</div>
-                        <div class="text-caption text-purple-darken-2">Kenbunshoku</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                  <v-col cols="4" v-if="playerCharacter.stats.kingHaki > 0">
-                    <v-card variant="outlined" color="amber-darken-1" class="haki-card">
-                      <v-card-text class="text-center pa-2">
-                        <v-icon size="25" color="amber-darken-3">mdi-crown</v-icon>
-                        <div class="text-h6 mt-1 text-amber-darken-4 font-weight-bold">{{ playerCharacter.stats.kingHaki }}</div>
-                        <div class="text-caption text-amber-darken-3">Haoshoku</div>
-                      </v-card-text>
-                    </v-card>
-                  </v-col>
-                </v-row>
+                <div class="ds-stats-list">
+                  <div v-if="playerCharacter.stats.armHaki > 0" class="ds-stat-row">
+                    <v-icon color="deep-purple-lighten-1" size="17" class="ds-stat-icon">mdi-shield-sword</v-icon>
+                    <span class="ds-stat-name">Armamento</span>
+                    <div class="ds-stat-bar-wrap">
+                      <div class="ds-stat-bar" :style="{ width: dsHakiPercent(playerCharacter.stats.armHaki) + '%', background: 'linear-gradient(90deg,#4A148C,#AB47BC)' }" />
+                    </div>
+                    <span class="ds-stat-val" style="color:#AB47BC">{{ playerCharacter.stats.armHaki }}</span>
+                  </div>
+                  <div v-if="playerCharacter.stats.obsHaki > 0" class="ds-stat-row">
+                    <v-icon color="cyan-lighten-1" size="17" class="ds-stat-icon">mdi-eye-circle</v-icon>
+                    <span class="ds-stat-name">Observação</span>
+                    <div class="ds-stat-bar-wrap">
+                      <div class="ds-stat-bar" :style="{ width: dsHakiPercent(playerCharacter.stats.obsHaki) + '%', background: 'linear-gradient(90deg,#006064,#26C6DA)' }" />
+                    </div>
+                    <span class="ds-stat-val" style="color:#26C6DA">{{ playerCharacter.stats.obsHaki }}</span>
+                  </div>
+                  <div v-if="playerCharacter.stats.kingHaki > 0" class="ds-stat-row">
+                    <v-icon color="amber-lighten-1" size="17" class="ds-stat-icon">mdi-crown</v-icon>
+                    <span class="ds-stat-name">Do Rei</span>
+                    <div class="ds-stat-bar-wrap">
+                      <div class="ds-stat-bar" :style="{ width: dsHakiPercent(playerCharacter.stats.kingHaki) + '%', background: 'linear-gradient(90deg,#E65100,#FFA726)' }" />
+                    </div>
+                    <span class="ds-stat-val" style="color:#FFA726">{{ playerCharacter.stats.kingHaki }}</span>
+                  </div>
+                </div>
               </div>
 
               <!-- KINDNESS -->
@@ -490,6 +452,80 @@
               </div>
             </v-card-text>
           </v-card>
+
+          <!-- NOTORIEDADE MUNDIAL -->
+          <v-card v-if="playerCharacter && playerFame" variant="elevated" class="mb-4 db-fame-card">
+            <v-card-title class="text-white pa-3" :style="{ background: playerFame.color }">
+              <v-icon class="mr-2">{{ playerFame.icon }}</v-icon>
+              Notoriedade Mundial
+            </v-card-title>
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center mb-4">
+                <v-icon size="52" :color="playerFame.color" class="mr-4">{{ playerFame.icon }}</v-icon>
+                <div class="flex-grow-1">
+                  <div class="text-h5 font-weight-bold" :style="{ color: playerFame.color }">{{ playerFame.title }}</div>
+                  <div class="text-subtitle-2 text-medium-emphasis">{{ playerFame.score.toLocaleString() }} pontos de fama</div>
+                </div>
+              </div>
+              <div v-if="playerFame.nextTitle" class="d-flex justify-space-between mb-1">
+                <span class="text-caption text-medium-emphasis">{{ playerFame.title }}</span>
+                <span class="text-caption text-medium-emphasis">{{ playerFame.nextTitle }}</span>
+              </div>
+              <v-progress-linear
+                :model-value="playerFame.progress"
+                :color="playerFame.color"
+                height="10"
+                rounded
+                class="mb-2"
+              />
+              <div v-if="playerFame.nextTitle" class="text-caption text-center text-medium-emphasis">
+                {{ (playerFame.nextScore! - playerFame.score).toLocaleString() }} pontos para <strong>{{ playerFame.nextTitle }}</strong>
+              </div>
+              <div v-else class="text-caption text-center font-weight-bold" :style="{ color: playerFame.color }">
+                <v-icon size="14">mdi-crown</v-icon> Título máximo alcançado!
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <!-- PROGRESSÃO DE MARES -->
+          <v-card v-if="playerCharacter && seaAccess.length" variant="elevated" class="mb-4 db-seas-card">
+            <v-card-title class="text-white pa-3" :style="{ background: currentSea.gradient }">
+              <v-icon class="mr-2">{{ currentSea.icon }}</v-icon>
+              Progressão de Mares — {{ currentSea.name }}
+            </v-card-title>
+            <v-card-text class="pa-4">
+              <div class="db-seas-grid">
+                <div
+                  v-for="sa in seaAccess"
+                  :key="sa.sea.index"
+                  class="db-sea-item"
+                  :class="{ 'db-sea-current': sa.sea.index === currentSea.index, 'db-sea-locked': !sa.unlocked }"
+                >
+                  <div class="db-sea-header" :style="{ background: sa.unlocked ? sa.sea.color : '#37474F' }">
+                    <v-icon color="white" size="18">{{ sa.sea.icon }}</v-icon>
+                    <span class="db-sea-name">{{ sa.sea.name }}</span>
+                    <v-icon color="white" size="16">{{ sa.unlocked ? 'mdi-check-circle' : 'mdi-lock' }}</v-icon>
+                  </div>
+                  <div class="db-sea-body">
+                    <div class="text-caption text-medium-emphasis">Dif. {{ sa.sea.range[0] }}–{{ sa.sea.range[1] }}</div>
+                    <div v-if="!sa.unlocked" class="db-sea-req mt-1">
+                      <span class="text-caption font-weight-bold" :class="(playerCharacter.level ?? 0) >= sa.minLevel ? 'text-success' : 'text-error'">Lv {{ sa.minLevel }}</span>
+                      <span class="text-caption mx-1">·</span>
+                      <span class="text-caption font-weight-bold" :class="(playerCharacter.bounty ?? 0) >= sa.minBounty ? 'text-success' : 'text-error'">{{ formatBounty(sa.minBounty) }}</span>
+                    </div>
+                    <div v-else class="text-caption text-success font-weight-bold mt-1">Desbloqueado ✓</div>
+                  </div>
+                </div>
+              </div>
+              <div v-if="nextSea" class="text-center mt-3">
+                <v-chip size="small" variant="tonal" :color="nextSea.sea.color">
+                  <v-icon start size="14">{{ nextSea.sea.icon }}</v-icon>
+                  Próximo: {{ nextSea.sea.name }} — Lv {{ nextSea.minLevel }} + {{ formatBounty(nextSea.minBounty) }}
+                </v-chip>
+              </div>
+            </v-card-text>
+          </v-card>
+
         </v-col>
 
         <!-- ✅ SIDEBAR COM AÇÕES RÁPIDAS E ANÚNCIOS -->
@@ -1032,7 +1068,8 @@ import { useCharacterStore } from '@/stores/characterStore'
 import { IslandExplorationSystem } from '@/utils/islandExplorationSystem'
 import { GameLogic } from '@/utils/gameLogic'
 import { useRouter } from 'vue-router'
-import type { Character, DevilFruit, StyleCombat } from '@/utils/database'
+import { db } from '@/utils/database'
+import type { Character, DevilFruit, StyleCombat, Crew } from '@/utils/database'
 
 // ✅ IMPORTS PARA CONTROLE DO MUNDO
 import { WorldResetSystem, type WorldResetResult } from '@/utils/worldResetSystem'
@@ -1094,14 +1131,47 @@ const showAd = computed(() => GenerationConfig.createEpic().showAd)
 
 const playerDevilFruit = ref<DevilFruit | null>(null)
 const playerStyleCombat = ref<StyleCombat | null>(null)
+const playerCrew = ref<Crew | null>(null)
 
 // ✅ COMPUTED PARA HAKI STATS
 const hasHakiStats = computed(() => {
   if (!playerCharacter.value) return false
-  return playerCharacter.value.stats.armHaki > 0 || 
-         playerCharacter.value.stats.obsHaki > 0 || 
+  return playerCharacter.value.stats.armHaki > 0 ||
+         playerCharacter.value.stats.obsHaki > 0 ||
          playerCharacter.value.stats.kingHaki > 0
 })
+
+// ✅ COMPUTED PARA BARRAS DE STATS
+const playerCombatStats = computed(() => {
+  const s = playerCharacter.value?.stats
+  if (!s) return []
+  return [
+    { key: 'attack',       label: 'Ataque',      icon: 'mdi-sword',    color: '#EF5350', bg: 'linear-gradient(90deg,#8B0000,#EF5350)', value: s.attack       || 0 },
+    { key: 'defense',      label: 'Defesa',       icon: 'mdi-shield',   color: '#42A5F5', bg: 'linear-gradient(90deg,#003087,#42A5F5)', value: s.defense      || 0 },
+    { key: 'speed',        label: 'Velocidade',   icon: 'mdi-run-fast', color: '#66BB6A', bg: 'linear-gradient(90deg,#1B5E20,#66BB6A)', value: s.speed        || 0 },
+    { key: 'intelligence', label: 'Inteligência', icon: 'mdi-brain',    color: '#AB47BC', bg: 'linear-gradient(90deg,#4A148C,#AB47BC)', value: s.intelligence || 0 },
+    { key: 'skill',        label: 'Habilidade',   icon: 'mdi-feather',  color: '#FFA726', bg: 'linear-gradient(90deg,#E65100,#FFA726)', value: s.skill        || 0 },
+  ]
+})
+
+const playerMaxStat = computed(() => {
+  const values = playerCombatStats.value.map(s => s.value)
+  return values.length > 0 ? Math.max(...values) : 1
+})
+
+const dsStatPercent = (value: number) => {
+  const max = playerMaxStat.value
+  if (max === 0) return 0
+  return Math.min(100, Math.max(0, (value / max) * 100))
+}
+
+const dsHakiPercent = (value: number) => {
+  const s = playerCharacter.value?.stats
+  if (!s) return 0
+  const maxHaki = Math.max(s.armHaki || 0, s.obsHaki || 0, s.kingHaki || 0)
+  if (maxHaki === 0) return 0
+  return Math.min(100, Math.max(0, (value / maxHaki) * 100))
+}
 
 // ✅ COMPUTED PARA POWER RANK
 const currentPowerRank = computed(() => {
@@ -1125,6 +1195,31 @@ const expForNextLevel = computed(() => {
   if (!playerCharacter.value) return 0
   return GameLogic.nextLevelUp(playerCharacter.value)
 })
+
+const playerFame = computed(() => {
+  if (!playerCharacter.value) return null
+  return GameLogic.getWorldFame(playerCharacter.value, playerCrew.value?.reputation ?? 0)
+})
+
+const seaAccess = computed(() => {
+  if (!playerCharacter.value) return []
+  return GameLogic.getSeaAccess(playerCharacter.value)
+})
+
+const currentSea = computed(() => {
+  if (!playerCharacter.value) return GameLogic.SEAS[0]
+  const maxDiff = GameLogic.getMaxAccessibleDifficulty(playerCharacter.value)
+  return GameLogic.getSea(Math.max(1, maxDiff))
+})
+
+const nextSea = computed(() => seaAccess.value.find(sa => !sa.unlocked) ?? null)
+
+const formatBounty = (value: number): string => {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(0)}M`
+  if (value >= 1_000) return `${(value / 1_000).toFixed(0)}K`
+  return `${value}`
+}
 
 // ✅ MÉTODOS PARA POSTER
 const onPosterDownload = (success: boolean) => {
@@ -1375,6 +1470,11 @@ onMounted(async () => {
   await checkActiveTasks()
 
   if (playerCharacter.value) {
+    // Carregar Crew do jogador
+    if (playerCharacter.value.crewId) {
+      playerCrew.value = await db.crews.get(playerCharacter.value.crewId) ?? null
+    }
+
     // Carregar Devil Fruit
     const devilFruit = await characterStore.loadDevilFruit(playerCharacter.value.devilFruitId)
     playerDevilFruit.value = devilFruit
@@ -1410,12 +1510,17 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ============================================================
+   Dashboard - Grand Line Command Center
+   ============================================================ */
+
 .dashboard-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 0 8px;
 }
 
+/* Loading */
 .loading-container {
   min-height: 400px;
   display: flex;
@@ -1423,433 +1528,279 @@ onMounted(async () => {
   justify-content: center;
 }
 
-/* ✅ HEADER DO DASHBOARD */
-.dashboard-header {
-  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
-  color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.3);
-}
-
-/* ✅ ESTILOS PARA CONTROLE DO MUNDO */
-.world-control-panel {
-  border-radius: 12px;
-  overflow: hidden;
-  border: 2px solid rgba(25, 118, 210, 0.2);
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
-}
-
-.status-compact {
-  display: flex;
-  align-items: center;
-}
-
-.world-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ✅ PLAYER CARD */
-.player-card {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
-  border: 2px solid rgba(25, 118, 210, 0.2);
-  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.1);
-}
-
-/* ✅ POSTER HERO SECTION */
-.poster-hero-section {
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
-  padding: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.poster-container {
-  position: relative;
-  display: inline-block;
-}
-
-.dashboard-poster {
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
-  transition: all 0.3s ease;
-}
-
-.dashboard-poster:hover {
-  transform: scale(1.02) rotate(1deg);
-  filter: drop-shadow(0 12px 32px rgba(0, 0, 0, 0.4));
-}
-
-.player-badge-overlay {
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  z-index: 10;
-}
-
-.power-rank-overlay {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  z-index: 10;
-}
-
-.player-chip {
-  background: linear-gradient(45deg, #4CAF50, #388E3C) !important;
-  color: white !important;
-  font-weight: bold !important;
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4) !important;
-}
-
-.power-rank-chip {
-  font-weight: bold !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* ✅ CHARACTER INFO */
-.character-dashboard-info {
-  padding: 16px;
-}
-
-.character-name {
-  color: #1565C0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-  line-height: 1.1;
-}
-
-.character-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.info-chip {
-  font-weight: bold !important;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
-}
-
-.power-display-card {
-  border: 2px solid rgba(156, 39, 176, 0.3);
-  transition: all 0.3s ease;
-}
-
-.power-display-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.3);
-}
-
-.bounty-display-dashboard {
-  display: flex;
-  justify-content: center;
-}
-
-/* ✅ SECTION TITLES */
-.stats-title {
-  color: #1565C0;
-  border-bottom: 2px solid rgba(25, 118, 210, 0.3);
-  padding-bottom: 4px;
-  margin-bottom: 16px;
-}
-
-/* ✅ STATS CARDS */
-.stat-card {
-  transition: all 0.3s ease;
-  border-width: 2px;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s;
-}
-
-.stat-card:hover::before {
-  left: 100%;
-}
-
-.attack-card { border-color: #c62828; }
-.defense-card { border-color: #1565c0; }
-.speed-card { border-color: #2e7d32; }
-.intelligence-card { border-color: #7d652e; }
-.skill-card { border-color: #542e7d; }
-
-/* ✅ HAKI CARDS */
-.haki-card {
-  transition: all 0.3s ease;
-  border-width: 2px;
-}
-
-.haki-card:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-/* ✅ KINDNESS CARD */
-.kindness-card {
-  border-width: 2px;
-  transition: all 0.3s ease;
-}
-
-.kindness-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-/* ✅ DEVIL FRUIT SECTION */
-.devil-fruit-card {
-  border: 2px solid rgba(77, 182, 172, 0.3);
-  animation: devilFruitPulse 4s ease-in-out infinite;
-}
-
-@keyframes devilFruitPulse {
-  0%, 100% { 
-    transform: scale(1);
-    box-shadow: 0 4px 12px rgba(77, 182, 172, 0.2);
-  }
-  50% { 
-    transform: scale(1.005);
-    box-shadow: 0 6px 16px rgba(77, 182, 172, 0.3);
-  }
-}
-
-.devil-fruit-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: rgba(77, 182, 172, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* ✅ EXPERIENCE CARD */
-.experience-card {
-  border: 2px solid #1976D2;
-  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2);
-}
-
-/* ✅ ACTION CARDS */
-.action-card {
-  transition: all 0.3s ease;
-  border-width: 2px;
-}
-
-.action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-}
-
-.status-quick-card {
-  border-width: 2px;
-}
-
-/* ✅ ESTILOS PARA ANÚNCIOS */
-.sidebar-ad-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 12px;
-  padding: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.sidebar-ad-container:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.sticky-ad {
-  position: sticky;
-  top: 20px;
-  z-index: 1;
-}
-
-/* ✅ LOADING STEPS */
 .loading-steps {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-width: 300px;
-  margin: 0 auto;
+  gap: 10px;
+  margin-top: 20px;
+  text-align: left;
+  max-width: 280px;
+  margin-inline: auto;
 }
 
 .step-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px;
+  font-size: 0.875rem;
+  color: #8B9DC3;
+  padding: 8px 14px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
 }
 
 .step-item.completed {
-  background-color: rgba(76, 175, 80, 0.1);
+  color: #D4AF37;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.25);
 }
 
-/* ✅ DEBUG STYLES */
-.debug-json {
-  background: #f5f5f5;
-  padding: 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
-  font-family: 'Courier New', monospace;
+/* Dashboard header */
+.dashboard-header {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.1) 0%,
+    rgba(21, 101, 192, 0.08) 100%
+  );
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
-.debug-calculations {
-  background: #f9f9f9;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #D4AF37, #FFD700, #D4AF37, transparent
+  );
 }
 
-.debug-calculations div {
-  margin-bottom: 8px;
-  font-family: 'Courier New', monospace;
-}
-
-.debug-actions {
+/* ─── Combat stat bar rows ─── */
+.ds-stats-list {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
 }
 
-/* ✅ RESPONSIVE */
-@media (max-width: 1200px) {
-  .sticky-ad {
-    position: static;
-  }
-  
-  .sidebar-ad-container {
-    margin: 16px 0;
-  }
+.ds-stat-row {
+  display: grid;
+  grid-template-columns: 20px 100px 1fr 38px;
+  align-items: center;
+  gap: 10px;
 }
 
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 8px;
-  }
-  
-  .poster-hero-section .v-row {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .character-dashboard-info {
-    margin-top: 16px;
-  }
-  
-  .player-badge-overlay, .power-rank-overlay {
-    position: static;
-    margin-top: 8px;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .character-chips {
-    justify-content: center;
-  }
-  
-  .character-name {
-    font-size: 1.8rem;
-  }
-  
-  .d-flex.align-center.justify-space-between {
-    flex-direction: column;
-    gap: 16px;
-  }
-  
-  .world-actions {
-    width: 100%;
-    justify-content: center;
-  }
-  
-  .world-actions .v-btn {
-    flex: 1;
-  }
-  
-  .sidebar-ad-container {
-    order: -1;
-  }
-  
-  .debug-actions {
-    justify-content: center;
-  }
+.ds-stat-icon { justify-self: center; }
+
+.ds-stat-name {
+  font-size: 0.82rem;
+  color: #B0BFDA;
+  white-space: nowrap;
 }
 
-/* ✅ ANIMAÇÕES */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.ds-stat-bar-wrap {
+  height: 7px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-.mdi-spin {
-  animation: spin 1s linear infinite;
+.ds-stat-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
 }
 
-@keyframes posterGlow {
-  0%, 100% { 
-    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3));
-  }
-  50% { 
-    filter: drop-shadow(0 12px 32px rgba(25, 118, 210, 0.4));
-  }
+.ds-stat-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: right;
+  font-family: 'Courier New', monospace;
 }
 
-.dashboard-poster:hover {
-  animation: posterGlow 2s ease-in-out infinite;
+/* Character panel */
+.character-panel {
+  background: linear-gradient(135deg, #132235, #1A2F45);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 14px;
+  overflow: hidden;
 }
 
-/* ✅ CORES CUSTOMIZADAS */
-.text-red-darken-3 { color: #c62828 !important; }
-.text-blue-darken-3 { color: #1565c0 !important; }
-.text-green-darken-3 { color: #2e7d32 !important; }
-.text-orange-darken-3 { color: #ef6c00 !important; }
-.text-purple-darken-3 { color: #6a1b9a !important; }
-.text-amber-darken-4 { color: #ff8f00 !important; }
-.text-teal-darken-3 { color: #00695c !important; }
-
-/* ✅ HOVER EFFECTS GLOBAIS */
-.v-card {
-  transition: all 0.3s ease;
+.character-panel-header {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.12),
+    rgba(21, 101, 192, 0.08)
+  );
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 14px 18px;
 }
 
-.v-card:hover {
-  transform: translateY(-2px);
+.character-name {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #D4AF37;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
 }
 
-.v-btn {
-  border-radius: 8px;
+/* XP / progress bars */
+.xp-bar-track {
+  height: 10px;
+  background: rgba(10, 22, 40, 0.8);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 6px;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #866700, #FFD700);
+  transition: width 0.6s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.xp-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: xp-shimmer 2.5s infinite;
+}
+
+/* Ranking section */
+.ranking-card {
+  background: #132235;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ranking-header {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.1),
+    rgba(21, 101, 192, 0.06)
+  );
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 12px 16px;
+}
+
+.ranking-title {
+  font-family: Georgia, serif;
+  color: #D4AF37;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+/* World status panel */
+.world-status-card {
+  background: linear-gradient(135deg, #132235, #0F1E33);
+  border: 1px solid rgba(21, 101, 192, 0.35);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.world-status-title {
+  font-family: Georgia, serif;
+  color: #90CAF9;
   font-weight: 600;
+  font-size: 0.95rem;
 }
 
-.v-chip {
-  font-weight: 700 !important;
+/* Bounty display */
+.bounty-display {
+  font-family: Georgia, serif;
+  color: #FFD700;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+  letter-spacing: 0.02em;
 }
 
-/* ✅ DARK MODE SUPPORT */
-.v-theme--dark .sidebar-ad-container {
-  background: rgba(255, 255, 255, 0.02);
-  border-color: rgba(255, 255, 255, 0.1);
+@keyframes xp-shimmer {
+  0%   { left: -60%; }
+  100% { left: 160%; }
 }
 
-.v-theme--dark .poster-hero-section {
-  background: rgba(0, 0, 0, 0.1);
+/* ── Fame card ── */
+.db-fame-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ── Seas progression card ── */
+.db-seas-card {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.db-seas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (min-width: 600px) {
+  .db-seas-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.db-sea-item {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: transform 0.15s;
+}
+
+.db-sea-item.db-sea-current {
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: 0 0 10px rgba(255,255,255,0.15);
+  transform: scale(1.03);
+}
+
+.db-sea-item.db-sea-locked {
+  opacity: 0.65;
+}
+
+.db-sea-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+}
+
+.db-sea-name {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-sea-body {
+  padding: 6px 8px;
+  background: rgba(0,0,0,0.2);
+}
+
+.db-sea-req {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
 }
 </style>

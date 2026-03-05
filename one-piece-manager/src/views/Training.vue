@@ -564,142 +564,228 @@ watch([playerCharacter, playerCrew], async () => {
 </script>
 
 <style scoped>
+/* ============================================================
+   Training - Grand Line Dojo
+   ============================================================ */
+
 .training-view {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 8px;
 }
 
+/* Page header */
 .page-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 2rem 0;
-  margin-bottom: 0;
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.1),
+    rgba(212, 175, 55, 0.06)
+  );
+  border: 1px solid rgba(21, 101, 192, 0.3);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 8px;
+  position: relative;
 }
 
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #1565C0, #90CAF9, #1565C0, transparent
+  );
+  border-radius: 14px 14px 0 0;
+}
+
+/* Loading */
 .loading-container {
-  padding: 4rem 0;
-}
-
-.crew-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.stat-item {
+  min-height: 300px;
   display: flex;
   align-items: center;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 6px;
-  border-left: 3px solid rgba(0, 0, 0, 0.1);
+  justify-content: center;
 }
 
-.crew-members-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.member-item {
-  display: flex;
-  align-items: center;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.member-item:hover {
-  background: rgba(0, 0, 0, 0.05);
-  transform: translateX(4px);
-}
-
-.member-info {
-  flex: 1;
-}
-
-.member-name {
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.member-details {
-  font-size: 0.875rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.member-power {
-  margin-left: auto;
-}
-
-.training-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.history-item {
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  border-left: 3px solid rgba(0, 0, 0, 0.1);
-}
-
-.history-info {
-  flex: 1;
-}
-
-.history-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.history-details {
-  font-size: 0.75rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.v-card {
+/* Member selector card */
+.member-card {
+  background: #132235;
+  border: 1px solid rgba(212, 175, 55, 0.25);
   border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  padding: 14px;
+  position: relative;
   overflow: hidden;
 }
 
-.v-card-title {
-  font-weight: 600;
-  font-size: 1.1rem;
+.member-card:hover {
+  border-color: rgba(212, 175, 55, 0.55);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.18);
+  transform: translateY(-2px);
 }
 
-.v-btn {
-  border-radius: 8px;
+.member-card.selected {
+  border-color: #D4AF37;
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.12),
+    rgba(21, 101, 192, 0.08)
+  );
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+}
+
+.member-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #D4AF37;
+  font-size: 0.95rem;
+}
+
+.member-level {
+  font-size: 0.75rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* Training option cards */
+.training-option {
+  background: #132235;
+  border: 1px solid rgba(21, 101, 192, 0.3);
+  border-radius: 12px;
+  padding: 18px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  height: 100%;
+}
+
+.training-option:hover {
+  border-color: rgba(21, 101, 192, 0.6);
+  box-shadow: 0 0 16px rgba(21, 101, 192, 0.2);
+  transform: translateY(-2px);
+}
+
+.training-option.selected {
+  border-color: #1565C0;
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.15),
+    rgba(212, 175, 55, 0.06)
+  );
+  box-shadow: 0 0 16px rgba(21, 101, 192, 0.3);
+}
+
+.training-option-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.training-option-name {
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #90CAF9;
+  margin-bottom: 4px;
+}
+
+.training-option-desc {
+  font-size: 0.8rem;
+  color: #8B9DC3;
+  line-height: 1.5;
+}
+
+/* Stats panel */
+.stats-panel {
+  background: linear-gradient(135deg, #132235, #1A2F45);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.stats-panel-header {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.1),
+    rgba(21, 101, 192, 0.06)
+  );
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 12px 18px;
+}
+
+.stats-panel-title {
+  font-family: Georgia, serif;
+  color: #D4AF37;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+}
+
+.stat-row:last-child { border-bottom: none; }
+
+.stat-label {
+  color: #8B9DC3;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+}
+
+.stat-value {
+  color: #E8D5A3;
   font-weight: 600;
 }
 
-/* RESPONSIVIDADE */
-@media (max-width: 960px) {
-  .page-header {
-    padding: 1rem 0;
-  }
-  
-  .page-header .d-flex {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: 1rem;
-  }
-  
-  .crew-members-list {
-    max-height: 300px;
-  }
-  
-  .training-history-list {
-    max-height: 200px;
-  }
+/* Active training progress */
+.training-progress-card {
+  background: linear-gradient(135deg, #0F1E33, #1A2F45);
+  border: 1px solid rgba(21, 101, 192, 0.4);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.training-progress-header {
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.2),
+    rgba(144, 202, 249, 0.06)
+  );
+  border-bottom: 1px solid rgba(21, 101, 192, 0.3);
+  padding: 12px 18px;
+}
+
+.progress-bar-track {
+  height: 12px;
+  background: rgba(10, 22, 40, 0.8);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #0D47A1, #42A5F5);
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: shimmer 2.5s infinite;
+}
+
+@keyframes shimmer {
+  0%   { left: -60%; }
+  100% { left: 160%; }
 }
 </style>

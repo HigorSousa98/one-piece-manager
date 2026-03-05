@@ -193,44 +193,50 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ── Grand Line Time Remaining ── */
 .time-remaining {
   display: inline-flex;
   align-items: center;
   transition: all 0.3s ease;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
   font-weight: 500;
+  font-family: 'Courier New', monospace;
 }
 
-/* ✅ CORES MELHORADAS PARA CONTRASTE EM FUNDO AZUL */
 .time-completed {
-  background-color: rgba(76, 175, 80, 0.9);
-  color: white !important;
+  background-color: rgba(46, 125, 50, 0.85);
+  color: #a5d6a7 !important;
   font-weight: 700;
+  border: 1px solid rgba(46, 125, 50, 0.5);
 }
 
 .time-critical {
-  background-color: rgba(244, 67, 54, 0.9);
-  color: white !important;
+  background-color: rgba(198, 40, 40, 0.85);
+  color: #ffcdd2 !important;
   font-weight: 700;
+  border: 1px solid rgba(198, 40, 40, 0.6);
   animation: blink 1s infinite;
 }
 
 .time-warning {
-  background-color: rgba(255, 152, 0, 0.9);
-  color: white !important;
+  background-color: rgba(245, 127, 23, 0.85);
+  color: #fff3e0 !important;
   font-weight: 600;
+  border: 1px solid rgba(245, 127, 23, 0.5);
 }
 
 .time-normal {
-  background-color: rgba(255, 255, 255, 0.9);
-  color: #1976d2 !important;
+  background-color: rgba(212, 175, 55, 0.12);
+  color: #D4AF37 !important;
   font-weight: 500;
+  border: 1px solid rgba(212, 175, 55, 0.25);
 }
 
 .time-default {
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #333 !important;
+  background-color: rgba(19, 34, 53, 0.7);
+  color: #8b9dc3 !important;
+  border: 1px solid rgba(139, 157, 195, 0.2);
 }
 
 .pulse {
@@ -239,21 +245,11 @@ onUnmounted(() => {
 
 @keyframes blink {
   0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0.7; }
+  51%, 100% { opacity: 0.65; }
 }
 
 @keyframes pulse {
-  0% { 
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% { 
-    transform: scale(1.05);
-    opacity: 0.9;
-  }
-  100% { 
-    transform: scale(1);
-    opacity: 1;
-  }
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(1.05); opacity: 0.9; }
 }
 </style>

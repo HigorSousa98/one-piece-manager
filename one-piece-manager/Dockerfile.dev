@@ -1,0 +1,35 @@
+# Dockerfile.dev
+FROM node:20-alpine
+
+# ✅ Instalar dependências do sistema
+RUN apk add --no-cache \
+    git \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    pango-dev \
+    jpeg-dev
+
+WORKDIR /app
+
+# ✅ Copiar package files
+COPY package*.json ./
+
+# ✅ Limpar cache e instalar dependências
+RUN npm cache clean --force && \
+    npm install && \
+    npm install html-to-image --save
+
+# ✅ Verificar instalação
+RUN ls -la node_modules/ | grep html-to-image || echo "html-to-image não encontrado"
+RUN npm list html-to-image || echo "Verificação de dependência falhou"
+
+# ✅ Copiar código fonte
+COPY . .
+
+# ✅ Expor porta
+EXPOSE 5173
+
+# ✅ Comando com instalação adicional
+CMD ["sh", "-c", "npm install html-to-image && npm run dev -- --host 0.0.0.0 --port 5173"]

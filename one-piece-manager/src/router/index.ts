@@ -59,6 +59,11 @@ const router = createRouter({
       name: 'BossFight',
       component: () => import('@/views/BossFight.vue'),
     },
+    {
+      path: '/inventory',
+      name: 'Inventory',
+      component: () => import('@/views/Inventory.vue'),
+    },
   ],
 })
 

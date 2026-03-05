@@ -1,28 +1,11 @@
 {
-  "name": "one-piece-manager",
+  "name": "one-piece-world",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build-with-types": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit"
-  },
-  "dependencies": {
-    "@mdi/font": "^7.4.47",
-    "dexie": "^3.2.7",
-    "pinia": "^2.1.7",
-    "vue": "^3.4.29",
-    "vue-router": "^4.3.3",
-    "vuetify": "^3.6.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.5",
-    "html-to-image": "^1.11.13",
-    "typescript": "^5.4.5",
-    "vite": "^5.3.1",
-    "vue-tsc": "^2.0.29"
+    "setup": "npm --prefix one-piece-manager install",
+    "dev": "cd one-piece-manager && npm run dev",
+    "build": "cd one-piece-manager && npm run build",
+    "preview": "cd one-piece-manager && npm run preview"
   }
 }

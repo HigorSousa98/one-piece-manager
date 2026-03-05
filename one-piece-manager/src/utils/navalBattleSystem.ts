@@ -5,6 +5,8 @@ import { GameLogic } from './gameLogic'
 import type { Crew, Character, Island } from './database'
 import { useCharacterStore } from '@/stores/characterStore'
 import { useBattleStore } from '@/stores/battleStore'
+import { AllianceSystem } from './allianceSystem'
+import { BattleNarrator } from './battleNarrator'
 
 export interface BattleResult {
   victory: boolean
@@ -26,28 +28,30 @@ export class NavalBattleSystem {
   // ✅ INICIAR BATALHA NAVAL
   static async startNavalBattle(
     playerCrewId: number,
-    enemyCrewId: number,
+    enemyCrewData: Crew,
     island: Island,
   ): Promise<BattleResult> {
     try {
       const battleStore = useBattleStore()
       console.log('⚔️ NavalBattleSystem - Iniciando batalha naval:', {
         playerCrewId,
-        enemyCrewId,
+        enemyCrew: enemyCrewData.name,
         island: island.name,
       })
 
-      // Buscar crews
+      // Buscar crew do jogador
       const playerCrew = await db.crews.get(playerCrewId)
-      const enemyCrew = await db.crews.get(enemyCrewId)
 
-      if (!playerCrew || !enemyCrew) {
-        throw new Error('Crews não encontrados para batalha')
+      if (!playerCrew) {
+        throw new Error('Crew do jogador não encontrado para batalha')
       }
+
+      // Usar o objeto do crew inimigo passado diretamente (evita race condition com worldUpdateWorker)
+      const enemyCrew = enemyCrewData
+      const enemyCrewId = enemyCrew.id!
 
       // Buscar membros dos crews
       const playerMembers = await db.characters.where('crewId').equals(playerCrewId).toArray()
-
       const enemyMembers = await db.characters.where('crewId').equals(enemyCrewId).toArray()
 
       console.log('👥 NavalBattleSystem - Membros encontrados:', {
@@ -79,6 +83,59 @@ export class NavalBattleSystem {
       console.error('❌ NavalBattleSystem - Erro na batalha:', error)
       throw error
     }
+  }
+
+  // ✅ BATALHA NAVAL COM CREWS ALIADAS
+  static async startNavalBattleWithAllies(
+    playerCrewId: number,
+    enemyCrewData: Crew,
+    island: Island,
+  ): Promise<BattleResult> {
+    // Get active allied crew IDs and their power bonus
+    const allyBonus = await AllianceSystem.getAlliedPowerBonus(playerCrewId)
+    const activeAlliances = await AllianceSystem.getActiveAlliances(playerCrewId)
+
+    const result = await this.startNavalBattle(playerCrewId, enemyCrewData, island)
+
+    // Append alliance info to battle log
+    if (activeAlliances.length > 0 && result.battleLog) {
+      const allyNames = await Promise.all(
+        activeAlliances.map(async (a) => {
+          const crew = await db.crews.get(a.alliedCrewId)
+          return crew?.name ?? `Crew #${a.alliedCrewId}`
+        }),
+      )
+      const allyLog = allyNames.map((name) => `🤝 ${name} junta-se à batalha como aliada!`)
+      result.battleLog.splice(1, 0, ...allyLog)
+
+      // Give 20% of rewards to each allied crew
+      if (result.victory && result.rewards) {
+        const allyExp = Math.floor(result.rewards.experience * 0.2)
+        const allyRep = Math.floor(result.rewards.reputation * 0.2)
+        await Promise.all(
+          activeAlliances.map(async (a) => {
+            const allyCrew = await db.crews.get(a.alliedCrewId)
+            if (allyCrew) {
+              await db.crews.update(a.alliedCrewId, {
+                reputation: (allyCrew.reputation || 0) + allyRep,
+              })
+              const captainMember = await db.characters
+                .where('crewId')
+                .equals(a.alliedCrewId)
+                .and((c) => c.position === 'Captain')
+                .first()
+              if (captainMember?.id) {
+                await db.characters.update(captainMember.id, {
+                  experience: (captainMember.experience || 0) + allyExp,
+                })
+              }
+            }
+          }),
+        )
+      }
+    }
+
+    return result
   }
 
   // ✅ BONUS DE PODER POR TIPO
@@ -197,41 +254,14 @@ export class NavalBattleSystem {
     enemyMembers: Character[],
     round: number,
   ): string[] {
-    const log: string[] = []
-
-    // Selecionar combatentes aleatórios
     const playerFighter = playerMembers[Math.floor(Math.random() * playerMembers.length)]
     const enemyFighter = enemyMembers[Math.floor(Math.random() * enemyMembers.length)]
 
-    const actions = [
-      `Round ${round}: ${playerFighter.name} ataca com ${this.getRandomAttack(playerFighter.type)}!`,
-      `${enemyFighter.name} contra-ataca com ${this.getRandomAttack(enemyFighter.type)}!`,
-      `Os navios trocam tiros de canhão!`,
-      `${playerFighter.name} e ${enemyFighter.name} duelam no convés!`,
-      `Manobras navais intensas acontecem!`,
-    ]
-
-    const randomAction = actions[Math.floor(Math.random() * actions.length)]
-    log.push(`⚔️ ${randomAction}`)
-
-    return log
-  }
-
-  // ✅ ATAQUES ALEATÓRIOS POR TIPO
-  static getRandomAttack(type: string): string {
-    const attacks = {
-      Swordsman: ['Corte Devastador', 'Técnica das Três Espadas', 'Rajada de Lâminas'],
-      Navigator: ['Manobra Evasiva', 'Previsão do Tempo', 'Rota de Fuga'],
-      Cook: ['Chute Flamejante', 'Técnica Culinária', 'Ataque Nutritivo'],
-      Doctor: ['Cirurgia de Campo', 'Tratamento Rápido', 'Análise Médica'],
-      Sniper: ['Tiro Certeiro', 'Rajada Precisa', 'Tiro à Distância'],
-      Shipwright: ['Martelo Devastador', 'Reparo Rápido', 'Técnica de Construção'],
-      Musician: ['Melodia Hipnótica', 'Acorde Ensurdecedor', 'Ritmo de Batalha'],
-      Archaeologist: ['Conhecimento Antigo', 'Técnica Histórica', 'Poder Ancestral'],
-    }
-
-    const typeAttacks = attacks[type as keyof typeof attacks] || ['Ataque Básico', 'Golpe Simples']
-    return typeAttacks[Math.floor(Math.random() * typeAttacks.length)]
+    return BattleNarrator.getNavalRoundLines(
+      { name: playerFighter.name, type: playerFighter.type, position: playerFighter.position },
+      { name: enemyFighter.name, type: enemyFighter.type, position: enemyFighter.position },
+      round,
+    )
   }
 
   // ✅ CALCULAR RECOMPENSAS

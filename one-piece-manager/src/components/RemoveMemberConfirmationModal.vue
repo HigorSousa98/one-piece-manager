@@ -167,99 +167,50 @@ const getTypeIcon = (type: string): string => {
 </script>
 
 <style scoped>
-.remove-member-modal {
-  border-radius: 12px;
-  overflow: hidden;
-  max-width: 600px;
+/* RemoveMemberConfirmationModal - Danger confirmation */
+
+.removal-modal-header {
+  background: linear-gradient(135deg, rgba(198,40,40,0.15), rgba(139,0,0,0.1));
+  border-bottom: 1px solid rgba(198,40,40,0.3);
+  padding: 16px 20px;
 }
 
-.member-info {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  padding: 16px;
-  border-left: 4px solid rgba(0, 0, 0, 0.1);
+.removal-title {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #EF5350;
+  letter-spacing: 0.04em;
 }
 
-.consequences-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.removal-member-info {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 12px 0;
+  text-align: center;
 }
 
-.consequence-item {
-  display: flex;
-  align-items: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 6px;
-  font-size: 0.875rem;
+.removal-member-name {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #E8D5A3;
+  margin-bottom: 4px;
 }
 
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
-  text-transform: none;
+.removal-warning-text {
+  font-size: 0.85rem;
+  color: #EF9A9A;
+  margin-top: 8px;
 }
 
-.v-card-actions {
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+.confirm-remove-btn {
+  background: linear-gradient(135deg, #B71C1C, #C62828) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: 0 4px 14px rgba(198,40,40,0.3) !important;
 }
-
-.v-chip {
-  font-weight: 600 !important;
-}
-
-/* RESPONSIVIDADE */
-@media (max-width: 768px) {
-  .member-info .d-flex {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .member-info .v-avatar {
-    margin-right: 0 !important;
-    margin-bottom: 12px;
-  }
-  
-  .consequence-item {
-    flex-direction: column;
-    text-align: center;
-    gap: 8px;
-  }
-  
-  .consequence-item .v-icon {
-    margin-right: 0 !important;
-  }
-}
-
-/* ANIMAÇÃO DO MODAL */
-.remove-member-modal {
-  animation: modalSlideUp 0.3s ease-out;
-}
-
-@keyframes modalSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* HOVER EFFECTS */
-.consequence-item {
-  transition: all 0.2s ease;
-}
-
-.consequence-item:hover {
-  background: rgba(255, 255, 255, 0.9);
-  transform: translateX(4px);
-}
-
-/* CORES CUSTOMIZADAS */
-.text-red-darken-3 { color: #c62828 !important; }
-.text-orange-darken-3 { color: #ef6c00 !important; }
-.text-red-darken-2 { color: #d32f2f !important; }
 </style>

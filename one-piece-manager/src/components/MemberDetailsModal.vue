@@ -1,11 +1,15 @@
 <template>
-  <v-card class="member-details-modal">
-    <v-card-title class="bg-primary text-white">
-      <v-icon left class="text-white">
-        {{ isCaptain ? 'mdi-crown' : 'mdi-account' }}
-      </v-icon>
-      {{ isCaptain ? '👑 Detalhes do Capitão' : '👥 Detalhes do Membro' }}
-    </v-card-title>
+  <v-card class="md-card">
+    <!-- Linha decorativa de topo -->
+    <div class="md-top-accent" />
+
+    <!-- Header -->
+    <div class="md-header">
+      <v-icon size="20" color="primary">{{ isCaptain ? 'mdi-crown' : 'mdi-account' }}</v-icon>
+      <div>
+        <p class="md-title">{{ isCaptain ? 'Detalhes do Capitão' : 'Detalhes do Membro' }}</p>
+      </div>
+    </div>
     
     <v-card-text class="pa-6">
       
@@ -157,99 +161,71 @@
 
       <!-- ✅ STATS PRINCIPAIS -->
       <div class="stats-section mb-6">
-        <h2 class="text-h5 mb-4 section-title">
-          <v-icon left color="primary" size="28">mdi-chart-line</v-icon>
+        <h2 class="md-section-title">
+          <v-icon size="16" class="me-2" color="primary">mdi-sword-cross</v-icon>
           Estatísticas de Combate
         </h2>
-        
-        <v-row class="mb-4">
-          <v-col cols="12" md="3">
-            <v-card variant="outlined" color="red-darken-1" class="stat-card">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="35" color="red-darken-2">mdi-sword</v-icon>
-                <div class="text-h5 mt-2 text-red-darken-3 font-weight-bold">{{ member.stats.attack }}</div>
-                <div class="text-subtitle-2 text-red-darken-2">Ataque</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" md="3">
-            <v-card variant="outlined" color="blue-darken-1" class="stat-card">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="35" color="blue-darken-2">mdi-shield</v-icon>
-                <div class="text-h5 mt-2 text-blue-darken-3 font-weight-bold">{{ member.stats.defense }}</div>
-                <div class="text-subtitle-2 text-blue-darken-2">Defesa</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" md="2">
-            <v-card variant="outlined" color="green-darken-1" class="stat-card">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="35" color="green-darken-2">mdi-run-fast</v-icon>
-                <div class="text-h5 mt-2 text-green-darken-3 font-weight-bold">{{ member.stats.speed }}</div>
-                <div class="text-subtitle-2 text-green-darken-2">Velocidade</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" md="2">
-            <v-card variant="outlined" color="blue-grey-darken-1" class="stat-card">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="35" color="blue-grey-darken-2">mdi-brain</v-icon>
-                <div class="text-h5 mt-2 text-blue-grey-darken-3 font-weight-bold">{{ member.stats.intelligence }}</div>
-                <div class="text-subtitle-2 text-blue-grey-darken-2">Inteligência</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" md="2">
-            <v-card variant="outlined" color="purple-darken-1" class="stat-card">
-              <v-card-text class="text-center pa-3">
-                <v-icon size="35" color="purple-darken-2">mdi-feather</v-icon>
-                <div class="text-h5 mt-2 text-purple-darken-3 font-weight-bold">{{ member.stats.skill }}</div>
-                <div class="text-subtitle-2 text-purple-darken-2">Habilidade</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+
+        <div class="md-stats-list">
+          <div v-for="stat in memberCombatStats" :key="stat.key" class="md-stat-row">
+            <v-icon :color="stat.color" size="18" class="md-stat-icon">{{ stat.icon }}</v-icon>
+            <span class="md-stat-name">{{ stat.label }}</span>
+            <div class="md-stat-bar-wrap">
+              <div class="md-stat-bar" :style="{ width: mdStatPercent(stat.value) + '%', background: stat.bg }" />
+            </div>
+            <span class="md-stat-val" :style="{ color: stat.color }">{{ stat.value }}</span>
+          </div>
+        </div>
       </div>
 
       <!-- ✅ HAKI STATS -->
       <div class="haki-section mb-6" v-if="hasHakiStats">
-        <h2 class="text-h5 mb-4 section-title">
-          <v-icon left color="orange-darken-2" size="28">mdi-meditation</v-icon>
-          Habilidades Haki
+        <h2 class="md-section-title">
+          <v-icon size="16" class="me-2" color="blue-grey-lighten-2">mdi-wave</v-icon>
+          Haki
         </h2>
-        
-        <v-row>
-          <v-col cols="12" md="4" v-if="member.stats.armHaki > 0">
-            <v-card variant="outlined" color="orange-darken-1" class="haki-card armament-haki">
-              <v-card-text class="text-center pa-4">
-                <v-icon size="45" color="orange-darken-2">mdi-arm-flex</v-icon>
-                <div class="text-h4 mt-2 text-orange-darken-3 font-weight-bold">{{ member.stats.armHaki }}</div>
-                <div class="text-subtitle-1 text-orange-darken-2">Busoshoku Haki</div>
-                <div class="text-caption text-orange-darken-1">Haki do Armamento</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" md="4" v-if="member.stats.obsHaki > 0">
-            <v-card variant="outlined" color="purple-darken-1" class="haki-card observation-haki">
-              <v-card-text class="text-center pa-4">
-                <v-icon size="45" color="purple-darken-2">mdi-eye</v-icon>
-                <div class="text-h4 mt-2 text-purple-darken-3 font-weight-bold">{{ member.stats.obsHaki }}</div>
-                <div class="text-subtitle-1 text-purple-darken-2">Kenbunshoku Haki</div>
-                <div class="text-caption text-purple-darken-1">Haki da Observação</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-          <v-col cols="12" md="4" v-if="member.stats.kingHaki > 0">
-            <v-card variant="outlined" color="amber-darken-1" class="haki-card conqueror-haki">
-              <v-card-text class="text-center pa-4">
-                <v-icon size="45" color="amber-darken-3">mdi-crown</v-icon>
-                <div class="text-h4 mt-2 text-amber-darken-4 font-weight-bold">{{ member.stats.kingHaki }}</div>
-                <div class="text-subtitle-1 text-amber-darken-3">Haoshoku Haki</div>
-                <div class="text-caption text-amber-darken-2">Haki do Rei</div>
-              </v-card-text>
-            </v-card>
-          </v-col>
-        </v-row>
+
+        <div class="md-stats-list">
+          <div v-if="member.stats.armHaki > 0" class="md-stat-row">
+            <v-icon color="deep-purple-lighten-1" size="18" class="md-stat-icon">mdi-shield-sword</v-icon>
+            <span class="md-stat-name">Armamento (Busoshoku)</span>
+            <div class="md-stat-bar-wrap">
+              <div class="md-stat-bar" :style="{ width: mdHakiPercent(member.stats.armHaki) + '%', background: 'linear-gradient(90deg,#4A148C,#AB47BC)' }" />
+            </div>
+            <span class="md-stat-val" style="color:#AB47BC">
+              {{ member.stats.armHaki }}
+              <span class="md-haki-tier" :style="{ color: GameLogic.hakiTier(member.stats.armHaki, 'arm').color }">
+                · {{ GameLogic.hakiTier(member.stats.armHaki, 'arm').name }}
+              </span>
+            </span>
+          </div>
+          <div v-if="member.stats.obsHaki > 0" class="md-stat-row">
+            <v-icon color="cyan-lighten-1" size="18" class="md-stat-icon">mdi-eye-circle</v-icon>
+            <span class="md-stat-name">Observação (Kenbunshoku)</span>
+            <div class="md-stat-bar-wrap">
+              <div class="md-stat-bar" :style="{ width: mdHakiPercent(member.stats.obsHaki) + '%', background: 'linear-gradient(90deg,#006064,#26C6DA)' }" />
+            </div>
+            <span class="md-stat-val" style="color:#26C6DA">
+              {{ member.stats.obsHaki }}
+              <span class="md-haki-tier" :style="{ color: GameLogic.hakiTier(member.stats.obsHaki, 'obs').color }">
+                · {{ GameLogic.hakiTier(member.stats.obsHaki, 'obs').name }}
+              </span>
+            </span>
+          </div>
+          <div v-if="member.stats.kingHaki > 0" class="md-stat-row">
+            <v-icon color="amber-lighten-1" size="18" class="md-stat-icon">mdi-crown</v-icon>
+            <span class="md-stat-name">Do Rei (Haoshoku)</span>
+            <div class="md-stat-bar-wrap">
+              <div class="md-stat-bar" :style="{ width: mdHakiPercent(member.stats.kingHaki) + '%', background: 'linear-gradient(90deg,#E65100,#FFA726)' }" />
+            </div>
+            <span class="md-stat-val" style="color:#FFA726">
+              {{ member.stats.kingHaki }}
+              <span class="md-haki-tier" :style="{ color: GameLogic.hakiTier(member.stats.kingHaki, 'king').color }">
+                · {{ GameLogic.hakiTier(member.stats.kingHaki, 'king').name }}
+              </span>
+            </span>
+          </div>
+        </div>
       </div>
       
       <!-- ✅ LOYALTY/KINDNESS SECTION -->
@@ -387,7 +363,8 @@
     </v-card-text>
     
     <!-- ✅ AÇÕES DO MODAL -->
-    <v-card-actions class="pa-4 bg-grey-lighten-4">
+    <v-divider style="border-color: rgba(212,175,55,0.2)" />
+    <v-card-actions class="md-actions pa-4">
       <!-- BOTÃO REMOVER (apenas para membros, não capitão) -->
       <v-btn 
         v-if="!isCaptain" 
@@ -450,10 +427,39 @@ const isRemoving = ref(false)
 
 // ✅ COMPUTED
 const hasHakiStats = computed(() => {
-  return props.member.stats.armHaki > 0 || 
-         props.member.stats.obsHaki > 0 || 
+  return props.member.stats.armHaki > 0 ||
+         props.member.stats.obsHaki > 0 ||
          props.member.stats.kingHaki > 0
 })
+
+const memberCombatStats = computed(() => {
+  const s = props.member.stats
+  return [
+    { key: 'attack',       label: 'Ataque',      icon: 'mdi-sword',    color: '#EF5350', bg: 'linear-gradient(90deg,#8B0000,#EF5350)', value: s.attack       || 0 },
+    { key: 'defense',      label: 'Defesa',       icon: 'mdi-shield',   color: '#42A5F5', bg: 'linear-gradient(90deg,#003087,#42A5F5)', value: s.defense      || 0 },
+    { key: 'speed',        label: 'Velocidade',   icon: 'mdi-run-fast', color: '#66BB6A', bg: 'linear-gradient(90deg,#1B5E20,#66BB6A)', value: s.speed        || 0 },
+    { key: 'intelligence', label: 'Inteligência', icon: 'mdi-brain',    color: '#AB47BC', bg: 'linear-gradient(90deg,#4A148C,#AB47BC)', value: s.intelligence || 0 },
+    { key: 'skill',        label: 'Habilidade',   icon: 'mdi-feather',  color: '#FFA726', bg: 'linear-gradient(90deg,#E65100,#FFA726)', value: s.skill        || 0 },
+  ]
+})
+
+const memberMaxStat = computed(() => {
+  const values = memberCombatStats.value.map(s => s.value)
+  return values.length > 0 ? Math.max(...values) : 1
+})
+
+const mdStatPercent = (value: number) => {
+  const max = memberMaxStat.value
+  if (max === 0) return 0
+  return Math.min(100, Math.max(0, (value / max) * 100))
+}
+
+const mdHakiPercent = (value: number) => {
+  const s = props.member.stats
+  const maxHaki = Math.max(s.armHaki || 0, s.obsHaki || 0, s.kingHaki || 0)
+  if (maxHaki === 0) return 0
+  return Math.min(100, Math.max(0, (value / maxHaki) * 100))
+}
 
 const experiencePercentage = computed(() => {
   const expForNext = GameLogic.nextLevelUp(props.member)
@@ -656,313 +662,111 @@ const getKindnessDescription = (kindness: number): string => {
 </script>
 
 <style scoped>
-.member-details-modal {
-  max-width: 1200px;
-  margin: 0 auto;
-}
+/* ============================================================
+   MemberDetailsModal - Grand Line Dark Theme
+   ============================================================ */
 
-/* ✅ POSTER HERO SECTION */
-.poster-hero-section {
-  margin-bottom: 32px;
-}
-
-.poster-hero-card {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
-  border: 2px solid rgba(25, 118, 210, 0.2);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
-
-.captain-poster-card {
-  background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 193, 7, 0.15) 100%);
-  border: 3px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
-}
-
-.poster-container {
-  position: relative;
-  display: inline-block;
-}
-
-.hero-poster {
-  filter: drop-shadow(0 12px 35px rgba(0, 0, 0, 0.3));
-  transition: all 0.3s ease;
-}
-
-.hero-poster:hover {
-  transform: scale(1.02) rotate(1deg);
-  filter: drop-shadow(0 16px 45px rgba(0, 0, 0, 0.4));
-}
-
-.poster-overlay-badges {
-  position: absolute;
-  top: -15px;
-  left: -15px;
-  right: -15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  z-index: 10;
-}
-
-.captain-hero-badge {
-  background: linear-gradient(45deg, #FFD700, #FFA000) !important;
-  color: #8B4513 !important;
-  font-weight: bold !important;
-  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4) !important;
-}
-
-.devil-fruit-hero-badge {
-  background: linear-gradient(45deg, #4DB6AC, #00695C) !important;
-  color: white !important;
-  font-weight: bold !important;
-  box-shadow: 0 6px 20px rgba(77, 182, 172, 0.4) !important;
-}
-
-.power-rank-hero-badge {
-  font-weight: bold !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* ✅ HERO INFO */
-.hero-info {
-  padding: 16px;
-}
-
-.member-hero-name {
-  color: #1565C0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-  line-height: 1.1;
-}
-
-.hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.hero-chip {
-  font-weight: bold !important;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2) !important;
-}
-
-.power-display-card {
-  border: 2px solid rgba(156, 39, 176, 0.3);
-  transition: all 0.3s ease;
-}
-
-.power-display-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(156, 39, 176, 0.3);
-}
-
-.bounty-display {
-  display: flex;
-  justify-content: center;
-}
-
-/* ✅ SECTION TITLES */
-.section-title {
-  color: #1565C0;
-  border-bottom: 3px solid rgba(25, 118, 210, 0.3);
-  padding-bottom: 8px;
-  margin-bottom: 24px;
-}
-
-/* ✅ DEVIL FRUIT SECTION */
-.devil-fruit-card {
-  border: 3px solid #4DB6AC;
-  box-shadow: 0 8px 25px rgba(77, 182, 172, 0.2);
-  animation: devilFruitDetailPulse 4s ease-in-out infinite;
-}
-
-@keyframes devilFruitDetailPulse {
-  0%, 100% { 
-    transform: scale(1);
-    box-shadow: 0 8px 25px rgba(77, 182, 172, 0.2);
-  }
-  50% { 
-    transform: scale(1.005);
-    box-shadow: 0 12px 35px rgba(77, 182, 172, 0.3);
-  }
-}
-
-.devil-fruit-icon-large {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  background: rgba(77, 182, 172, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-}
-
-.devil-fruit-stat-card, .awakening-card {
-  transition: all 0.3s ease;
-  border-width: 2px;
-}
-
-.devil-fruit-stat-card:hover, .awakening-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-/* ✅ STATS CARDS */
-.stat-card {
-  transition: all 0.3s ease;
-  border-width: 3px;
-  position: relative;
+.md-card {
+  background: #172D48 !important;
+  border: 1px solid rgba(212,175,55,0.45) !important;
+  border-radius: 14px !important;
   overflow: hidden;
 }
 
-.stat-card:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 12px 35px rgba(0,0,0,0.2);
+.md-top-accent {
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #D4AF37 30%, #FFD700 50%, #D4AF37 70%, transparent 100%);
 }
 
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
+.md-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(10,22,40,0.6) 0%, rgba(212,175,55,0.06) 100%);
+  border-bottom: 1px solid rgba(212,175,55,0.15);
+}
+
+.md-title {
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin: 0;
+  letter-spacing: 0.07em;
+  text-shadow: 0 0 14px rgba(212,175,55,0.3);
+}
+
+/* Section labels */
+.md-section-title {
+  display: flex;
+  align-items: center;
+  font-family: Georgia, serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #B0BFDA;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(212,175,55,0.18);
+}
+
+/* ─── Combat stat bar rows ─── */
+.md-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.md-stat-row {
+  display: grid;
+  grid-template-columns: 22px 160px 1fr 42px;
+  align-items: center;
+  gap: 10px;
+}
+
+.md-stat-icon { justify-self: center; }
+
+.md-stat-name {
+  font-size: 0.83rem;
+  color: #B0BFDA;
+  white-space: nowrap;
+}
+
+.md-stat-bar-wrap {
+  height: 7px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.md-stat-bar {
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-  transition: left 0.5s;
+  border-radius: 4px;
+  transition: width 0.5s ease;
 }
 
-.stat-card:hover::before {
-  left: 100%;
-}
-
-.attack-card { border-color: #c62828; }
-.defense-card { border-color: #1565c0; }
-.speed-card { border-color: #2e7d32; }
-
-/* ✅ HAKI CARDS */
-.haki-card {
-  transition: all 0.3s ease;
-  border-width: 2px;
-  position: relative;
-}
-
-.haki-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.armament-haki { border-color: #ef6c00; }
-.observation-haki { border-color: #6a1b9a; }
-.conqueror-haki { border-color: #ff8f00; }
-
-/* ✅ LOYALTY/KINDNESS CARDS */
-.loyalty-card, .kindness-card {
-  border-width: 3px;
-  transition: all 0.3s ease;
-}
-
-.loyalty-card:hover, .kindness-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.loyalty-progress {
-  border-radius: 6px;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* ✅ EXPERIENCE CARD */
-.experience-card {
-  border: 3px solid #1976D2;
-  box-shadow: 0 8px 25px rgba(25, 118, 210, 0.2);
-}
-
-.exp-remaining-chip {
-  font-weight: bold !important;
-  font-size: 1rem !important;
-  padding: 8px 16px !important;
-}
-
-/* ✅ DEBUG */
-.debug-json {
-  background: #f5f5f5;
-  padding: 16px;
-  border-radius: 8px;
-  font-size: 12px;
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #ddd;
+.md-stat-val {
+  font-size: 0.83rem;
+  font-weight: 700;
+  text-align: right;
   font-family: 'Courier New', monospace;
 }
 
-/* ✅ CHIPS */
-.v-chip {
-  font-weight: 600 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+.md-haki-tier {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-align: right;
+  line-height: 1;
+  margin-top: 1px;
+  font-family: inherit;
 }
 
-/* ✅ RESPONSIVE */
-@media (max-width: 768px) {
-  .poster-hero-card .v-row {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .hero-info {
-    margin-top: 16px;
-  }
-  
-  .poster-overlay-badges {
-    position: static;
-    flex-direction: row;
-    justify-content: center;
-    margin-top: 16px;
-  }
-  
-  .hero-chips {
-    justify-content: center;
-  }
-  
-  .member-hero-name {
-    font-size: 2rem;
-  }
+/* Actions */
+.md-actions {
+  background: rgba(10,22,40,0.4);
 }
-
-/* ✅ ANIMAÇÕES */
-@keyframes modalEntry {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.member-details-modal {
-  animation: modalEntry 0.6s ease-out;
-}
-
-@keyframes statCardPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-}
-
-.stat-card:hover {
-  animation: statCardPulse 2s ease-in-out infinite;
-}
-
-/* ✅ CORES CUSTOMIZADAS */
-.text-red-darken-3 { color: #c62828 !important; }
-.text-blue-darken-3 { color: #1565c0 !important; }
-.text-green-darken-3 { color: #2e7d32 !important; }
-.text-orange-darken-3 { color: #ef6c00 !important; }
-.text-purple-darken-3 { color: #6a1b9a !important; }
-.text-amber-darken-4 { color: #ff8f00 !important; }
-.text-teal-darken-3 { color: #00695c !important; }
-.text-light-green-darken-3 { color: #388e3c !important; }
-.text-blue-grey-darken-3 { color: #455a64 !important; }
-.text-deep-orange-darken-3 { color: #d84315 !important; }
 </style>

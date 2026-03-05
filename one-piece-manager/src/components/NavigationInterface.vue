@@ -454,120 +454,101 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.navigation-interface {
+/* ============================================================
+   NavigationInterface - Sea route planner
+   ============================================================ */
+
+.nav-interface {
+  max-width: 100%;
+}
+
+.nav-section-header {
+  background: linear-gradient(135deg, rgba(21,101,192,0.12), rgba(212,175,55,0.05));
+  border: 1px solid rgba(21,101,192,0.3);
   border-radius: 12px;
-  overflow: hidden;
-}
-
-/* CONFLITOS */
-.conflicts-section {
-  border-radius: 8px;
-}
-
-.conflicting-tasks {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.conflict-item {
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  border-left: 4px solid #ff9800;
-}
-
-.task-info {
-  flex: 1;
-}
-
-.task-title {
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.task-details {
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-/* INFORMAÇÕES */
-.ship-info {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.info-item {
+  padding: 14px 18px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.7);
-  border-radius: 6px;
-  border-left: 3px solid rgba(0, 0, 0, 0.1);
-  transition: background-color 0.2s ease;
+  gap: 10px;
 }
 
-.info-item:hover {
-  background: rgba(255, 255, 255, 0.9);
+.nav-section-title {
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #90CAF9;
+  letter-spacing: 0.04em;
+}
+
+.destination-card {
+  background: #132235;
+  border: 1px solid rgba(21,101,192,0.25);
+  border-radius: 11px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  height: 100%;
+}
+
+.destination-card:hover {
+  border-color: rgba(21,101,192,0.55);
+  box-shadow: 0 0 14px rgba(21,101,192,0.2);
+  transform: translateY(-2px);
+}
+
+.destination-card.selected {
+  border-color: #1565C0;
+  background: linear-gradient(135deg, rgba(21,101,192,0.15), rgba(212,175,55,0.05));
+  box-shadow: 0 0 18px rgba(21,101,192,0.3);
+}
+
+.destination-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #90CAF9;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
 }
 
 .destination-info {
-  animation: pulse 2s infinite;
+  font-size: 0.78rem;
+  color: #8B9DC3;
 }
 
-@keyframes pulse {
+.destination-info-value {
+  color: #E8D5A3;
+  font-weight: 600;
+}
+
+.voyage-status-banner {
+  background: linear-gradient(135deg, rgba(21,101,192,0.15), rgba(0,137,123,0.08));
+  border: 1px solid rgba(21,101,192,0.4);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.voyage-status-text {
+  font-family: Georgia, serif;
+  color: #90CAF9;
+  font-weight: 600;
+  animation: voyage-pulse 3s ease-in-out infinite;
+}
+
+.eta-display {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #D4AF37;
+  letter-spacing: 0.04em;
+}
+
+@keyframes voyage-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
-}
-
-/* COMPONENTES */
-.v-card-title {
-  font-weight: 600;
-}
-
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-/* ANIMAÇÃO DE LOADING */
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.mdi-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* CORES CUSTOMIZADAS */
-.text-blue-darken-3 { color: #1565c0 !important; }
-.text-green-darken-3 { color: #2e7d32 !important; }
-.text-orange-darken-3 { color: #ef6c00 !important; }
-.text-red-darken-3 { color: #c62828 !important; }
-
-/* RESPONSIVIDADE */
-@media (max-width: 960px) {
-  .conflict-item {
-    padding: 8px;
-  }
-  
-  .task-title {
-    font-size: 0.9rem;
-  }
-  
-  .task-details {
-    font-size: 0.8rem;
-  }
-  
-  .ship-info {
-    gap: 8px;
-  }
-  
-  .info-item {
-    padding: 6px;
-    font-size: 0.875rem;
-  }
+  50% { opacity: 0.65; }
 }
 </style>

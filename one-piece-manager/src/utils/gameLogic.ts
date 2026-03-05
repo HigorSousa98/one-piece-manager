@@ -1,6 +1,6 @@
 // utils/gameLogic.ts
-import { Character, StyleCombat, DevilFruit, Crew, Island } from '@/utils/database'
-import { GenerationConfig, GenerationSettings } from '@/utils/generationConfig'
+import { Character, StyleCombat, DevilFruit, Island } from '@/utils/database'
+import { GenerationConfig } from '@/utils/generationConfig'
 import { PowerCalculationSystem } from '@/utils/powerCalculationSystem'
 import STYLES from '@/data/styleCombats'
 
@@ -33,10 +33,7 @@ export class GameLogic {
       const powerRatio = loserPower / winnerPower
       powerMultiplier = 1.0 + Math.min((powerRatio - 1.0) * 0.5, 1.5) // Até 2.5x
     } else if (winnerPower > loserPower) {
-      // Derrotar alguém mais fraco = menos XP
-      const powerRatio = winnerPower / loserPower
-      const reduction = Math.min((powerRatio - 1.0) * 0.3, 0.8)
-      powerMultiplier = 1.0 //Math.max(0.2, 1.0 - reduction); // Mínimo 20% //editado para 1
+      powerMultiplier = 1.0
     }
 
     // 4. 🏆 BONUS POR TIPO DE OPONENTE
@@ -89,10 +86,7 @@ export class GameLogic {
       skillBonus += 0.3 // +30% por Devil Fruit
     }
 
-    // 8. 📚 FATOR DE APRENDIZADO - Baseado na diferença de experiência
-    let learningMultiplier = 1.0
-
-    // 9. 🎲 FATOR DE DIFICULDADE DA BATALHA
+    // 8. 🎲 FATOR DE DIFICULDADE DA BATALHA
     let difficultyMultiplier = 1.0
 
     // Se a batalha foi muito difícil (powers próximos), mais XP
@@ -108,12 +102,7 @@ export class GameLogic {
       difficultyMultiplier = 1.1
     }
 
-    // 10. 🌟 BONUS POR PRIMEIRO ENCONTRO
-    let firstTimeBonus = 1.0
-    // Aqui você poderia verificar se é a primeira vez lutando contra este oponente
-    // firstTimeBonus = hasBeatenBefore ? 1.0 : 1.2;
-
-    // 11. 📊 CÁLCULO FINAL
+    // 9. 📊 CÁLCULO FINAL
     let finalExp = baseExp
 
     // Aplicar todos os multiplicadores
@@ -123,9 +112,7 @@ export class GameLogic {
     finalExp *= positionBonus
     finalExp *= bountyMultiplier
     finalExp *= skillBonus
-    finalExp *= learningMultiplier
     finalExp *= difficultyMultiplier
-    finalExp *= firstTimeBonus
 
     // 12. 🎯 LIMITADORES E BALANCEAMENTO
     const winnerLevel = winner.level
@@ -305,8 +292,8 @@ export class GameLogic {
   }
 
   static determineEncounterTypeOnly(
-    player: String,
-    opponent: String,
+    player: string,
+    opponent: string,
   ): 'hostile' | 'neutral' | 'friendly' {
     // Piratas vs Marines = sempre hostil
     if (
@@ -365,6 +352,8 @@ export class GameLogic {
     if (player === opponent) {
       return Math.random() < 0.7 ? 'neutral' : 'hostile'
     }
+
+    return 'neutral'
   }
 
   static validateTypeCompatibility(recruiterType: string, targetType: string): boolean {
@@ -447,6 +436,147 @@ export class GameLogic {
     return Math.floor(Math.random() * (max - min + 1)) + min
   }
 
+  /**
+   * Retorna o estágio de domínio de um tipo de Haki dado seu valor.
+   * Usado em toda a UI e em cálculos narrativos de batalha.
+   */
+  static hakiTier(
+    value: number,
+    type: 'arm' | 'obs' | 'king',
+  ): { name: string; color: string; tier: number } {
+    if (value <= 0) return { name: 'Inativo', color: '#546E7A', tier: 0 }
+    const stages: Array<{ min: number; name: string; arm: string; obs: string; king: string }> = [
+      { min: 1,    name: 'Iniciante',     arm: '#CE93D8', obs: '#80DEEA', king: '#FFCC80' },
+      { min: 100,  name: 'Básico',        arm: '#AB47BC', obs: '#26C6DA', king: '#FFA726' },
+      { min: 300,  name: 'Intermediário', arm: '#8E24AA', obs: '#00ACC1', king: '#F57C00' },
+      { min: 600,  name: 'Avançado',      arm: '#6A1B9A', obs: '#006064', king: '#E65100' },
+      { min: 1000, name: 'Mestre',        arm: '#4A148C', obs: '#003f47', king: '#BF360C' },
+    ]
+    let idx = 0
+    for (let i = 0; i < stages.length; i++) {
+      if (value >= stages[i].min) idx = i
+    }
+    return { name: stages[idx].name, color: stages[idx][type], tier: idx + 1 }
+  }
+
+  // ── Sea Progression ─────────────────────────────────────────────────────
+
+  static readonly SEAS = [
+    { name: 'East Blue',  range: [1, 5]   as [number, number], color: '#1565C0', gradient: 'linear-gradient(135deg,#0D47A1,#1E88E5)', icon: 'mdi-waves',   index: 0 },
+    { name: 'Grand Line', range: [6, 14]  as [number, number], color: '#00695C', gradient: 'linear-gradient(135deg,#004D40,#00897B)', icon: 'mdi-compass', index: 1 },
+    { name: 'New World',  range: [15, 24] as [number, number], color: '#B71C1C', gradient: 'linear-gradient(135deg,#7F0000,#E53935)', icon: 'mdi-fire',    index: 2 },
+    { name: 'End Game',   range: [25, 30] as [number, number], color: '#4A148C', gradient: 'linear-gradient(135deg,#1A0050,#7B1FA2)', icon: 'mdi-skull',   index: 3 },
+  ]
+
+  static readonly SEA_REQUIREMENTS = [
+    { minLevel: 1,  minBounty: 0 },
+    { minLevel: 20, minBounty: 15_000_000 },
+    { minLevel: 50, minBounty: 400_000_000 },
+    { minLevel: 80, minBounty: 1_500_000_000 },
+  ]
+
+  static getSea(difficulty: number): typeof GameLogic.SEAS[0] {
+    for (let i = GameLogic.SEAS.length - 1; i >= 0; i--) {
+      if (difficulty >= GameLogic.SEAS[i].range[0]) return GameLogic.SEAS[i]
+    }
+    return GameLogic.SEAS[0]
+  }
+
+  static getSeaAccess(
+    character: Character,
+    requirements: Array<{ minLevel: number; minBounty: number }> = GameLogic.SEA_REQUIREMENTS,
+  ): Array<{
+    sea: typeof GameLogic.SEAS[0]
+    minLevel: number
+    minBounty: number
+    unlocked: boolean
+  }> {
+    return GameLogic.SEAS.map((sea, i) => {
+      const req = requirements[i]
+      return {
+        sea,
+        minLevel: req.minLevel,
+        minBounty: req.minBounty,
+        unlocked: character.level >= req.minLevel && character.bounty >= req.minBounty,
+      }
+    })
+  }
+
+  static getMaxAccessibleDifficulty(
+    character: Character,
+    requirements: Array<{ minLevel: number; minBounty: number }> = GameLogic.SEA_REQUIREMENTS,
+  ): number {
+    let maxDiff = 5 // East Blue always accessible
+    for (let i = GameLogic.SEAS.length - 1; i >= 0; i--) {
+      const req = requirements[i]
+      if (character.level >= req.minLevel && character.bounty >= req.minBounty) {
+        maxDiff = GameLogic.SEAS[i].range[1]
+        break
+      }
+    }
+    return maxDiff
+  }
+
+  // ── World Fame ───────────────────────────────────────────────────────────
+
+  private static readonly FAME_TIERS = [
+    { minScore: 0,     title: 'Marinheiro Desconhecido', color: '#546E7A', icon: 'mdi-account'              },
+    { minScore: 1000,  title: 'Novato dos Mares',         color: '#78909C', icon: 'mdi-sail-boat'           },
+    { minScore: 5000,  title: 'Aventureiro',              color: '#1565C0', icon: 'mdi-map-search'          },
+    { minScore: 12000, title: 'Reconhecido nos Mares',    color: '#00695C', icon: 'mdi-eye'                 },
+    { minScore: 22000, title: 'Supernova',                color: '#F57F17', icon: 'mdi-lightning-bolt'      },
+    { minScore: 35000, title: 'Temido pelos Mares',       color: '#E65100', icon: 'mdi-skull-crossbones'    },
+    { minScore: 50000, title: 'Lenda dos Mares',          color: '#C62828', icon: 'mdi-crown-outline'       },
+    { minScore: 75000, title: '__MAX__',                  color: '#D4AF37', icon: 'mdi-crown'               },
+  ]
+
+  private static getFameMaxTitle(type: string): string {
+    switch (type) {
+      case 'Pirate':       return 'Rei dos Piratas'
+      case 'Marine':       return 'Grande Almirante'
+      case 'BountyHunter': return 'O Caçador Lendário'
+      case 'Government':   return 'Senhor do Mundo'
+      default:             return 'Lenda Absoluta'
+    }
+  }
+
+  static getWorldFame(character: Character, crewReputation: number = 0): {
+    score: number
+    title: string
+    color: string
+    icon: string
+    nextTitle: string | null
+    nextScore: number | null
+    progress: number
+  } {
+    const score = Math.floor(
+      Math.log10(character.bounty + 1) * 500
+      + character.level * 100
+      + Math.log10(crewReputation + 1) * 200,
+    )
+
+    const tiers = GameLogic.FAME_TIERS
+    let tierIdx = 0
+    for (let i = tiers.length - 1; i >= 0; i--) {
+      if (score >= tiers[i].minScore) { tierIdx = i; break }
+    }
+
+    const current = tiers[tierIdx]
+    const title = current.title === '__MAX__' ? GameLogic.getFameMaxTitle(character.type) : current.title
+
+    const next = tierIdx < tiers.length - 1 ? tiers[tierIdx + 1] : null
+    const nextTitle = next
+      ? (next.title === '__MAX__' ? GameLogic.getFameMaxTitle(character.type) : next.title)
+      : null
+    const nextScore = next ? next.minScore : null
+
+    const progress = next
+      ? Math.min(100, Math.floor(((score - current.minScore) / (next.minScore - current.minScore)) * 100))
+      : 100
+
+    return { score, title, color: current.color, icon: current.icon, nextTitle, nextScore, progress }
+  }
+
   static expNeeded(level: number): number {
     const expRequired = Math.floor(100 * Math.pow(level + 1, 1.5) + level * 50)
     return expRequired
@@ -464,7 +594,6 @@ export class GameLogic {
       let currentExp = character.experience
       let levelsGained = 0
       let totalExpUsed = 0
-      const initialLevel = character.level
 
       // Loop para verificar múltiplos level ups
       while (true) {
@@ -888,7 +1017,7 @@ export class GameLogic {
   static mockStyleCombact(): StyleCombat[] {
     const styleCombats: Omit<StyleCombat, 'id'>[] = []
 
-    STYLES.forEach((style, index) => {
+    STYLES.forEach((style) => {
       styleCombats.push({
         name: style.name,
         attack: style.attack,
@@ -991,26 +1120,30 @@ export class GameLogic {
   }
 
   static selectIslandForCrew(captain: Character, islands: Island[]): number {
-    // Selecionar ilha baseada no level do capitão
-    // Capitães de level alto vão para ilhas mais difíceis
-    const suitableIslands = islands.filter((island) => {
-      const levelDiff = Math.abs(island.difficulty - captain.level / (100 / 30))
-      return levelDiff <= 1.2 // Ilhas com dificuldade próxima ao level do capitão
-    })
+    // Mapeia level → dificuldade alvo (level 1 → 0.3, level 100 → 30)
+    const targetDifficulty = captain.level / (100 / 30)
 
-    if (suitableIslands.length === 0) {
-      // Se não encontrar ilha adequada, usar qualquer uma
-      const suitableIslandsExpanded = islands.filter((island) => {
-        const levelDiff = Math.abs(island.difficulty - captain.level / (100 / 30))
-        return levelDiff <= 2.4 // Ilhas com dificuldade próxima ao level do capitão
-      })
-      return (
-        suitableIslandsExpanded[this.randomBetween(0, suitableIslandsExpanded.length - 1)]?.id || 1
-      )
+    // Tolerância apertada: ±0.5 — personagens ficam próximos ao tier correto
+    const suitableIslands = islands.filter((island) =>
+      Math.abs(island.difficulty - targetDifficulty) <= 0.5
+    )
+    if (suitableIslands.length > 0) {
+      return suitableIslands[this.randomBetween(0, suitableIslands.length - 1)]?.id || 1
     }
 
-    const selectedIsland = suitableIslands[this.randomBetween(0, suitableIslands.length - 1)]
-    return selectedIsland?.id || 1
+    // Fallback moderado: ±1.0
+    const fallbackIslands = islands.filter((island) =>
+      Math.abs(island.difficulty - targetDifficulty) <= 1.0
+    )
+    if (fallbackIslands.length > 0) {
+      return fallbackIslands[this.randomBetween(0, fallbackIslands.length - 1)]?.id || 1
+    }
+
+    // Fallback final: ilha mais próxima disponível
+    const sorted = [...islands].sort(
+      (a, b) => Math.abs(a.difficulty - targetDifficulty) - Math.abs(b.difficulty - targetDifficulty)
+    )
+    return sorted[0]?.id || 1
   }
 
   // 🎯 Função auxiliar para calcular "rating" do personagem
@@ -1264,4 +1397,151 @@ static getTypeColor(type: string): string {
 static formatType(type: string): string{
   return type.replace(/([A-Z])/g, ' $1').trim()
 }
+
+  /**
+   * ✅ GERADOR PRINCIPAL COM MÚLTIPLAS OPÇÕES
+   */
+  static generate(
+    min: number = 1,
+    max: number = 100,
+    distribution: 'gaussian' | 'exponential' | 'weighted' | 'hybrid' | 'normal' = 'normal',
+    intensity: 'low' | 'medium' | 'high' = 'medium'
+  ): number {
+    switch (distribution) {
+      case 'gaussian':
+        return this.gaussianDistribution(min, max, intensity)
+      
+      case 'exponential':
+        return this.exponentialDistribution(min, max, intensity)
+      
+      case 'weighted':
+        return this.weightedDistribution(min, max, intensity)
+      
+      case 'hybrid':
+        return this.hybridDistribution(min, max, intensity)
+      
+      default:
+        return this.randomBetween(min, max)
+    }
+  }
+
+  /**
+   * ✅ DISTRIBUIÇÃO GAUSSIANA OTIMIZADA
+   */
+  private static gaussianDistribution(min: number, max: number, intensity: string): number {
+    const range = max - min
+    
+    // ✅ Ajustar parâmetros baseado na intensidade
+    let meanPercent: number
+    let stdDevPercent: number
+    
+    switch (intensity) {
+      case 'low':
+        meanPercent = 0.35 // Média em 35% do range
+        stdDevPercent = 0.25 // Desvio de 25%
+        break
+      case 'medium':
+        meanPercent = 0.25 // Média em 25% do range
+        stdDevPercent = 0.15 // Desvio de 15%
+        break
+      case 'high':
+        meanPercent = 0.15 // Média em 15% do range
+        stdDevPercent = 0.10 // Desvio de 10%
+        break
+    }
+    
+    const mean = min + (range * meanPercent)
+    const stdDev = range * stdDevPercent
+    
+    // ✅ Box-Muller Transform
+    let u = 0, v = 0
+    while (u === 0) u = Math.random()
+    while (v === 0) v = Math.random()
+    
+    const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v)
+    let result = z * stdDev + mean
+    
+    // ✅ Clamping com redistribuição
+    if (result < min) result = min + Math.random() * (range * 0.1)
+    if (result > max) result = max - Math.random() * (range * 0.1)
+    
+    return Math.round(result)
+  }
+
+  /**
+   * ✅ DISTRIBUIÇÃO EXPONENCIAL
+   */
+  private static exponentialDistribution(min: number, max: number, intensity: string): number {
+    let curve: number
+    
+    switch (intensity) {
+      case 'low': curve = 1.5; break
+      case 'medium': curve = 2.5; break
+      case 'high': curve = 4; break
+    }
+    
+    const random = Math.random()
+    const curved = 1 - Math.pow(random, curve)
+    const result = min + (curved * (max - min))
+    
+    return Math.round(result)
+  }
+
+  /**
+   * ✅ DISTRIBUIÇÃO COM PESOS
+   */
+  private static weightedDistribution(min: number, max: number, intensity: string): number {
+    let weights: number[]
+    
+    switch (intensity) {
+      case 'low':
+        weights = [40, 30, 20, 8, 2] // Distribuição mais suave
+        break
+      case 'medium':
+        weights = [45, 25, 15, 10, 5] // Distribuição padrão
+        break
+      case 'high':
+        weights = [70, 20, 8, 2] // Distribuição extrema
+        break
+    }
+    
+    return this.weightedRandomInternal(min, max, weights)
+  }
+
+  /**
+   * ✅ DISTRIBUIÇÃO HÍBRIDA (COMBINA GAUSSIANA + EXPONENCIAL)
+   */
+  private static hybridDistribution(min: number, max: number, intensity: string): number {
+    // ✅ 70% gaussiana, 30% exponencial para variação
+    if (Math.random() < 0.7) {
+      return this.gaussianDistribution(min, max, intensity)
+    } else {
+      return this.exponentialDistribution(min, max, intensity)
+    }
+  }
+
+  /**
+   * ✅ FUNÇÃO AUXILIAR PARA PESOS
+   */
+  private static weightedRandomInternal(min: number, max: number, weights: number[]): number {
+    const range = max - min + 1
+    const segmentSize = Math.ceil(range / weights.length)
+    const totalWeight = weights.reduce((sum, weight) => sum + weight, 0)
+    
+    let random = Math.random() * totalWeight
+    let selectedSegment = 0
+    
+    for (let i = 0; i < weights.length; i++) {
+      random -= weights[i]
+      if (random <= 0) {
+        selectedSegment = i
+        break
+      }
+    }
+    
+    const segmentMin = min + (selectedSegment * segmentSize)
+    const segmentMax = Math.min(max, segmentMin + segmentSize - 1)
+    
+    return Math.floor(Math.random() * (segmentMax - segmentMin + 1)) + segmentMin
+  }
 }

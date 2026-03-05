@@ -52,6 +52,10 @@ export class WorldSimulator {
             )
           }
 
+          if (battleResult.kingHakiAwakened) {
+            results.summary.push(`👑 ${battleResult.winner.name} manifestou o Haki do Conquistador!`)
+          }
+
           // Adicionar eventos interessantes
           if (battleResult.bountyGain > 100000000) {
             // 100M+
@@ -68,6 +72,16 @@ export class WorldSimulator {
       }
 
       console.log(`✅ ${results.battlesSimulated.length} batalhas NPC simuladas`)
+
+      // A cada ciclo com 5+ batalhas, rodar atividade de inventário dos NPCs
+      if (npcBattlesToSimulate >= 5) {
+        try {
+          await this.simulateNPCItemActivity()
+        } catch {
+          // Silencioso
+        }
+      }
+
       return results
     } catch (error) {
       console.error('❌ Erro ao simular mundo:', error)
@@ -84,6 +98,7 @@ export class WorldSimulator {
     levelUp: boolean
     newYonko: boolean
     legendFell: boolean
+    kingHakiAwakened: boolean
   } | null> {
     try {
       // Buscar dois NPCs para batalhar
@@ -115,14 +130,14 @@ export class WorldSimulator {
       const expNeeded = GameLogic.nextLevelUp(winner)
       const levelCheck = winner.experience >= expNeeded
       let levelUp = false
+      let kingHakiAwakened = false
 
       if (levelCheck) {
         winner.level += 1
         winner.experience -= expNeeded
         levelUp = true
 
-        // Aplicar bonus de level up
-        this.applyLevelUpBonus(winner)
+        kingHakiAwakened = this.applyLevelUpBonus(winner)
       }
 
       // Verificar mudanças importantes
@@ -140,6 +155,17 @@ export class WorldSimulator {
         this.saveBattleRecord(winner, loser, expGain, bountyGain),
       ])
 
+      // Roubo de itens pós-batalha NPC
+      try {
+        const { InventorySystem } = await import('./inventorySystem')
+        const theft = await InventorySystem.rollItemTheft(winner.id!, loser.id!)
+        if (theft.stolenItems.length > 0) {
+          await InventorySystem.optimizeEquipment(winner.id!)
+        }
+      } catch {
+        // Silencioso: não interrompe a simulação
+      }
+
       return {
         winner,
         loser,
@@ -148,6 +174,7 @@ export class WorldSimulator {
         levelUp,
         newYonko,
         legendFell,
+        kingHakiAwakened,
       }
     } catch (error) {
       console.error('Erro ao simular batalha NPC:', error)
@@ -295,10 +322,10 @@ export class WorldSimulator {
     }
   }
 
-  // 7. 📈 APLICAR BONUS DE LEVEL UP
-  private static applyLevelUpBonus(character: Character): void {
-    // Distribuir pontos de atributo aleatoriamente
-    const pointsToDistribute = 3 // 3 pontos por level
+  // 7. 📈 APLICAR BONUS DE LEVEL UP — retorna true se King's Haki foi despertado
+  private static applyLevelUpBonus(character: Character): boolean {
+    const pointsToDistribute = 3
+    let kingHakiAwakened = false
 
     for (let i = 0; i < pointsToDistribute; i++) {
       const statToIncrease = Math.random()
@@ -316,14 +343,17 @@ export class WorldSimulator {
       } else if (statToIncrease < 0.98) {
         character.stats.devilFruit += 1
       } else {
-        // 2% chance de ganhar Conqueror's Haki
-        if (character.stats.kingHaki === 0 && character.level >= 50) {
+        // 2% chance de despertar Haki do Conquistador
+        if (character.stats.kingHaki === 0 && character.level >= 50 && character.potentialToHaveKngHaki) {
           character.stats.kingHaki = 1
-        } else {
+          kingHakiAwakened = true
+        } else if (character.stats.kingHaki > 0) {
           character.stats.kingHaki += 1
         }
       }
     }
+
+    return kingHakiAwakened
   }
 
   // 8. 👑 VERIFICAR NOVO YONKO
@@ -405,6 +435,45 @@ export class WorldSimulator {
         success: false,
         message: 'Erro ao atualizar mundo',
       }
+    }
+  }
+
+  // 13. 🛒 ATIVIDADE DE INVENTÁRIO DOS NPCs
+  private static async simulateNPCItemActivity(): Promise<void> {
+    try {
+      const { InventorySystem } = await import('./inventorySystem')
+
+      const npcCrews = await db.crews.filter((c) => c.type !== 'Player').toArray()
+
+      for (const crew of npcCrews) {
+        if (!crew.currentIsland || !crew.id) continue
+
+        // 10% de chance por crew por chamada (não sobrecarregar)
+        if (Math.random() >= 0.1) continue
+
+        const members = await db.characters.where('crewId').equals(crew.id).toArray()
+        if (members.length === 0) continue
+
+        // Escolher membro aleatório para tentar comprar
+        const buyer = members[Math.floor(Math.random() * members.length)]
+        const bought = await InventorySystem.npcBuyBestItem(
+          buyer.id!,
+          crew.id,
+          crew.currentIsland,
+        )
+        if (bought) {
+          await InventorySystem.optimizeEquipment(buyer.id!)
+        }
+
+        // 1% de chance: otimizar equipamento de todos os membros
+        if (Math.random() < 0.01) {
+          for (const member of members) {
+            await InventorySystem.optimizeEquipment(member.id!)
+          }
+        }
+      }
+    } catch {
+      // Silencioso
     }
   }
 

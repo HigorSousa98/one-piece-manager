@@ -38,6 +38,9 @@ export interface GenerationSettings {
   navigationFactor: number
   crewMovementFactor: number
   maxNewCharacters: number
+  seaRequirements: Array<{ minLevel: number; minBounty: number }>
+  eventChancePerIsland: number   // 0.0–1.0, chance of spawning an event per island per world cycle
+  eventIslandSampleSize: number  // how many islands are sampled per world cycle
 }
 
 export class GenerationConfig {
@@ -79,7 +82,15 @@ export class GenerationConfig {
     islandEncounters: 50,
     navigationFactor: 1,
     crewMovementFactor: 0.3,
-    maxNewCharacters: 4
+    maxNewCharacters: 4,
+    seaRequirements: [
+      { minLevel: 1,  minBounty: 0 },
+      { minLevel: 20, minBounty: 15_000_000 },
+      { minLevel: 50, minBounty: 400_000_000 },
+      { minLevel: 80, minBounty: 1_500_000_000 },
+    ],
+    eventChancePerIsland: 0.20,  // 20% chance per sampled island per cycle
+    eventIslandSampleSize: 30,   // islands sampled per cycle
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -274,6 +285,15 @@ export class GenerationConfig {
   }
   get maxNewCharacters(): number {
     return this.config.maxNewCharacters
+  }
+  get seaRequirements(): Array<{ minLevel: number; minBounty: number }> {
+    return this.config.seaRequirements
+  }
+  get eventChancePerIsland(): number {
+    return this.config.eventChancePerIsland
+  }
+  get eventIslandSampleSize(): number {
+    return this.config.eventIslandSampleSize
   }
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

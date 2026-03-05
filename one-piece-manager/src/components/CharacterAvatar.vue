@@ -267,6 +267,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ── Grand Line Character Avatar ── */
 .character-avatar-container {
   position: relative;
   display: inline-block;
@@ -281,64 +282,53 @@ onMounted(() => {
   border: 2px solid transparent;
 }
 
-.avatar-circle {
-  border-radius: 50%;
-}
-
-.avatar-rounded {
-  border-radius: 12px;
-}
-
-.avatar-square {
-  border-radius: 4px;
-}
+.avatar-circle  { border-radius: 50%; }
+.avatar-rounded { border-radius: 12px; }
+.avatar-square  { border-radius: 4px; }
 
 .character-avatar:hover {
   transform: scale(1.05);
 }
 
-/* Bordas temáticas */
+/* Themed borders aligned to Grand Line palette */
 .avatar-pirate .character-avatar:hover {
-  border-color: rgba(244, 67, 54, 0.5);
-  box-shadow: 0 0 15px rgba(244, 67, 54, 0.3);
+  border-color: rgba(255, 107, 53, 0.7);
+  box-shadow: 0 0 15px rgba(255, 107, 53, 0.45);
 }
 
 .avatar-marine .character-avatar:hover {
-  border-color: rgba(25, 118, 210, 0.5);
-  box-shadow: 0 0 15px rgba(25, 118, 210, 0.3);
+  border-color: rgba(0, 48, 135, 0.7);
+  box-shadow: 0 0 15px rgba(0, 48, 135, 0.45);
 }
 
 .avatar-government .character-avatar:hover {
-  border-color: rgba(255, 152, 0, 0.5);
-  box-shadow: 0 0 15px rgba(255, 152, 0, 0.3);
+  border-color: rgba(212, 175, 55, 0.7);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.45);
 }
 
 .avatar-bountyhunter .character-avatar:hover {
-  border-color: rgba(76, 175, 80, 0.5);
-  box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+  border-color: rgba(0, 137, 123, 0.7);
+  box-shadow: 0 0 15px rgba(0, 137, 123, 0.45);
 }
 
 .avatar-civillian .character-avatar:hover {
-  border-color: rgba(156, 39, 176, 0.5);
-  box-shadow: 0 0 15px rgba(156, 39, 176, 0.3);
+  border-color: rgba(84, 110, 122, 0.7);
+  box-shadow: 0 0 15px rgba(84, 110, 122, 0.45);
 }
 
 .avatar-loading {
-  background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+  background: linear-gradient(45deg, #132235, #0d1b2e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .avatar-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.avatar-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
 }
 
 .status-indicators {

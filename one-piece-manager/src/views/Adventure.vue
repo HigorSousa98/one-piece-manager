@@ -468,9 +468,37 @@
                 </v-row>
               </div>
 
+              <!-- 🗡️ ITENS ROUBADOS -->
+              <div v-if="theftResult && theftResult.stolenItems.length > 0">
+                <v-divider class="my-4"></v-divider>
+                <div class="text-h6 mb-3">🗡️ Itens Saqueados:</div>
+                <v-row>
+                  <v-col
+                    v-for="item in theftResult.stolenItems"
+                    :key="item.id"
+                    cols="auto"
+                  >
+                    <v-chip
+                      color="amber-darken-2"
+                      variant="elevated"
+                      size="small"
+                    >
+                      <v-icon start size="14">mdi-bag-personal</v-icon>
+                      {{ item.name }}
+                      <v-chip
+                        size="x-small"
+                        class="ml-1"
+                        :color="item.class === 'S' ? 'yellow-darken-3' : item.class === 'A' ? 'pink-darken-2' : 'blue-darken-1'"
+                        variant="elevated"
+                      >{{ item.class }}</v-chip>
+                    </v-chip>
+                  </v-col>
+                </v-row>
+              </div>
+
               <!-- ✅ BATTLE LOG MELHORADO -->
               <v-divider class="my-4"></v-divider>
-              <BattleLogDisplay 
+              <BattleLogDisplay
                 :battle-log="lastBattleResult.battleLog"
                 :player-character="playerCharacter"
                 :opponent-character="lastBattleResult.loser"
@@ -791,6 +819,7 @@ import { useBattleStore } from '@/stores/battleStore'
 import { useWorldStore } from '@/stores/worldStore'
 import { useRouter } from 'vue-router'
 import { AdventureSystem, type AdventureEncounter } from '@/utils/adventureSystem'
+import { InventorySystem } from '@/utils/inventorySystem'
 import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentSystem'
 import { IslandExplorationSystem } from '@/utils/islandExplorationSystem'
 import { GameLogic } from '@/utils/gameLogic'
@@ -824,6 +853,7 @@ const currentEncounter = ref<AdventureEncounter | null>(null)
 const loadingAdventure = ref(false)
 const battleStarted = ref(false)
 const lastBattleResult = ref<any>(null)
+const theftResult = ref<{ stolenItems: any[]; message: string } | null>(null)
 const availableStyleCombat = ref<StyleCombat[]>([])
 const availableDevilFruit = ref<DevilFruit[]>([])
 const allCrews = ref<Crew[]>([])
@@ -1085,29 +1115,40 @@ const startAdventure = async () => {
 
 const startBattle = async () => {
   if (!playerCharacter.value || !currentEncounter.value) return
-  
+
   battleStarted.value = true
-  
+  theftResult.value = null
+
   try {
-      
+    // Aplicar bônus de itens equipados ao personagem do jogador
+    const itemBonuses = await InventorySystem.calculateItemBonuses(playerCharacter.value)
+    const playerWithItems = {
+      ...playerCharacter.value,
+      stats: InventorySystem.applyBonusesToStats(playerCharacter.value.stats, itemBonuses),
+    }
+
     const specialBounty = currentEncounter.value.specialReward && currentEncounter.value.specialReward.type === 'bounty' ? currentEncounter.value.specialReward.value : 0
     const specialExp = currentEncounter.value.specialReward && currentEncounter.value.specialReward.type === 'experience' ? currentEncounter.value.specialReward.value : 0
     const result = await battleStore.simulateBattle(
-      playerCharacter.value,
+      playerWithItems,
       currentEncounter.value.opponent,
       specialBounty,
       specialExp
     )
     await AdventureSystem.onPlayerAction()
-    
+
     lastBattleResult.value = result
-    
-    
-    // 🎯 VERIFICAR POSSIBILIDADE DE RECRUTAMENTO
+
+    // 🎯 VERIFICAR POSSIBILIDADE DE RECRUTAMENTO E ROUBO DE ITENS
     if (result.winner.id === playerCharacter.value.id) {
       await checkRecruitmentPossibility(result.loser)
+      // Rolar dados para roubo de itens do perdedor
+      const theft = await InventorySystem.rollItemTheft(result.winner.id!, result.loser.id!)
+      if (theft.stolenItems.length > 0) {
+        theftResult.value = theft
+      }
     }
-    
+
   } catch (error) {
     console.error('❌ Erro na batalha:', error)
   }
@@ -1184,6 +1225,7 @@ const retreatFromEncounter = () => {
   recruitmentData.value = null
   recruitmentResult.value = null
   recruitmentTryed.value = false
+  theftResult.value = null
 }
 
 const resetAdventure = () => {
@@ -1193,6 +1235,7 @@ const resetAdventure = () => {
   recruitmentData.value = null
   recruitmentResult.value = null
   recruitmentTryed.value = false
+  theftResult.value = null
 }
 
 const viewCrew = () => {
@@ -1298,12 +1341,17 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ============================================================
+   Adventure - Grand Line Expedition
+   ============================================================ */
+
 .adventure-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 0 8px;
 }
 
+/* Loading */
 .loading-container {
   min-height: 400px;
   display: flex;
@@ -1314,314 +1362,209 @@ onMounted(async () => {
 .loading-steps {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 20px;
+  text-align: left;
   max-width: 300px;
-  margin: 0 auto;
+  margin-inline: auto;
 }
 
 .step-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px;
+  font-size: 0.875rem;
+  color: #8B9DC3;
+  padding: 8px 14px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
 }
 
 .step-item.completed {
-  background-color: rgba(76, 175, 80, 0.1);
+  color: #D4AF37;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.25);
 }
 
-/* ✅ ESTILOS PARA AVATARES */
-.player-avatar-section {
-  position: relative;
-  display: inline-block;
-}
-
-.player-adventure-avatar {
-  border: 4px solid rgba(25, 118, 210, 0.3);
-  transition: all 0.3s ease;
-}
-
-.player-adventure-avatar:hover {
-  border-color: rgba(25, 118, 210, 0.6);
-  transform: scale(1.05);
-}
-
-.player-stats-card {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
-  border: 2px solid rgba(25, 118, 210, 0.2);
-}
-
-/* ✅ ESTILOS PARA COMPARAÇÃO DE AVATARES */
-.avatar-comparison-card {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
-  border: 2px solid rgba(255, 193, 7, 0.3);
-}
-
-.combatant-section {
-  padding: 16px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.combatant-avatar {
-  transition: all 0.3s ease;
-}
-
-.player-combatant .combatant-avatar {
-  border: 3px solid rgba(25, 118, 210, 0.4);
-}
-
-.opponent-combatant .combatant-avatar {
-  border: 3px solid rgba(244, 67, 54, 0.4);
-}
-
-.vs-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-/* ✅ ESTILOS PARA RESULTADO DA BATALHA */
-.battle-result-card {
-  border: 3px solid rgba(255, 255, 255, 0.3);
-}
-
-.battle-result-avatars {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.result-combatant {
-  padding: 16px;
-}
-
-.result-avatar {
-  transition: all 0.3s ease;
-}
-
-.winner-avatar {
-  box-shadow: 0 0 20px rgba(76, 175, 80, 0.4);
-  animation: winnerGlow 2s ease-in-out infinite alternate;
-}
-
-.loser-avatar {
-  filter: grayscale(0.3);
-}
-
-@keyframes winnerGlow {
-  0% { box-shadow: 0 0 20px rgba(76, 175, 80, 0.4); }
-  100% { box-shadow: 0 0 30px rgba(76, 175, 80, 0.7); }
-}
-
-/* ✅ ESTILOS PARA RECRUTAMENTO */
-.recruitment-card {
-  border: 3px solid rgba(255, 152, 0, 0.4);
-}
-
-.recruitment-candidate {
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 16px;
-  border: 2px solid rgba(255, 152, 0, 0.3);
-}
-
-.candidate-avatar {
-  border: 3px solid rgba(255, 152, 0, 0.6);
-  transition: all 0.3s ease;
-}
-
-.candidate-avatar:hover {
-  transform: scale(1.05);
-  border-color: rgba(255, 152, 0, 0.8);
-}
-
-/* ✅ ESTILOS PARA MODAL */
-.modal-candidate-avatar {
-  border: 3px solid rgba(25, 118, 210, 0.4);
-  margin: 0 auto;
-}
-
-/* ✅ CARDS ESPECIAIS */
+/* Page header */
 .adventure-header {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(25, 118, 210, 0.05) 100%);
-  border: 2px solid rgba(25, 118, 210, 0.2);
+  background: linear-gradient(135deg,
+    rgba(255, 107, 53, 0.1),
+    rgba(212, 175, 55, 0.06)
+  );
+  border: 1px solid rgba(255, 107, 53, 0.25);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
 }
 
-.player-info-card {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
-  border: 2px solid rgba(76, 175, 80, 0.2);
+.adventure-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #FF6B35, #FFD700, #FF6B35, transparent
+  );
 }
 
-.encounter-card {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 193, 7, 0.1) 100%);
-  border: 2px solid rgba(255, 193, 7, 0.3);
+.adventure-title {
+  font-family: Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #FF6B35;
+  text-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
+  letter-spacing: 0.05em;
+  margin: 0;
 }
 
-.opponent-details-card {
-  background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, rgba(244, 67, 54, 0.1) 100%);
-  border: 2px solid rgba(244, 67, 54, 0.2);
+/* Adventure option cards */
+.adventure-option-card {
+  background: #132235;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 14px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
 }
 
-.special-reward-card {
-  border: 3px solid rgba(76, 175, 80, 0.4);
+.adventure-option-card:hover {
+  border-color: rgba(212, 175, 55, 0.6);
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
+  transform: translateY(-3px);
 }
 
-/* ✅ BOTÕES ESPECIAIS */
-.adventure-start-btn {
-  background: linear-gradient(45deg, #1976D2, #1565C0) !important;
-  color: white !important;
-  font-weight: 700 !important;
-  font-size: 1.1rem !important;
-  padding: 16px 32px !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3) !important;
-  transition: all 0.3s ease !important;
+.adventure-option-card.selected {
+  border-color: #D4AF37;
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.12),
+    rgba(21, 101, 192, 0.08)
+  );
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
 }
 
-.adventure-start-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4) !important;
+.adventure-option-icon {
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  display: block;
 }
 
-.battle-btn {
-  background: linear-gradient(45deg, #F44336, #D32F2F) !important;
-  color: white !important;
-  font-weight: 700 !important;
-  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3) !important;
+.adventure-option-name {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin-bottom: 6px;
 }
 
-.battle-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4) !important;
+.adventure-option-desc {
+  font-size: 0.82rem;
+  color: #8B9DC3;
+  line-height: 1.5;
 }
 
-.retreat-btn {
-  background: linear-gradient(45deg, #757575, #616161) !important;
-  color: white !important;
+/* Active task panel */
+.active-task-card {
+  background: linear-gradient(135deg, #132235, #1A2F45);
+  border: 1px solid rgba(255, 107, 53, 0.35);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
 }
 
-/* ✅ CARDS GERAIS */
-.v-card {
-  transition: all 0.3s ease;
-  border-radius: 12px !important;
+.active-task-header {
+  background: linear-gradient(135deg,
+    rgba(255, 107, 53, 0.15),
+    rgba(212, 175, 55, 0.06)
+  );
+  border-bottom: 1px solid rgba(255, 107, 53, 0.25);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.v-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+.active-task-title {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #FF6B35;
+  font-size: 1rem;
+  letter-spacing: 0.03em;
 }
 
-.v-progress-linear {
+/* Result cards */
+.result-card-win {
+  background: linear-gradient(135deg, #0A2010, #143020) !important;
+  border-color: rgba(46, 125, 50, 0.5) !important;
+  box-shadow: 0 0 20px rgba(46, 125, 50, 0.2) !important;
+}
+
+.result-card-lose {
+  background: linear-gradient(135deg, #1A0808, #2D1010) !important;
+  border-color: rgba(198, 40, 40, 0.5) !important;
+  box-shadow: 0 0 20px rgba(198, 40, 40, 0.2) !important;
+}
+
+/* Encounter type badge */
+.encounter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.encounter-badge-hostile {
+  color: #EF5350;
+  background: rgba(239, 83, 80, 0.12);
+  border: 1px solid rgba(239, 83, 80, 0.35);
+}
+
+.encounter-badge-friendly {
+  color: #66BB6A;
+  background: rgba(102, 187, 106, 0.1);
+  border: 1px solid rgba(102, 187, 106, 0.3);
+}
+
+.encounter-badge-neutral {
+  color: #78909C;
+  background: rgba(120, 144, 156, 0.1);
+  border: 1px solid rgba(120, 144, 156, 0.25);
+}
+
+/* Reward display */
+.reward-section {
+  background: rgba(212, 175, 55, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 10px;
+  padding: 14px;
 }
 
-.text-h6 {
-  font-weight: 600;
+.reward-xp {
+  font-family: Georgia, serif;
+  color: #90CAF9;
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
-.v-alert {
-  border-radius: 12px;
-}
-
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-/* MELHOR CONTRASTE PARA CHIPS */
-.v-chip {
-  font-weight: 700 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-}
-
-.v-chip .v-chip__content {
-  font-weight: 700 !important;
-}
-
-/* ANIMAÇÕES */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.mdi-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* HOVER EFFECTS */
-.v-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.v-chip:hover {
-  transform: scale(1.05);
-}
-
-/* RESPONSIVE DESIGN */
-@media (max-width: 768px) {
-  .adventure-container {
-    padding: 8px;
-  }
-  
-  .v-card-text {
-    padding: 12px;
-  }
-  
-  .text-h5 {
-    font-size: 1.3rem !important;
-  }
-  
-  .v-btn.v-btn--size-x-large {
-    font-size: 1rem;
-    padding: 12px 24px;
-  }
-
-  .combatant-section {
-    padding: 8px;
-  }
-
-  .vs-section {
-    padding: 10px;
-  }
-
-  .player-avatar-section {
-    margin-bottom: 16px;
-  }
-}
-
-/* CORES CUSTOMIZADAS */
-.text-orange-darken-3 {
-  color: #e65100 !important;
-}
-
-.text-green-darken-3 {
-  color: #1b5e20 !important;
-}
-
-.text-green-darken-4 {
-  color: #0d5016 !important;
-}
-
-/* SOMBRAS CUSTOMIZADAS */
-.v-card.v-card--variant-elevated {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.v-alert.v-alert--variant-elevated {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.v-btn.v-btn--variant-elevated {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.v-chip.v-chip--variant-elevated {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+.reward-bounty {
+  font-family: Georgia, serif;
+  color: #FFD700;
+  font-weight: 700;
+  font-size: 1.1rem;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
 }
 </style>

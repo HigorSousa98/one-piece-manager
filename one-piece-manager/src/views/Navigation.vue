@@ -29,6 +29,24 @@
       </v-container>
     </div>
 
+    <!-- SEA BANNER -->
+    <div v-if="allDataLoaded && playerCharacter" class="nav-sea-banner" :style="{ background: currentSeaInfo.gradient }">
+      <v-container>
+        <div class="d-flex align-center flex-wrap gap-3">
+          <v-icon color="white" size="22">{{ currentSeaInfo.icon }}</v-icon>
+          <span class="nav-sea-name">{{ currentSeaInfo.name }}</span>
+          <v-chip v-if="nextSeaInfo" size="small" color="white" text-color="black" variant="elevated">
+            <v-icon start size="12">{{ nextSeaInfo.sea.icon }}</v-icon>
+            Próximo: {{ nextSeaInfo.sea.name }} — Lv {{ nextSeaInfo.minLevel }} + {{ formatBountyNav(nextSeaInfo.minBounty) }}
+          </v-chip>
+          <v-chip v-else size="small" color="amber-lighten-1" variant="elevated">
+            <v-icon start size="12">mdi-crown</v-icon>
+            Mar máximo desbloqueado!
+          </v-chip>
+        </div>
+      </v-container>
+    </div>
+
     <div v-if="!allDataLoaded" class="loading-container">
       <v-container>
         <v-card class="pa-8 text-center">
@@ -365,6 +383,7 @@ import type { Island, Ship, Task, Crew } from '@/utils/database'
 import NavalBattleResultModal from '@/components/NavalBattleResultModal.vue'
 import { NavalBattleSystem } from '@/utils/navalBattleSystem'
 import type { BattleResult } from '@/utils/navalBattleSystem'
+import { GameLogic } from '@/utils/gameLogic'
 
 const characterStore = useCharacterStore()
 
@@ -411,6 +430,16 @@ let shipUpgradeComposable: ReturnType<typeof useShipUpgrade> | null = null
 // 📊 COMPUTED
 const playerCharacter = computed(() => characterStore.playerCharacter)
 const playerCrew = computed(() => characterStore.playerCrew)
+
+const currentSeaInfo = computed(() => GameLogic.getSea(currentIsland.value?.difficulty ?? 1))
+const seaAccessInfo = computed(() => playerCharacter.value ? GameLogic.getSeaAccess(playerCharacter.value) : [])
+const nextSeaInfo = computed(() => seaAccessInfo.value.find(sa => !sa.unlocked) ?? null)
+
+const formatBountyNav = (value: number): string => {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(0)}M`
+  return `${value}`
+}
 
 const allDataLoaded = computed(() => {
   return playerCharacterLoaded.value && 
@@ -786,7 +815,7 @@ const handleStartBattle = async (battleData: any) => {
     console.log('⚔️ Navigation - Executando batalha...')
     const result = await NavalBattleSystem.startNavalBattle(
       playerCrew.value!.id!,
-      battleData.enemyCrew.id,
+      battleData.enemyCrew,
       battleData.island
     )
     
@@ -1022,115 +1051,173 @@ const testNavigationModal = () => {
 </script>
 
 <style scoped>
-.navigation-view {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-}
+/* ============================================================
+   Navigation - Grand Line Sea Chart
+   ============================================================ */
 
-.page-header {
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-  color: white;
-  padding: 2rem 0;
+/* Sea banner */
+.nav-sea-banner {
+  padding: 10px 0;
   margin-bottom: 0;
 }
 
+.nav-sea-name {
+  font-weight: 700;
+  color: white;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
 .loading-container {
-  padding: 4rem 0;
-}
-
-.ship-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.ship-stat {
+  min-height: 350px;
   display: flex;
   align-items: center;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 6px;
-  border-left: 3px solid rgba(0, 0, 0, 0.1);
-}
-
-.island-info {
-  text-align: center;
-}
-
-.island-stats {
-  display: flex;
-  flex-wrap: wrap;
   justify-content: center;
-  gap: 4px;
 }
 
-.navigation-history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 300px;
-  overflow-y: auto;
+/* Navigation header */
+.navigation-header {
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.12),
+    rgba(212, 175, 55, 0.06)
+  );
+  border: 1px solid rgba(21, 101, 192, 0.35);
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 20px;
+  position: relative;
 }
 
-.history-item {
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  border-left: 3px solid rgba(0, 0, 0, 0.1);
+.navigation-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #1565C0, #90CAF9, #1565C0, transparent
+  );
+  border-radius: 14px 14px 0 0;
 }
 
-.history-info {
-  flex: 1;
-}
-
-.history-title {
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.history-details {
-  font-size: 0.75rem;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-.v-card {
+/* Route / destination cards */
+.route-card {
+  background: #132235;
+  border: 1px solid rgba(21, 101, 192, 0.3);
   border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  height: 100%;
+}
+
+.route-card:hover {
+  border-color: rgba(21, 101, 192, 0.65);
+  box-shadow: 0 0 16px rgba(21, 101, 192, 0.22);
+  transform: translateY(-2px);
+}
+
+.route-card.selected {
+  border-color: #1565C0;
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.15),
+    rgba(212, 175, 55, 0.06)
+  );
+  box-shadow: 0 0 20px rgba(21, 101, 192, 0.3);
+}
+
+.route-island-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #90CAF9;
+  font-size: 1rem;
+  margin-bottom: 6px;
+}
+
+.route-distance {
+  font-size: 0.78rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.route-distance-value {
+  color: #D4AF37;
+  font-weight: 600;
+}
+
+/* Ship status panel */
+.ship-status-panel {
+  background: linear-gradient(135deg, #0F1E33, #132235);
+  border: 1px solid rgba(21, 101, 192, 0.4);
+  border-radius: 14px;
   overflow: hidden;
 }
 
-.v-card-title {
-  font-weight: 600;
-  font-size: 1.1rem;
+.ship-status-header {
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.18),
+    rgba(144, 202, 249, 0.05)
+  );
+  border-bottom: 1px solid rgba(21, 101, 192, 0.3);
+  padding: 12px 18px;
 }
 
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
+.ship-status-name {
+  font-family: Georgia, serif;
+  color: #90CAF9;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
-/* RESPONSIVIDADE */
-@media (max-width: 960px) {
-  .page-header {
-    padding: 1rem 0;
-  }
-  
-  .page-header .d-flex {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: 1rem;
-  }
-  
-  .ship-details {
-    gap: 8px;
-  }
-  
-  .ship-stat {
-    padding: 6px;
-    font-size: 0.875rem;
-  }
-  
-  .navigation-history-list {
-    max-height: 200px;
-  }
+/* Navigation in progress panel */
+.voyage-in-progress {
+  background: linear-gradient(135deg, #0A1A2E, #0F2040);
+  border: 1px solid rgba(21, 101, 192, 0.5);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
 }
+
+.voyage-header {
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.2),
+    rgba(144, 202, 249, 0.06)
+  );
+  border-bottom: 1px solid rgba(21, 101, 192, 0.35);
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.voyage-title {
+  font-family: Georgia, serif;
+  color: #90CAF9;
+  font-weight: 700;
+  font-size: 1rem;
+  animation: voyage-pulse 3s ease-in-out infinite;
+}
+
+@keyframes voyage-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Weather / sea condition badge */
+.sea-condition {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 16px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sea-calm { color: #66BB6A; background: rgba(102, 187, 106, 0.1); border: 1px solid rgba(102, 187, 106, 0.3); }
+.sea-rough { color: #FFA726; background: rgba(255, 167, 38, 0.1); border: 1px solid rgba(255, 167, 38, 0.3); }
+.sea-storm { color: #EF5350; background: rgba(239, 83, 80, 0.1); border: 1px solid rgba(239, 83, 80, 0.3); }
 </style>

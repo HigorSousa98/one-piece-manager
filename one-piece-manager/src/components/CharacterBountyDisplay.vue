@@ -48,30 +48,49 @@ const iconSize = computed(() => {
 </script>
 
 <style scoped>
-.character-bounty-chip {
-  font-weight: 700 !important;
-  letter-spacing: 0.5px;
+/* CharacterBountyDisplay - Bounty chip component */
+
+.bounty-display-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
-.character-bounty-chip .v-icon {
-  margin-right: 4px;
+.bounty-display-chip.size-small {
+  font-size: 0.72rem;
+  padding: 2px 8px;
 }
 
-
-/* ESTILOS ESPECÍFICOS POR TIPO */
-.character-bounty-chip.pirate {
-  background: linear-gradient(45deg, #c62828, #d32f2f) !important;
+.bounty-display-chip.size-default {
+  font-size: 0.82rem;
 }
 
-.character-bounty-chip.marine {
-  background: linear-gradient(45deg, #1565c0, #1976d2) !important;
+.bounty-display-chip.size-large {
+  font-size: 1rem;
+  padding: 4px 14px;
 }
 
-.character-bounty-chip.bounty-hunter {
-  background: linear-gradient(45deg, #2e7d32, #388e3c) !important;
+.bounty-display-chip.variant-elevated {
+  background: rgba(212,175,55,0.15);
+  border: 1px solid rgba(212,175,55,0.4);
+  color: #FFD700;
 }
 
-.character-bounty-chip.government {
-  background: linear-gradient(45deg, #ef6c00, #f57c00) !important;
+.bounty-display-chip.variant-flat {
+  background: transparent;
+  color: #D4AF37;
+  border: none;
+}
+
+.bounty-icon { flex-shrink: 0; }
+
+.bounty-amount {
+  font-family: Georgia, serif;
+  text-shadow: 0 0 6px rgba(255,215,0,0.3);
 }
 </style>

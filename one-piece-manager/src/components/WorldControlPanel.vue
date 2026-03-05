@@ -293,13 +293,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ── Grand Line World Control Panel ── */
 .world-control-panel {
   border-radius: 12px;
   overflow: hidden;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(160deg, #132235 0%, #0d1b2e 100%);
 }
 
 .status-details {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(212, 175, 55, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.15);
   border-radius: 8px;
   padding: 8px;
 }
@@ -314,7 +318,7 @@ onMounted(() => {
   .action-buttons {
     flex-direction: column;
   }
-  
+
   .action-buttons .v-btn {
     width: 100%;
     margin: 0 0 12px 0 !important;

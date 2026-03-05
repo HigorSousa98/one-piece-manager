@@ -1408,158 +1408,71 @@ watch(() => props.island.id, async () => {
 </script>
 
 <style scoped>
-.territory-liberation-interface {
-  max-width: 1200px;
-  margin: 0 auto;
-}
+/* TerritoryLiberationInterface - Conquest panel */
 
-.island-status {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
+.liberation-interface { max-width: 100%; }
+
+.island-target-card {
+  background: #132235;
+  border: 1px solid rgba(198,40,40,0.25);
+  border-radius: 12px;
   padding: 16px;
-}
-
-.progress-section {
-  background: rgba(255, 152, 0, 0.05);
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid rgba(255, 152, 0, 0.2);
-}
-
-.next-step-section {
-  background: rgba(33, 150, 243, 0.05);
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid rgba(33, 150, 243, 0.2);
-}
-
-.active-task-info {
-  background: rgba(156, 39, 176, 0.05);
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid rgba(156, 39, 176, 0.2);
-}
-
-.task-progress {
-  background: rgba(156, 39, 176, 0.1);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.step-history-item {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  padding: 12px;
-  margin-left: 8px;
-}
-
-.rewards-section {
-  background: rgba(76, 175, 80, 0.05);
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid rgba(76, 175, 80, 0.2);
-}
-
-.devil-fruit-section {
-  background: rgba(255, 193, 7, 0.05);
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid rgba(255, 193, 7, 0.2);
-}
-
-.devil-fruit-actions .v-btn-group {
-  width: 100%;
-}
-
-.devil-fruit-actions .v-btn {
-  flex: 1;
-}
-
-.crew-member-item {
-  border-radius: 8px;
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
   cursor: pointer;
+  transition: all 0.25s ease;
+  height: 100%;
 }
 
-.crew-member-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-.crew-member-item.selected-member {
-  background-color: rgba(98, 0, 238, 0.1);
-  border: 2px solid rgba(98, 0, 238, 0.3);
-}
-
-.member-stats {
-  text-align: right;
-}
-
-.selected-member-info {
-  background: rgba(33, 150, 243, 0.05);
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.fruit-decision-result {
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.crew-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.threat-level {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 8px;
-  padding: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.time-info {
-  margin-top: 8px;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 4px;
-}
-
-.v-card {
-  transition: all 0.3s ease;
-}
-
-.v-card:hover {
+.island-target-card:hover {
+  border-color: rgba(198,40,40,0.55);
+  box-shadow: 0 0 14px rgba(198,40,40,0.18);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.island-target-card.selected {
+  border-color: #C62828;
+  background: linear-gradient(135deg, rgba(198,40,40,0.12), rgba(139,0,0,0.08));
+  box-shadow: 0 0 18px rgba(198,40,40,0.25);
 }
 
-@media (max-width: 768px) {
-  .territory-liberation-interface {
-    padding: 8px;
-  }
-  
-  .devil-fruit-actions .v-btn-group {
-    flex-direction: column;
-  }
-  
-  .devil-fruit-actions .v-btn {
-    width: 100%;
-    margin-bottom: 8px;
-  }
+.island-target-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #E8D5A3;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
 
-  .crew-details {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .crew-details .v-chip {
-    margin-bottom: 4px;
-  }
+.liberation-power-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.84rem;
+}
+
+.liberation-power-row:last-child { border-bottom: none; }
+
+.power-label { color: #8B9DC3; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.06em; }
+
+.power-value { color: #E8D5A3; font-weight: 700; }
+.power-value.player { color: #D4AF37; }
+.power-value.enemy  { color: #EF5350; }
+
+.liberation-action-btn {
+  background: linear-gradient(135deg, #B71C1C, #C62828) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(198,40,40,0.3) !important;
+}
+
+.liberation-progress-card {
+  background: linear-gradient(135deg, rgba(198,40,40,0.1), rgba(139,0,0,0.06));
+  border: 1px solid rgba(198,40,40,0.35);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 </style>

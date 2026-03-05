@@ -778,117 +778,181 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.history-page {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+/* ============================================================
+   History - Grand Line Chronicle
+   ============================================================ */
+
+/* Page container */
+.history-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 8px;
+}
+
+/* History header */
+.history-header {
+  background: linear-gradient(135deg,
+    rgba(84, 110, 122, 0.12),
+    rgba(212, 175, 55, 0.06)
+  );
+  border: 1px solid rgba(84, 110, 122, 0.3);
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 20px;
   position: relative;
 }
 
-/* Loading Overlay */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+.history-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #546E7A, #90A4AE, #546E7A, transparent
+  );
+  border-radius: 14px 14px 0 0;
+}
+
+/* Timeline / log entries */
+.log-entry {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.log-entry:hover {
+  background: rgba(212, 175, 55, 0.05);
+  border-color: rgba(212, 175, 55, 0.2);
+}
+
+.log-entry::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 3px 0 0 3px;
+}
+
+.log-entry.log-win::before    { background: #4CAF50; }
+.log-entry.log-loss::before   { background: #EF5350; }
+.log-entry.log-neutral::before { background: #78909C; }
+.log-entry.log-gain::before   { background: #D4AF37; }
+
+.log-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  flex-shrink: 0;
+  font-size: 1rem;
 }
 
-.loading-content {
-  text-align: center;
-  max-width: 400px;
-  padding: 2rem;
+.log-icon.win    { background: rgba(76, 175, 80, 0.15); color: #81C784; border: 1px solid rgba(76, 175, 80, 0.3); }
+.log-icon.loss   { background: rgba(239, 83, 80, 0.15); color: #EF5350; border: 1px solid rgba(239, 83, 80, 0.3); }
+.log-icon.gold   { background: rgba(212, 175, 55, 0.15); color: #D4AF37; border: 1px solid rgba(212,175,55,0.3); }
+.log-icon.info   { background: rgba(33, 150, 243, 0.12); color: #90CAF9; border: 1px solid rgba(33,150,243,0.25); }
+
+.log-content {
+  flex: 1;
+  min-width: 0;
 }
 
-.loading-steps {
-  margin-top: 2rem;
-}
-
-.step-item {
-  display: flex;
-  align-items: center;
-  padding: 0.5rem 0;
-  opacity: 0.3;
-  transition: opacity 0.3s ease;
+.log-title {
   font-size: 0.9rem;
+  font-weight: 600;
+  color: #E8D5A3;
+  margin-bottom: 3px;
 }
 
-.step-item.active {
-  opacity: 1;
-  color: var(--v-theme-primary);
-}
-
-/* Timeline Styles */
-.history-timeline {
-  max-width: none;
-}
-
-.history-entry {
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-left: 4px solid transparent;
-}
-
-.history-entry:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-  border-left-color: var(--v-theme-primary);
-}
-
-.entry-expanded {
-  border-left-color: var(--v-theme-primary);
-}
-
-.expanded-details {
-  background: rgba(0,0,0,0.02);
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.detail-item {
-  margin-bottom: 8px;
-  font-size: 0.875rem;
-}
-
-.battle-log {
-  max-height: 150px;
-  overflow-y: auto;
-  background: rgba(0,0,0,0.02);
-  border-radius: 4px;
-  padding: 8px;
-}
-
-.battle-log-full {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.log-entry {
-  font-family: 'Courier New', monospace;
+.log-desc {
   font-size: 0.8rem;
-  line-height: 1.4;
+  color: #8B9DC3;
+  line-height: 1.5;
 }
 
-.border-t {
-  border-top: 1px solid rgba(0,0,0,0.12);
+.log-timestamp {
+  font-size: 0.7rem;
+  color: #546E7A;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 6px;
 }
 
-.gap-2 {
+.log-rewards {
+  display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .loading-content {
-    padding: 1rem;
-  }
-  
-  .step-item {
-    font-size: 0.8rem;
-  }
+.log-reward-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #D4AF37;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+/* Filter chips */
+.filter-section {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.filter-chip {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #8B9DC3;
+  background: rgba(255, 255, 255, 0.04);
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  color: #D4AF37;
+}
+
+.filter-chip.active {
+  border-color: #D4AF37;
+  color: #D4AF37;
+  background: rgba(212, 175, 55, 0.1);
+}
+
+/* Empty state */
+.empty-chronicle {
+  text-align: center;
+  padding: 60px 20px;
+  color: #546E7A;
+}
+
+.empty-chronicle-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.empty-chronicle-text {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  color: #546E7A;
 }
 </style>

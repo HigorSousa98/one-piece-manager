@@ -340,19 +340,21 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* ── Grand Line Civilian Recruitment ── */
 .civilian-info {
-  background: rgba(33, 150, 243, 0.05);
+  background: rgba(21, 101, 192, 0.1);
+  border: 1px solid rgba(21, 101, 192, 0.3);
   border-radius: 12px;
   padding: 16px;
 }
 
 .recruitment-analysis {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(212, 175, 55, 0.05);
   border-radius: 12px;
 }
 
 .chance-visual {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(13, 27, 46, 0.4);
   border-radius: 8px;
   padding: 12px;
 }
@@ -366,40 +368,23 @@ onMounted(async () => {
 }
 
 .loyalty-info {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(212, 175, 55, 0.08);
+  border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 8px;
 }
 
 @keyframes slideIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(30px); 
-  }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
-  }
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes bounceIn {
-  0% { 
-    transform: scale(0.3); 
-    opacity: 0; 
-  }
-  50% { 
-    transform: scale(1.05); 
-  }
-  70% { 
-    transform: scale(0.9); 
-  }
-  100% { 
-    transform: scale(1); 
-    opacity: 1; 
-  }
+  0%   { transform: scale(0.3); opacity: 0; }
+  50%  { transform: scale(1.05); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-.text-success-darken-2 { color: #2e7d32 !important; }
-.text-error-darken-2 { color: #c62828 !important; }
-.success-darken-1 { background-color: #e8f5e8 !important; }
-.error-darken-1 { background-color: #ffebee !important; }
+.text-success-darken-2 { color: #66bb6a !important; }
+.text-error-darken-2   { color: #ef5350 !important; }
 </style>

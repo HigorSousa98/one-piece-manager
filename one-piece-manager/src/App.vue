@@ -81,7 +81,7 @@
       <!-- Player Info no Menu -->
       <template v-slot:append>
         <div class="pa-2" v-if="playerCharacter">
-          <v-card color="rgba(255,255,255,0.1)" dark>
+          <v-card class="player-info-card">
             <v-card-text class="py-2">
               <div class="text-caption">{{ playerCharacter.name }}</div>
               <div class="text-body-2">Level {{ playerCharacter.level }}</div>
@@ -367,10 +367,15 @@ const regularMenuItems = [
     icon: 'mdi-island', 
     route: '/islands' 
   },
-  { 
-    title: 'Tripulação', 
-    icon: 'mdi-account-group', 
-    route: '/crew' 
+  {
+    title: 'Tripulação',
+    icon: 'mdi-account-group',
+    route: '/crew'
+  },
+  {
+    title: 'Inventário',
+    icon: 'mdi-bag-personal',
+    route: '/inventory'
   }
 ]
 
@@ -534,123 +539,193 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.v-navigation-drawer {
-  background: linear-gradient(135deg, #FF6B35 0%, #004E89 100%);
+/* ============================================================
+   App.vue - Grand Line Dark Navigation
+   ============================================================ */
+
+/* Navigation Drawer - Deep sea panel */
+:deep(.v-navigation-drawer) {
+  background: linear-gradient(180deg,
+    #10264b 0%,
+    #183562 40%,
+    #224981 100%
+  ) !important;
+  border-right: 2px solid rgba(212, 175, 55, 0.4) !important;
 }
 
-.v-app-bar {
-  background: linear-gradient(90deg, #FF6B35 0%, #FFD23F 100%) !important;
+/* Drawer header separator */
+:deep(.v-navigation-drawer .v-divider) {
+  border-color: rgba(212, 175, 55, 0.3) !important;
+  margin: 8px 16px !important;
 }
 
-.v-main {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+/* Navigation drawer title */
+:deep(.v-list-item-title) {
+  color: #F0E6D8 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.03em;
+}
+
+/* App Bar - Golden horizon */
+:deep(.v-app-bar) {
+  background: linear-gradient(90deg,
+    #060F1E 0%,
+    #0A1628 50%,
+    #060F1E 100%
+  ) !important;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.5) !important;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.7) !important;
+}
+
+:deep(.v-toolbar-title) {
+  font-family: 'Georgia', 'Times New Roman', serif !important;
+  font-weight: 700 !important;
+  color: #D4AF37 !important;
+  text-shadow: 0 0 16px rgba(212, 175, 55, 0.5);
+  letter-spacing: 0.05em;
+}
+
+/* Main content area */
+:deep(.v-main) {
+  background: linear-gradient(135deg,
+    #060F1E 0%,
+    #0A1628 50%,
+    #060F1E 100%
+  ) !important;
   min-height: 100vh;
 }
 
-/* ✅ ESTILOS PARA BOSS FIGHT */
-.boss-fight-menu-item {
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.15), rgba(238, 90, 36, 0.15));
-  border-left: 4px solid #ff6b6b;
-  margin: 4px 8px;
-  border-radius: 8px;
-  position: relative;
+/* Player info card at bottom of drawer */
+.player-info-card {
+  background: rgba(212, 175, 55, 0.1) !important;
+  border: 1px solid rgba(212, 175, 55, 0.35) !important;
+  border-radius: 10px !important;
 }
 
-.boss-fight-menu-item:hover {
-  background: linear-gradient(135deg, rgba(255, 107, 107, 0.25), rgba(238, 90, 36, 0.25));
+.player-info-card :deep(.text-caption) {
+  color: #B0BFDA !important;
+}
+
+.player-info-card :deep(.text-body-2) {
+  color: #D4AF37 !important;
+  font-weight: 600 !important;
+}
+
+/* Boss Fight menu item - pulsing danger */
+.boss-fight-menu-item {
+  background: linear-gradient(135deg,
+    rgba(198, 40, 40, 0.15),
+    rgba(139, 0, 0, 0.12)
+  ) !important;
+  border-left: 3px solid #C62828 !important;
+  border-radius: 8px !important;
+  margin: 4px 8px !important;
+  position: relative;
+  overflow: hidden;
 }
 
 .boss-fight-menu-item::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
-  animation: shimmer 2s infinite;
+  inset: 0;
+  background: linear-gradient(45deg,
+    transparent 30%,
+    rgba(198, 40, 40, 0.08) 50%,
+    transparent 70%
+  );
+  animation: boss-shimmer 2.5s infinite;
+}
+
+.boss-fight-menu-item:hover {
+  background: linear-gradient(135deg,
+    rgba(198, 40, 40, 0.25),
+    rgba(139, 0, 0, 0.2)
+  ) !important;
 }
 
 .boss-count-chip {
-  animation: pulse 2s infinite;
-  font-weight: bold;
+  animation: pulse-danger 2s ease-in-out infinite;
+  font-weight: bold !important;
 }
 
 .boss-fight-header-btn {
-  animation: glow 2s ease-in-out infinite alternate;
+  animation: glow-danger 2s ease-in-out infinite alternate;
 }
 
-/* ✅ INDICADOR DISCRETO DE MUNDO ATUALIZANDO */
+/* World update indicator */
 .world-updating-indicator {
-  opacity: 0.7;
-  animation: fadeInOut 2s ease-in-out infinite;
+  opacity: 0.65;
+  animation: fade-cycle 2.5s ease-in-out infinite;
 }
 
-/* ✅ INDICADOR DE PERFORMANCE */
+/* Performance chip */
 .performance-indicator {
   font-size: 0.7rem !important;
   height: 20px !important;
-  opacity: 0.8;
-  transition: all 0.3s ease;
+  opacity: 0.75;
+  transition: all 0.25s ease;
+  border-color: rgba(212, 175, 55, 0.35) !important;
 }
 
 .performance-indicator:hover {
   opacity: 1;
   transform: scale(1.05);
+  border-color: rgba(212, 175, 55, 0.7) !important;
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+/* Loading screen */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  gap: 16px;
+  color: #F0E6D8;
 }
 
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+.loading-container :deep(.text-h6) {
+  color: #D4AF37 !important;
+  font-family: Georgia, serif;
 }
 
-@keyframes glow {
-  from {
-    box-shadow: 0 0 5px rgba(255, 107, 107, 0.5);
-  }
-  to {
-    box-shadow: 0 0 20px rgba(255, 107, 107, 0.8), 0 0 30px rgba(255, 107, 107, 0.6);
-  }
+.loading-container :deep(.text-body-2) {
+  color: #B0BFDA !important;
 }
 
-@keyframes fadeInOut {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+/* Keyframes */
+@keyframes boss-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%);  }
 }
 
-/* ✅ RESPONSIVE */
+@keyframes pulse-danger {
+  0%, 100% { transform: scale(1);    box-shadow: 0 0 4px rgba(198, 40, 40, 0.4); }
+  50%       { transform: scale(1.12); box-shadow: 0 0 12px rgba(198, 40, 40, 0.8); }
+}
+
+@keyframes glow-danger {
+  from { box-shadow: 0 0 6px rgba(198, 40, 40, 0.5); }
+  to   { box-shadow: 0 0 20px rgba(198, 40, 40, 0.9), 0 0 30px rgba(198, 40, 40, 0.6); }
+}
+
+@keyframes fade-cycle {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.75; }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .v-app-bar .v-btn {
+  :deep(.v-app-bar .v-btn) {
     margin: 0 2px;
   }
-  
-  .v-badge {
-    transform: scale(0.8);
-  }
-  
+
   .world-updating-indicator {
     margin-right: 8px !important;
-    size: 16px;
   }
 
   .performance-indicator {
-    display: none; /* Ocultar em mobile */
+    display: none;
   }
-}
-
-/* ✅ CARDS DE STATUS */
-.v-card {
-  transition: all 0.3s ease;
-}
-
-.v-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 </style>

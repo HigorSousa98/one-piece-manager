@@ -259,6 +259,191 @@
         </v-col>
       </v-row>
       
+      <!-- ALIANÇAS -->
+      <v-row>
+        <v-col cols="12">
+          <v-card variant="elevated" class="mb-4 alliance-card">
+            <v-card-title style="background: linear-gradient(135deg,#1A3A5C,#1565C0);" class="d-flex align-center py-3 px-4">
+              <v-icon color="#D4AF37" class="me-2">mdi-handshake</v-icon>
+              <span class="text-white font-weight-bold">ALIANÇAS</span>
+              <v-spacer />
+              <v-btn
+                size="small"
+                variant="tonal"
+                color="white"
+                prepend-icon="mdi-plus"
+                @click="openAllianceModal"
+              >
+                Nova Aliança
+              </v-btn>
+            </v-card-title>
+            <v-card-text class="pa-3">
+              <!-- Active alliances list -->
+              <div v-if="activeAlliances.length > 0">
+                <div
+                  v-for="alliance in activeAlliances"
+                  :key="alliance.id"
+                  class="alliance-row d-flex align-center gap-2 pa-2 mb-2 rounded"
+                >
+                  <v-chip
+                    :color="alliance.type === 'permanent' ? '#D4AF37' : '#1565C0'"
+                    size="small"
+                    variant="tonal"
+                  >
+                    {{ alliance.type === 'permanent' ? 'Permanente' : 'Temporária' }}
+                  </v-chip>
+                  <span class="alliance-crew-name">{{ allianceCrewName(alliance.alliedCrewId) }}</span>
+                  <v-spacer />
+                  <v-btn
+                    size="x-small"
+                    color="error"
+                    variant="tonal"
+                    @click="dissolveAlliance(alliance.id!)"
+                  >
+                    Encerrar
+                  </v-btn>
+                </div>
+              </div>
+
+              <!-- Betrayed alliances notification -->
+              <div v-if="allAlliancesList.filter(a => a.status === 'betrayed').length > 0">
+                <v-alert type="error" density="compact" class="mb-2" variant="tonal">
+                  <span v-for="a in allAlliancesList.filter(a => a.status === 'betrayed')" :key="a.id">
+                    ⚠️ {{ allianceCrewName(a.alliedCrewId) }} traiu a aliança!
+                  </span>
+                </v-alert>
+              </div>
+
+              <p v-if="activeAlliances.length === 0 && allAlliancesList.filter(a => a.status === 'betrayed').length === 0" class="text-medium-emphasis text-body-2 ma-0 py-1">
+                Nenhuma aliança ativa. Proponha uma aliança com crews da mesma ilha.
+              </p>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- MODAL: PROPOR ALIANÇA -->
+      <v-dialog v-model="showAllianceModal" max-width="600" scrollable>
+        <v-card>
+          <v-card-title style="background: linear-gradient(135deg,#1A3A5C,#1565C0);" class="text-white py-3 px-4 d-flex align-center">
+            <v-icon class="me-2">mdi-handshake</v-icon>
+            Propor Aliança
+            <v-spacer />
+            <v-icon @click="showAllianceModal = false" style="cursor:pointer">mdi-close</v-icon>
+          </v-card-title>
+
+          <v-card-text class="pa-4">
+            <!-- Empty state -->
+            <div v-if="eligibleAllies.length === 0" class="text-center py-6">
+              <v-icon size="48" color="#546E7A" class="mb-3">mdi-anchor-off</v-icon>
+              <p class="text-medium-emphasis">Nenhuma crew elegível na mesma ilha.</p>
+              <p class="text-caption text-medium-emphasis">Navegue para uma ilha com crews compatíveis.</p>
+            </div>
+
+            <div v-else>
+              <!-- Tipo de aliança -->
+              <div class="ally-type-selector mb-4">
+                <div class="ally-type-label mb-2">Tipo de aliança:</div>
+                <div class="d-flex gap-3">
+                  <div
+                    class="ally-type-card"
+                    :class="{ 'ally-type-selected': selectedAllianceType === 'temporary' }"
+                    @click="selectedAllianceType = 'temporary'"
+                  >
+                    <v-icon size="20" color="#1565C0" class="mb-1">mdi-clock-time-four-outline</v-icon>
+                    <div class="ally-type-name">Temporária</div>
+                    <div class="ally-type-desc">2 horas</div>
+                  </div>
+                  <div
+                    class="ally-type-card"
+                    :class="{ 'ally-type-selected': selectedAllianceType === 'permanent' }"
+                    @click="selectedAllianceType = 'permanent'"
+                  >
+                    <v-icon size="20" color="#D4AF37" class="mb-1">mdi-infinity</v-icon>
+                    <div class="ally-type-name">Permanente</div>
+                    <div class="ally-type-desc">Risco de traição</div>
+                  </div>
+                </div>
+                <v-alert v-if="selectedAllianceType === 'permanent'" type="warning" density="compact" variant="tonal" class="mt-2">
+                  Alianças permanentes podem ser traídas a qualquer momento!
+                </v-alert>
+              </div>
+
+              <!-- Lista de crews como cards com capitão -->
+              <div class="ally-type-label mb-2">Selecione uma crew:</div>
+              <div class="ally-crew-list">
+                <div
+                  v-for="entry in eligibleAllyCaptains"
+                  :key="entry.crew.id"
+                  class="ally-crew-card"
+                  :class="{ 'ally-crew-selected': selectedAllyId === entry.crew.id }"
+                  @click="selectedAllyId = entry.crew.id ?? null"
+                >
+                  <!-- Selection indicator -->
+                  <div class="ally-select-dot">
+                    <v-icon
+                      size="18"
+                      :color="selectedAllyId === entry.crew.id ? '#D4AF37' : '#546E7A'"
+                    >
+                      {{ selectedAllyId === entry.crew.id ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+                    </v-icon>
+                  </div>
+
+                  <!-- Captain avatar placeholder -->
+                  <div class="ally-avatar" :style="{ background: crewTypeGradient(entry.crew.type) }">
+                    <v-icon size="26" color="white">{{ crewTypeIcon(entry.crew.type) }}</v-icon>
+                  </div>
+
+                  <!-- Info -->
+                  <div class="ally-info">
+                    <div class="ally-crew-name">{{ entry.crew.name }}</div>
+                    <div class="ally-captain-name" v-if="entry.captain">
+                      <v-icon size="12" color="#D4AF37" class="me-1">mdi-crown</v-icon>
+                      {{ entry.captain.name }} · Lv {{ entry.captain.level }}
+                    </div>
+                    <div class="d-flex align-center gap-2 mt-1 flex-wrap">
+                      <v-chip size="x-small" :color="crewTypeColor(entry.crew.type)" variant="tonal">
+                        {{ entry.crew.type }}
+                      </v-chip>
+                      <span class="ally-stat-text">
+                        <v-icon size="11" color="#D4AF37">mdi-star</v-icon>
+                        {{ entry.crew.reputation?.toLocaleString() ?? 0 }} rep
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Betrayal risk -->
+                  <div class="ally-betrayal">
+                    <div class="ally-betrayal-label">Risco traição</div>
+                    <div
+                      class="ally-betrayal-val"
+                      :class="betrayalRiskClass(entry.crew)"
+                    >
+                      {{ estimatedBetrayalPercent(entry.crew) }}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </v-card-text>
+
+          <v-card-actions class="pa-3 border-top">
+            <v-btn variant="text" @click="showAllianceModal = false">Cancelar</v-btn>
+            <v-spacer />
+            <v-btn
+              color="primary"
+              variant="elevated"
+              :loading="proposingAlliance"
+              :disabled="!selectedAllyId || eligibleAllies.length === 0"
+              @click="proposeAlliance"
+            >
+              <v-icon start>mdi-handshake</v-icon>
+              Confirmar Aliança
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <!-- CAPITÃO (JOGADOR) -->
       <v-row>
         <v-col cols="12">
@@ -419,7 +604,8 @@ import CrewMemberCard from '@/components/CrewMemberCard.vue'
 import MemberDetailsModal from '@/components/MemberDetailsModal.vue'
 import ShipUpgradeModal from '@/components/ShipUpgradeModal.vue'
 import { RecruitmentSystem } from '@/utils/recruitmentSystem'
-import type { Character, Ship, DevilFruit, StyleCombat, Task } from '@/utils/database'
+import { AllianceSystem } from '@/utils/allianceSystem'
+import type { Character, Ship, DevilFruit, StyleCombat, Task, Alliance, Crew } from '@/utils/database'
 
 const characterStore = useCharacterStore()
 
@@ -455,6 +641,17 @@ const shipCanUpgrade = ref(false)
 
 // ✅ COMPOSABLE INSTANCE
 let shipUpgradeComposable: ReturnType<typeof useShipUpgrade> | null = null
+
+// 🤝 ALLIANCES
+const activeAlliances = ref<Alliance[]>([])
+const allAlliancesList = ref<Alliance[]>([])
+const eligibleAllies = ref<Crew[]>([])
+const showAllianceModal = ref(false)
+const selectedAllyId = ref<number | null>(null)
+const selectedAllianceType = ref<'temporary' | 'permanent'>('temporary')
+const proposingAlliance = ref(false)
+const allianceCrewNames = ref<Map<number, string>>(new Map())
+const eligibleAllyCaptains = ref<{ crew: Crew; captain: Character | null }[]>([])
 
 // 🎛️ FILTROS E ORDENAÇÃO
 const selectedTypeFilter = ref<string | null>(null)
@@ -806,7 +1003,8 @@ const loadDataSequentially = async () => {
       loadPlayerShip(),
       getStyleCombats(),
       getDevilFruits(),
-      loadCanUpgrade()
+      loadCanUpgrade(),
+      loadAlliances(),
     ])
     
     // 4. ✅ Inicializar composable APÓS todos os dados estarem carregados
@@ -1044,6 +1242,111 @@ const formatBounty = (bounty: number): string => {
   return `${bounty} B$`
 }
 
+// 🤝 ALLIANCE METHODS
+const loadAlliances = async () => {
+  if (!playerCrew.value?.id) return
+  const crewId = playerCrew.value.id
+  const [active, all, eligible] = await Promise.all([
+    AllianceSystem.getActiveAlliances(crewId),
+    AllianceSystem.getAllAlliances(crewId),
+    AllianceSystem.getEligibleAllies(crewId),
+  ])
+  activeAlliances.value = active
+  allAlliancesList.value = all
+  eligibleAllies.value = eligible
+
+  // Build name map for all involved crews
+  const nameMap = new Map<number, string>()
+  const crewIds = [...new Set([...active.map(a => a.alliedCrewId), ...all.map(a => a.alliedCrewId)])]
+  await Promise.all(crewIds.map(async (id) => {
+    const crew = await db.crews.get(id)
+    if (crew) nameMap.set(id, crew.name)
+  }))
+  allianceCrewNames.value = nameMap
+}
+
+const proposeAlliance = async () => {
+  if (!playerCrew.value?.id || !selectedAllyId.value) return
+  proposingAlliance.value = true
+  try {
+    await AllianceSystem.proposeAlliance(playerCrew.value.id, selectedAllyId.value, selectedAllianceType.value)
+    showAllianceModal.value = false
+    selectedAllyId.value = null
+    await loadAlliances()
+  } catch (e: any) {
+    console.error('Erro ao propor aliança:', e)
+  } finally {
+    proposingAlliance.value = false
+  }
+}
+
+const dissolveAlliance = async (allianceId: number) => {
+  await AllianceSystem.dissolveAlliance(allianceId)
+  await loadAlliances()
+}
+
+const openAllianceModal = async () => {
+  if (!playerCrew.value?.id) return
+  const allies = await AllianceSystem.getEligibleAllies(playerCrew.value.id)
+  eligibleAllies.value = allies
+
+  // Load captain for each eligible crew for rich display
+  eligibleAllyCaptains.value = await Promise.all(
+    allies.map(async (crew) => {
+      const captain = crew.captainId
+        ? await db.characters.get(crew.captainId).catch(() => null)
+        : null
+      return { crew, captain: captain ?? null }
+    }),
+  )
+
+  selectedAllyId.value = null
+  selectedAllianceType.value = 'temporary'
+  showAllianceModal.value = true
+}
+
+const allianceCrewName = (crewId: number): string => {
+  return allianceCrewNames.value.get(crewId) ?? `Crew #${crewId}`
+}
+
+const allianceStatusColor = (status: Alliance['status']): string => {
+  if (status === 'betrayed') return 'error'
+  if (status === 'expired') return 'grey'
+  return 'success'
+}
+
+const estimatedBetrayalPercent = (crew: Crew): string => {
+  const repFactor = Math.min(1, (crew.reputation ?? 0) / 10000)
+  const chance = 0.02 + (1 - repFactor) * 0.1
+  return (chance * 100).toFixed(1)
+}
+
+const crewTypeIcon = (type: string): string => ({
+  Pirate: 'mdi-skull-crossbones',
+  Marine: 'mdi-anchor',
+  BountyHunter: 'mdi-crosshairs',
+  Government: 'mdi-shield-crown',
+}[type] ?? 'mdi-account-group')
+
+const crewTypeGradient = (type: string): string => ({
+  Pirate:       'linear-gradient(135deg,#7F0000,#C62828)',
+  Marine:       'linear-gradient(135deg,#0D47A1,#1976D2)',
+  BountyHunter: 'linear-gradient(135deg,#4A148C,#7B1FA2)',
+  Government:   'linear-gradient(135deg,#1B5E20,#388E3C)',
+}[type] ?? 'linear-gradient(135deg,#37474F,#546E7A)')
+
+const crewTypeColor = (type: string): string => ({
+  Pirate: '#EF5350', Marine: '#42A5F5',
+  BountyHunter: '#CE93D8', Government: '#66BB6A',
+}[type] ?? '#78909C')
+
+const betrayalRiskClass = (crew: Crew): string => {
+  const pct = parseFloat(estimatedBetrayalPercent(crew))
+  if (pct >= 8) return 'betrayal-high'
+  if (pct >= 5) return 'betrayal-mid'
+  return 'betrayal-low'
+}
+
 // 🔄 LIFECYCLE
 onMounted(async () => {
   console.log('🚀 Componente CrewManagement montado, iniciando carregamento...')
@@ -1071,12 +1374,17 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ============================================================
+   Crew Management - Grand Line Crew HQ
+   ============================================================ */
+
 .crew-management-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 0 8px;
 }
 
+/* Loading */
 .loading-container {
   min-height: 400px;
   display: flex;
@@ -1087,68 +1395,331 @@ onUnmounted(() => {
 .loading-steps {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 20px;
+  text-align: left;
   max-width: 300px;
-  margin: 0 auto;
+  margin-inline: auto;
 }
 
 .step-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px;
+  font-size: 0.875rem;
+  color: #8B9DC3;
+  padding: 8px 14px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
 }
 
 .step-item.completed {
-  background-color: rgba(76, 175, 80, 0.1);
+  color: #D4AF37;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.25);
 }
 
-.v-card {
-  transition: all 0.3s ease;
+/* Crew header panel */
+.crew-header-panel {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.1),
+    rgba(21, 101, 192, 0.08)
+  );
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  position: relative;
 }
 
-.v-card:hover {
+.crew-header-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #D4AF37, #FFD700, #D4AF37, transparent
+  );
+  border-radius: 14px 14px 0 0;
+}
+
+.crew-name {
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #D4AF37;
+  text-shadow: 0 0 16px rgba(212, 175, 55, 0.4);
+  letter-spacing: 0.04em;
+}
+
+/* Ship info card */
+.ship-card {
+  background: linear-gradient(135deg, #0F1E33, #132235);
+  border: 1px solid rgba(21, 101, 192, 0.35);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ship-card-header {
+  background: linear-gradient(135deg,
+    rgba(21, 101, 192, 0.15),
+    rgba(212, 175, 55, 0.05)
+  );
+  border-bottom: 1px solid rgba(21, 101, 192, 0.3);
+  padding: 12px 16px;
+}
+
+.ship-name {
+  font-family: Georgia, serif;
+  color: #90CAF9;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+/* Member card grid */
+.member-grid-card {
+  background: #132235;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  height: 100%;
+}
+
+.member-grid-card:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.18);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-.text-h6 {
+.member-grid-card.is-captain {
+  border-color: rgba(212, 175, 55, 0.5);
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.08),
+    rgba(21, 101, 192, 0.06)
+  );
+}
+
+.member-grid-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #E8D5A3;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.member-grid-role {
+  font-size: 0.72rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.member-grid-level {
+  font-size: 0.8rem;
+  color: #D4AF37;
   font-weight: 600;
 }
 
-.v-btn {
-  border-radius: 8px;
+/* Recruitment panel */
+.recruitment-panel {
+  background: linear-gradient(135deg, #132235, #1A2F45);
+  border: 1px solid rgba(46, 125, 50, 0.35);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.recruitment-header {
+  background: linear-gradient(135deg,
+    rgba(46, 125, 50, 0.12),
+    rgba(212, 175, 55, 0.05)
+  );
+  border-bottom: 1px solid rgba(46, 125, 50, 0.25);
+  padding: 12px 16px;
+}
+
+.recruitment-title {
+  font-family: Georgia, serif;
+  color: #81C784;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+}
+
+/* Combat style badges */
+.style-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(212, 175, 55, 0.08);
+  color: #D4AF37;
+}
+
+/* Alliance styles */
+.alliance-card {
+  border: 1px solid rgba(21, 101, 192, 0.4);
+}
+
+.alliance-row {
+  background: rgba(21, 101, 192, 0.08);
+  border: 1px solid rgba(21, 101, 192, 0.2);
+}
+
+.alliance-crew-name {
   font-weight: 600;
+  color: #E8D5A3;
 }
 
-.v-chip {
-  font-weight: 700 !important;
+/* Alliance Modal — improved UX */
+.ally-type-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #8B9DC3;
+  text-transform: uppercase;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.ally-type-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border-radius: 10px;
+  border: 2px solid rgba(139, 157, 195, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
 }
 
-.mdi-spin {
-  animation: spin 1s linear infinite;
+.ally-type-card:hover {
+  background: rgba(212, 175, 55, 0.06);
+  border-color: rgba(212, 175, 55, 0.3);
 }
 
-/* CORES CUSTOMIZADAS */
-.text-blue-darken-3 { color: #1565c0 !important; }
-.text-green-darken-3 { color: #2e7d32 !important; }
-.text-orange-darken-3 { color: #ef6c00 !important; }
-.text-purple-darken-3 { color: #6a1b9a !important; }
-.text-red-darken-3 { color: #c62828 !important; }
-.text-yellow-darken-4 { color: #f57f17 !important; }
-.text-cyan-darken-3 { color: #00838f !important; }
+.ally-type-selected {
+  border-color: #D4AF37 !important;
+  background: rgba(212, 175, 55, 0.1) !important;
+}
 
-/* RESPONSIVE DESIGN */
-@media (max-width: 768px) {
-  .crew-management-container {
-    padding: 8px;
-  }
+.ally-type-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #E8D5A3;
+  margin-top: 2px;
+}
+
+.ally-type-desc {
+  font-size: 0.7rem;
+  color: #8B9DC3;
+}
+
+.ally-crew-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.ally-crew-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid rgba(139, 157, 195, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.ally-crew-card:hover {
+  background: rgba(21, 101, 192, 0.07);
+  border-color: rgba(21, 101, 192, 0.3);
+}
+
+.ally-crew-selected {
+  border-color: #D4AF37 !important;
+  background: rgba(212, 175, 55, 0.08) !important;
+}
+
+.ally-select-dot {
+  flex-shrink: 0;
+}
+
+.ally-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ally-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ally-crew-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #E8D5A3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ally-captain-name {
+  font-size: 0.75rem;
+  color: #8B9DC3;
+  margin-top: 2px;
+}
+
+.ally-stat-text {
+  font-size: 0.7rem;
+  color: #8B9DC3;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ally-betrayal {
+  flex-shrink: 0;
+  text-align: center;
+  min-width: 54px;
+}
+
+.ally-betrayal-label {
+  font-size: 0.6rem;
+  color: #546E7A;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ally-betrayal-val {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.betrayal-low  { color: #66BB6A; }
+.betrayal-mid  { color: #FFA726; }
+.betrayal-high { color: #EF5350; }
+
+.border-top {
+  border-top: 1px solid rgba(139, 157, 195, 0.15);
 }
 </style>

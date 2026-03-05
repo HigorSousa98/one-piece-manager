@@ -384,9 +384,47 @@ export interface Store {
 
 export interface Inventory {
   id?: number
-  characterId: number
+  crewId: number
   itemId: number
   acquiredAt: Date
+}
+
+export interface Alliance {
+  id?: number
+  playerCrewId: number
+  alliedCrewId: number
+  type: 'temporary' | 'permanent'
+  status: 'active' | 'betrayed' | 'expired'
+  betrayalChance: number // 0–1
+  createdAt: Date
+  expiresAt?: Date // apenas temporary (now + 2h)
+}
+
+export interface IslandEventData {
+  title: string
+  description: string
+  difficulty: number
+  rewards: {
+    experience?: number
+    bounty?: number
+    reputation?: number
+    itemId?: number
+    specialRecruitId?: number
+  }
+  marineStrength?: number
+  prisonerLevel?: number
+  prisonerType?: string
+}
+
+export interface IslandEvent {
+  id?: number
+  islandId: number
+  type: 'marine_invasion' | 'pirate_festival' | 'ancient_shipwreck' | 'escaped_prisoner'
+  status: 'active' | 'completed' | 'expired'
+  startedAt: Date
+  expiresAt: Date
+  data: IslandEventData
+  participantCrewId?: number
 }
 
 class OnePieceGameDB extends Dexie {
@@ -411,6 +449,8 @@ class OnePieceGameDB extends Dexie {
   items!: Table<Item>
   inventories!: Table<Inventory>
   stores!: Table<Store>
+  alliances!: Table<Alliance>
+  islandEvents!: Table<IslandEvent>
 
   constructor() {
     super('OnePieceGameDB')
@@ -438,6 +478,19 @@ class OnePieceGameDB extends Dexie {
       items: '++id, name, class, type, subtype, rarity, unique, isBreakable',
       inventories: '++id, characterId, itemId, acquiredAt',
       stores: '++id, currentIslandId, itemId'
+    })
+
+    // v2: inventories migradas para baú por tripulação (crewId em vez de characterId)
+    this.version(2).stores({
+      inventories: '++id, crewId, itemId, acquiredAt',
+    }).upgrade(trans => {
+      return trans.table('inventories').clear()
+    })
+
+    // v3: alliances e islandEvents
+    this.version(3).stores({
+      alliances: '++id, playerCrewId, alliedCrewId, type, status, expiresAt',
+      islandEvents: '++id, islandId, type, status, expiresAt',
     })
 
     // Hook para CREATE (add)

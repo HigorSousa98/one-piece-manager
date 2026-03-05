@@ -213,29 +213,180 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.character-creation-view {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-  padding: 2rem 0;
+/* ============================================================
+   Character Creation - Become a Pirate
+   ============================================================ */
+
+.character-creation-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 8px;
 }
 
-.v-card {
-  border-radius: 16px;
+/* Creation header */
+.creation-header {
+  background: linear-gradient(135deg,
+    rgba(255, 107, 53, 0.1),
+    rgba(212, 175, 55, 0.08)
+  );
+  border: 1px solid rgba(255, 107, 53, 0.3);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 24px;
+  text-align: center;
+  position: relative;
   overflow: hidden;
 }
 
-.v-card-title {
-  padding: 2rem;
+.creation-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #FF6B35, #FFD700, #FF6B35, transparent
+  );
 }
 
-@media (max-width: 768px) {
-  .v-card-title {
-    padding: 1rem;
-  }
-  
-  .v-card-text,
-  .v-card-actions {
-    padding: 1rem !important;
-  }
+.creation-title {
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #FF6B35;
+  text-shadow: 0 0 20px rgba(255, 107, 53, 0.4);
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+}
+
+.creation-subtitle {
+  font-size: 0.95rem;
+  color: #8B9DC3;
+  letter-spacing: 0.03em;
+}
+
+/* Creation steps */
+.creation-step-card {
+  background: #132235;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.creation-step-card.active {
+  border-color: rgba(255, 107, 53, 0.5);
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.12);
+}
+
+.creation-step-card.completed {
+  border-color: rgba(46, 125, 50, 0.4);
+  background: linear-gradient(135deg, rgba(46,125,50,0.05), #132235);
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #D4AF37;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.step-title {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #D4AF37;
+  letter-spacing: 0.03em;
+}
+
+/* Input styling */
+.creation-input {
+  background: rgba(13, 27, 46, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: #E8D5A3;
+  font-size: 1rem;
+  width: 100%;
+  transition: border-color 0.2s ease;
+  outline: none;
+}
+
+.creation-input:focus {
+  border-color: #D4AF37;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+}
+
+/* Style selection */
+.style-option {
+  background: #132235;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.style-option:hover {
+  border-color: rgba(255, 107, 53, 0.4);
+  background: rgba(255, 107, 53, 0.05);
+}
+
+.style-option.selected {
+  border-color: #FF6B35;
+  background: rgba(255, 107, 53, 0.1);
+  box-shadow: 0 0 14px rgba(255, 107, 53, 0.2);
+}
+
+.style-option-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #E8D5A3;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.style-option-desc {
+  font-size: 0.75rem;
+  color: #8B9DC3;
+  line-height: 1.4;
+}
+
+/* Avatar preview */
+.avatar-preview-container {
+  background: linear-gradient(135deg, rgba(212,175,55,0.08), rgba(21,101,192,0.06));
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 14px;
+  padding: 24px;
+  text-align: center;
+}
+
+/* Start adventure button */
+.start-btn {
+  background: linear-gradient(135deg, #866700, #D4AF37, #FFD700) !important;
+  color: #0D1B2E !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 0.06em !important;
+  padding: 14px 40px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4) !important;
+  transition: all 0.25s ease !important;
+  text-transform: uppercase !important;
+}
+
+.start-btn:hover {
+  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.65) !important;
+  transform: translateY(-2px) !important;
 }
 </style>

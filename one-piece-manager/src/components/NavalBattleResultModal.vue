@@ -112,115 +112,77 @@ const getLogEntryClass = (logEntry: string): string => {
 </script>
 
 <style scoped>
-.naval-battle-result-modal {
-  border-radius: 16px;
-  overflow: hidden;
-}
+/* ============================================================
+   NavalBattleResultModal - Naval combat result
+   ============================================================ */
 
-.battle-summary {
+.naval-result-header {
+  padding: 20px;
   text-align: center;
+  position: relative;
 }
 
-.battle-log-content {
-  max-height: 300px;
-  overflow-y: auto;
-  font-family: 'Courier New', monospace;
-  font-size: 0.9rem;
-  line-height: 1.5;
+.naval-result-header.victory {
+  background: linear-gradient(135deg, rgba(46,125,50,0.2), rgba(27,94,32,0.1));
+  border-bottom: 1px solid rgba(46,125,50,0.3);
 }
 
-.log-entry {
-  padding: 4px 8px;
-  margin-bottom: 2px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+.naval-result-header.defeat {
+  background: linear-gradient(135deg, rgba(198,40,40,0.2), rgba(183,28,28,0.1));
+  border-bottom: 1px solid rgba(198,40,40,0.3);
 }
 
-.victory-log {
-  background: rgba(76, 175, 80, 0.1);
-  color: #2e7d32;
-  font-weight: 600;
+.naval-result-title {
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 20px currentColor;
+  margin: 0;
 }
 
-.defeat-log {
-  background: rgba(244, 67, 54, 0.1);
-  color: #c62828;
-  font-weight: 600;
+.naval-result-title.victory { color: #FFD700; }
+.naval-result-title.defeat  { color: #FF5252; }
+
+.ship-damage-section {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 14px;
+  margin: 12px 0;
 }
 
-.action-log {
-  background: rgba(33, 150, 243, 0.1);
-  color: #1565c0;
-}
-
-.reward-log {
-  background: rgba(255, 193, 7, 0.1);
-  color: #f57f17;
-  font-weight: 600;
-}
-
-.normal-log {
-  color: rgba(0, 0, 0, 0.8);
-}
-
-.reward-item {
-  text-align: center;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  border: 1px solid rgba(76, 175, 80, 0.2);
-}
-
-.casualty-item {
+.damage-row {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 6px;
-  margin-bottom: 8px;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
 
-.v-card-title {
-  font-weight: 600;
+.damage-row:last-child { border-bottom: none; }
+
+.damage-label { color: #8B9DC3; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.damage-value { color: #E8D5A3; font-weight: 600; }
+.damage-value.loss { color: #EF5350; }
+.damage-value.gain { color: #81C784; }
+.damage-value.gold { color: #FFD700; }
+
+.naval-reward-card {
+  background: rgba(212,175,55,0.06);
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
 }
 
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
-  text-transform: none;
-}
-
-/* ANIMAÇÕES */
-.naval-battle-result-modal {
-  animation: battleSlideUp 0.5s ease-out;
-}
-
-@keyframes battleSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* RESPONSIVIDADE */
-@media (max-width: 768px) {
-  .battle-log-content {
-    max-height: 200px;
-    font-size: 0.8rem;
-  }
-  
-  .reward-item {
-    padding: 12px;
-  }
-  
-  .casualty-item {
-    flex-direction: column;
-    text-align: center;
-    gap: 4px;
-  }
+.naval-reward-value {
+  font-family: Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.4);
 }
 </style>

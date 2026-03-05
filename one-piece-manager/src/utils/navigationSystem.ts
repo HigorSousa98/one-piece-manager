@@ -77,8 +77,11 @@ export class NavigationSystem {
     return timeInMinutes
   }
 
-  // ✅ MÉTODO PARA SELECIONAR ILHA DE DESTINO (MELHORADO)
-  static async selectDestinationIsland(currentIslandId: number): Promise<Island | null> {
+  // ✅ MÉTODO PARA SELECIONAR ILHA DE DESTINO (COM SEA GATING)
+  static async selectDestinationIsland(
+    currentIslandId: number,
+    character?: Character,
+  ): Promise<Island | null> {
     try {
       console.log(
         '🔍 NavigationSystem - Selecionando ilha de destino. Ilha atual:',
@@ -92,51 +95,42 @@ export class NavigationSystem {
         return null
       }
 
-      console.log(
-        '✅ NavigationSystem - Ilha atual:',
-        currentIsland.name,
-        'Dificuldade:',
-        currentIsland.difficulty,
-      )
+      // Calcular dificuldade máxima acessível
+      // NPCs (sem character) têm acesso total; jogadores são limitados pelo mar desbloqueado
+      const maxDifficulty = character
+        ? Math.max(
+            currentIsland.difficulty, // sempre pode sair da ilha atual
+            GameLogic.getMaxAccessibleDifficulty(character),
+          )
+        : 30
 
-      // Buscar todas as ilhas disponíveis (exceto a atual)
-      const allIslands = await db.islands.where('id').notEqual(currentIslandId).toArray()
+      // Buscar ilhas acessíveis (exceto a atual)
+      const allIslands = (await db.islands.where('id').notEqual(currentIslandId).toArray())
+        .filter((island) => island.difficulty <= maxDifficulty)
 
       if (allIslands.length === 0) {
         console.error('❌ NavigationSystem - Nenhuma ilha disponível para navegação')
         return null
       }
 
-      console.log('🏝️ NavigationSystem - Ilhas disponíveis:', allIslands.length)
+      console.log(`🏝️ NavigationSystem - Ilhas acessíveis (maxDiff=${maxDifficulty}):`, allIslands.length)
 
-      // Lógica de seleção: 40% mesma dificuldade, 60% dificuldade +1
+      // Lógica de seleção: 40% mesma dificuldade, 60% dificuldade +1 (dentro do max)
       const random = Math.random()
       let targetDifficulty: number
 
       if (random < 0.4) {
-        // 40% chance - mesma dificuldade
         targetDifficulty = currentIsland.difficulty
-        console.log('🎯 NavigationSystem - Buscando ilha de mesma dificuldade:', targetDifficulty)
       } else {
-        // 60% chance - dificuldade +1
-        targetDifficulty = Math.min(currentIsland.difficulty + 1, 30) // Max 10
-        console.log('🎯 NavigationSystem - Buscando ilha de dificuldade +1:', targetDifficulty)
+        targetDifficulty = Math.min(currentIsland.difficulty + 1, maxDifficulty)
       }
 
-      // Filtrar ilhas pela dificuldade desejada
       let candidateIslands = allIslands.filter((island) => island.difficulty === targetDifficulty)
 
-      // Se não há ilhas da dificuldade desejada, usar qualquer uma
       if (candidateIslands.length === 0) {
-        console.log(
-          '⚠️ NavigationSystem - Nenhuma ilha encontrada com dificuldade',
-          targetDifficulty,
-          'usando qualquer uma',
-        )
         candidateIslands = allIslands
       }
 
-      // Selecionar aleatoriamente
       const randomIndex = Math.floor(Math.random() * candidateIslands.length)
       const selectedIsland = candidateIslands[randomIndex]
 
@@ -145,6 +139,7 @@ export class NavigationSystem {
         name: selectedIsland.name,
         difficulty: selectedIsland.difficulty,
         fromDifficulty: currentIsland.difficulty,
+        maxDifficulty,
       })
 
       return selectedIsland
@@ -175,8 +170,12 @@ export class NavigationSystem {
         return null
       }
 
-      // Selecionar ilha destino
-      const destinationIsland = await this.selectDestinationIsland(crew.currentIsland)
+      // Selecionar ilha destino (com sea gating para jogadores)
+      const character = await db.characters.get(characterId)
+      const destinationIsland = await this.selectDestinationIsland(
+        crew.currentIsland,
+        character ?? undefined,
+      )
       if (!destinationIsland) {
         console.error('❌ Não foi possível selecionar ilha destino')
         return null

@@ -246,31 +246,75 @@ const formatCost = (cost: number): string => {
 </script>
 
 <style scoped>
-.ship-upgrade-modal {
-  border-radius: 12px;
-  overflow: hidden;
+/* ShipUpgradeModal - Ship enhancement dialog */
+
+.ship-upgrade-header {
+  background: linear-gradient(135deg, rgba(21,101,192,0.15), rgba(212,175,55,0.06));
+  border-bottom: 1px solid rgba(21,101,192,0.3);
+  padding: 16px 20px;
 }
 
-.improvement-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  padding: 8px;
-  background-color: rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
+.ship-upgrade-title {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #90CAF9;
+  letter-spacing: 0.04em;
 }
 
-.improvement-item:last-child {
-  margin-bottom: 0;
+.ship-current-stats {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
 }
 
-.v-card-title {
-  font-weight: 600;
-  font-size: 1.25rem;
+.upgrade-option-card {
+  background: #132235;
+  border: 1px solid rgba(21,101,192,0.25);
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  height: 100%;
 }
 
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
+.upgrade-option-card:hover {
+  border-color: rgba(21,101,192,0.55);
+  box-shadow: 0 0 12px rgba(21,101,192,0.2);
+  transform: translateY(-2px);
+}
+
+.upgrade-option-card.selected {
+  border-color: #1565C0;
+  background: linear-gradient(135deg, rgba(21,101,192,0.15), rgba(212,175,55,0.04));
+  box-shadow: 0 0 16px rgba(21,101,192,0.28);
+}
+
+.upgrade-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #90CAF9;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.upgrade-bonus { font-size: 0.78rem; color: #81C784; font-weight: 600; }
+
+.upgrade-cost {
+  font-family: Georgia, serif;
+  color: #FFD700;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-shadow: 0 0 6px rgba(255,215,0,0.3);
+}
+
+.confirm-upgrade-btn {
+  background: linear-gradient(135deg, #0D47A1, #1565C0) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: 0 4px 16px rgba(21,101,192,0.3) !important;
 }
 </style>

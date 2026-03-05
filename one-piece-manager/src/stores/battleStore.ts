@@ -1,6 +1,7 @@
 // stores/battleStore.ts
 import { defineStore } from 'pinia'
 import { GameLogic } from '@/utils/gameLogic'
+import { BattleNarrator } from '@/utils/battleNarrator'
 import { WorldSimulator } from '@/utils/worldSimulator'
 import { AdventureSystem } from '@/utils/adventureSystem'
 import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentSystem'
@@ -92,33 +93,92 @@ export const useBattleStore = defineStore('battle', {
         const attackerDice = GameLogic.diceUsed(winChance)
         const defenderDice = GameLogic.diceUsed(1 - winChance)
 
+        // ── Haki values ─────────────────────────────────────────
+        const c1arm  = char1.stats.armHaki  ?? 0
+        const c2arm  = char2.stats.armHaki  ?? 0
+        const c1obs  = char1.stats.obsHaki  ?? 0
+        const c2obs  = char2.stats.obsHaki  ?? 0
+        const c1king = char1.stats.kingHaki ?? 0
+        const c2king = char2.stats.kingHaki ?? 0
+
         let attackerHp = GameLogic.healthPointsCharacter(char1.level)
         let defenderHp = GameLogic.healthPointsCharacter(char2.level)
+
+        // Arm Haki — coating armor: up to +15% HP
+        attackerHp = Math.round(attackerHp * (1 + Math.min(0.15, c1arm * 0.00015)))
+        defenderHp = Math.round(defenderHp * (1 + Math.min(0.15, c2arm * 0.00015)))
+
+        // King's Haki — intimidation: reduce opponent starting HP when clearly dominant
+        if (c1king >= 50 && winChance > 0.55) {
+          const intimidation = Math.min(0.15, c1king * 0.0002)
+          defenderHp = Math.round(defenderHp * (1 - intimidation))
+          log.push(`👑 ${char1.name} emana o Haki do Conquistador! ${char2.name} sente o peso de sua presença!`)
+        }
+        if (c2king >= 50 && winChance < 0.45) {
+          const intimidation = Math.min(0.15, c2king * 0.0002)
+          attackerHp = Math.round(attackerHp * (1 - intimidation))
+          log.push(`👑 ${char2.name} emana o Haki do Conquistador! ${char1.name} sente o peso de sua presença!`)
+        }
+
+        // Obs Haki — heightened senses
+        if (c1obs >= 100 || c2obs >= 100) {
+          const hakiUser = c1obs >= c2obs ? char1.name : char2.name
+          log.push(`👁️ ${hakiUser} aguça sua percepção com o Haki da Observação!`)
+        }
+
+        // Track max HP for pressure narration
+        const attackerMaxHp = attackerHp
+        const defenderMaxHp = defenderHp
 
         let fighting = true
 
         while (fighting) {
           const attackerRoll = GameLogic.rollDice(attackerDice)
-          defenderHp -= attackerRoll
-          if (attackerRoll > attackerDice) {
-            log.push(`${char1.name} ataca causando ${attackerRoll} de dano! Um ataque crítico!`)
+          // Obs Haki dodge — defender evades attacker's blow
+          const c2DodgeChance = c2obs >= 100 ? Math.min(0.25, (c2obs - 100) * 0.001) : 0
+          if (c2obs >= 100 && Math.random() < c2DodgeChance) {
+            log.push(BattleNarrator.getDodgeLine(char2.name, char2StyleCombat?.name))
           } else {
-            log.push(`${char1.name} ataca causando ${attackerRoll} de dano!`)
+            defenderHp -= attackerRoll
+            if (attackerRoll > attackerDice) {
+              const armCritBonus = c1arm > 0 ? Math.floor(attackerRoll * Math.min(0.4, c1arm * 0.0004)) : 0
+              if (armCritBonus > 0) {
+                defenderHp -= armCritBonus
+                log.push(BattleNarrator.getAttackLine(char1.name, char1StyleCombat?.name, attackerRoll, true, armCritBonus, defenderHp, defenderMaxHp))
+              } else {
+                log.push(BattleNarrator.getAttackLine(char1.name, char1StyleCombat?.name, attackerRoll, true, 0, defenderHp, defenderMaxHp))
+              }
+            } else {
+              log.push(BattleNarrator.getAttackLine(char1.name, char1StyleCombat?.name, attackerRoll, false, 0, defenderHp, defenderMaxHp))
+            }
           }
+
           if (defenderHp <= 0) {
             fighting = false
-            log.push(`${char2.name} foi derrotado!`)
+            log.push(BattleNarrator.getDefeatLine(char2.name, char2StyleCombat?.name))
           } else {
             const defenderRoll = GameLogic.rollDice(defenderDice)
-            attackerHp -= defenderRoll
-            if (defenderRoll > defenderDice) {
-              log.push(`${char2.name} ataca causando ${defenderRoll} de dano! Um ataque crítico!`)
+            // Obs Haki dodge — attacker evades counterattack
+            const c1DodgeChance = c1obs >= 100 ? Math.min(0.25, (c1obs - 100) * 0.001) : 0
+            if (c1obs >= 100 && Math.random() < c1DodgeChance) {
+              log.push(BattleNarrator.getDodgeLine(char1.name, char1StyleCombat?.name))
             } else {
-              log.push(`${char2.name} ataca causando ${defenderRoll} de dano!`)
+              attackerHp -= defenderRoll
+              if (defenderRoll > defenderDice) {
+                const armCritBonus = c2arm > 0 ? Math.floor(defenderRoll * Math.min(0.4, c2arm * 0.0004)) : 0
+                if (armCritBonus > 0) {
+                  attackerHp -= armCritBonus
+                  log.push(BattleNarrator.getAttackLine(char2.name, char2StyleCombat?.name, defenderRoll, true, armCritBonus, attackerHp, attackerMaxHp))
+                } else {
+                  log.push(BattleNarrator.getAttackLine(char2.name, char2StyleCombat?.name, defenderRoll, true, 0, attackerHp, attackerMaxHp))
+                }
+              } else {
+                log.push(BattleNarrator.getAttackLine(char2.name, char2StyleCombat?.name, defenderRoll, false, 0, attackerHp, attackerMaxHp))
+              }
             }
             if (attackerHp <= 0) {
               fighting = false
-              log.push(`${char1.name} foi derrotado!`)
+              log.push(BattleNarrator.getDefeatLine(char1.name, char1StyleCombat?.name))
             }
           }
         }
@@ -173,7 +233,15 @@ export const useBattleStore = defineStore('battle', {
           db.characters.where('crewId').equals(crew2.id!).toArray(),
         ])
 
-        const crew1Wins = this.simulateCrewBattleMembers(crew1Members, crew2Members, allDevilFruits)
+        // King's Haki captain modifier: up to +10% crew power
+        const crew1KingMod = (captain1.stats.kingHaki ?? 0) >= 50
+          ? 1 + Math.min(0.1, (captain1.stats.kingHaki ?? 0) * 0.001)
+          : 1
+        const crew2KingMod = (captain2.stats.kingHaki ?? 0) >= 50
+          ? 1 + Math.min(0.1, (captain2.stats.kingHaki ?? 0) * 0.001)
+          : 1
+
+        const crew1Wins = this.simulateCrewBattleMembers(crew1Members, crew2Members, allDevilFruits, crew1KingMod, crew2KingMod)
 
         const winnerCrew = crew1Wins ? crew1 : crew2
         const loserCrew = crew1Wins ? crew2 : crew1
@@ -523,9 +591,11 @@ export const useBattleStore = defineStore('battle', {
       crew1Members: Character[],
       crew2Members: Character[],
       allDevilFruits: DevilFruit[],
+      crew1PowerMod: number = 1,
+      crew2PowerMod: number = 1,
     ): boolean {
-      const crew1Power = GameLogic.calculateCrewPower(crew1Members, allDevilFruits)
-      const crew2Power = GameLogic.calculateCrewPower(crew2Members, allDevilFruits)
+      const crew1Power = GameLogic.calculateCrewPower(crew1Members, allDevilFruits) * crew1PowerMod
+      const crew2Power = GameLogic.calculateCrewPower(crew2Members, allDevilFruits) * crew2PowerMod
 
       // Determinar vencedor
       const totalPower = crew1Power + crew2Power
@@ -564,24 +634,42 @@ export const useBattleStore = defineStore('battle', {
 
     async calculateCrewHelp(char: Character, opponent: Character | null): Promise<number> {
       let crewHelp = 0
-      const crewMember =
-        char.crewId && (!opponent || opponent.level / char.level > 2)
-          ? await db.characters
-              .where('crewId')
-              .equals(char.crewId)
-              .and((member) => member.id != char.id)
-              .toArray()
+
+      if (!char.crewId || (opponent && opponent.level / char.level <= 2)) {
+        return 0
+      }
+
+      const crewMembers = await db.characters
+        .where('crewId')
+        .equals(char.crewId)
+        .and((member) => member.id != char.id)
+        .toArray()
+
+      const eligibleMembers = crewMembers.filter((m) => m.level / char.level > 2)
+      if (eligibleMembers.length === 0) return 0
+
+      // ✅ Batch: busca todos os devil fruits de uma só vez (ao invés de N gets individuais)
+      const devilFruitIds = eligibleMembers
+        .map((m) => m.devilFruitId)
+        .filter((id): id is number => !!id)
+
+      const devilFruits = devilFruitIds.length > 0
+        ? await db.devilFruits.bulkGet(devilFruitIds)
+        : []
+
+      const devilFruitMap = new Map<number, typeof devilFruits[0]>(
+        devilFruitIds.map((id, i) => [id, devilFruits[i]])
+      )
+
+      const crewHelpFactor = GenerationConfig.createEpic().regularCrewHelp
+
+      for (const member of eligibleMembers) {
+        const devilFruit = member.devilFruitId
+          ? (devilFruitMap.get(member.devilFruitId) ?? null)
           : null
-      crewMember?.forEach(async (member) => {
-        if (member.level / char.level > 2) {
-          const memberDevilFruit = member.devilFruitId
-            ? await db.devilFruits.get(member.devilFruitId)
-            : null
-          crewHelp +=
-            GameLogic.calculatePower(member, memberDevilFruit) *
-            GenerationConfig.createEpic().regularCrewHelp // 10-30% de ajuda
-        }
-      })
+        crewHelp += GameLogic.calculatePower(member, devilFruit) * crewHelpFactor
+      }
+
       return Math.round(crewHelp)
     },
 

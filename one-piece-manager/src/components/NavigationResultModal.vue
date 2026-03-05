@@ -306,115 +306,55 @@ const formatTravelTime = (): string => {
 </script>
 
 <style scoped>
-.navigation-result-modal {
-  border-radius: 16px;
-  overflow: hidden;
-}
+/* NavigationResultModal - Voyage result */
 
-.destination-info {
+.nav-result-header {
+  padding: 20px;
   text-align: center;
+  position: relative;
 }
 
-.story-text {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: rgba(0, 0, 0, 0.8);
-  font-style: italic;
-  background: rgba(255, 255, 255, 0.7);
-  padding: 16px;
-  border-radius: 8px;
-  border-left: 4px solid rgba(25, 118, 210, 0.5);
+.nav-result-header.success {
+  background: linear-gradient(135deg, rgba(21,101,192,0.2), rgba(0,137,123,0.1));
+  border-bottom: 1px solid rgba(21,101,192,0.3);
 }
 
-.enemy-encounter {
-  border-radius: 12px;
+.nav-result-header.failure {
+  background: linear-gradient(135deg, rgba(198,40,40,0.2), rgba(183,28,28,0.1));
+  border-bottom: 1px solid rgba(198,40,40,0.3);
 }
 
-.battle-options {
-  background: rgba(255, 255, 255, 0.8);
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(244, 67, 54, 0.2);
+.nav-result-title {
+  font-family: Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin: 0;
 }
 
-.peaceful-arrival {
-  text-align: center;
+.nav-result-title.success { color: #90CAF9; text-shadow: 0 0 16px rgba(144,202,249,0.4); }
+.nav-result-title.failure { color: #FF5252; text-shadow: 0 0 16px rgba(255,82,82,0.4); }
+
+.arrival-island-name {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #D4AF37;
+  text-shadow: 0 0 10px rgba(212,175,55,0.35);
+  margin: 8px 0;
 }
 
-.info-item {
+.voyage-stat-row {
   display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  font-size: 0.95rem;
+  justify-content: space-between;
+  font-size: 0.84rem;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-.v-card {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-}
+.voyage-stat-row:last-child { border-bottom: none; }
 
-.v-card-title {
-  font-weight: 600;
-}
-
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
-  text-transform: none;
-}
-
-.v-chip {
-  font-weight: 600;
-}
-
-.v-alert {
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-/* ANIMAÇÕES */
-.navigation-result-modal {
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* RESPONSIVIDADE */
-@media (max-width: 768px) {
-  .v-card-text {
-    padding: 16px !important;
-  }
-  
-  .v-card-actions {
-    padding: 16px !important;
-  }
-  
-  .story-text {
-    font-size: 0.9rem;
-    padding: 12px;
-  }
-  
-  .battle-options {
-    padding: 12px;
-  }
-  
-  .info-item {
-    font-size: 0.875rem;
-  }
-}
-
-/* CORES CUSTOMIZADAS */
-.text-red-darken-3 { color: #c62828 !important; }
-.text-blue-darken-3 { color: #1565c0 !important; }
-.text-green-darken-3 { color: #2e7d32 !important; }
-.text-orange-darken-3 { color: #ef6c00 !important; }
-.text-purple-darken-3 { color: #6a1b9a !important; }
+.voyage-stat-label { color: #8B9DC3; text-transform: uppercase; font-size: 0.72rem; letter-spacing: 0.06em; }
+.voyage-stat-value { color: #E8D5A3; font-weight: 600; }
+.voyage-stat-value.gold { color: #D4AF37; }
 </style>

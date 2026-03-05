@@ -7,7 +7,8 @@ import { GameLogic } from '../utils/gameLogic'
 import { ShipNameGenerator } from '../data/shipNameGenerator'
 import { CrewNameGenerator } from '../data/crewNames'
 import { NameGenerator } from '../data/characterNames'
-import { config } from 'node:process'
+import { IslandEventSystem } from '../utils/islandEventSystem'
+import { AllianceSystem } from '../utils/allianceSystem'
 
 // ✅ INTERFACES (mantidas iguais)
 interface WorkerMessage {
@@ -353,7 +354,9 @@ export class UltraOptimizedWorldUpdateWorker {
       const crews = results[0].status === 'fulfilled' ? (results[0].value as Crew[]) : []
       const characters = results[1].status === 'fulfilled' ? (results[1].value as Character[]) : []
       const ships = results[2].status === 'fulfilled' ? (results[2].value as Ship[]) : []
-      const playerShip = ships.find(ship => ship.crewId == crews.find(crew => crew.id == (characters.find(char => char.isPlayer == 1).crewId)).id)
+      const playerCharacter = characters.find((char) => char.isPlayer === 1)
+      const playerCrew = playerCharacter ? crews.find((crew) => crew.id === playerCharacter.crewId) : undefined
+      const playerShip = playerCrew ? ships.find((ship) => ship.crewId === playerCrew.id) : undefined
 
       // ✅ CRIAR MAPS PARA PERFORMANCE O(1)
       const crewsWithCharacters = new Set(
@@ -396,10 +399,11 @@ export class UltraOptimizedWorldUpdateWorker {
       const updateShips = []
 
       ships.forEach((ship) => {
-        if (!crewsToDeleteSet.has(ship.crewId) && ship.id != playerShip.id) {
-          const crew = crews.find((crew) => crew.id == ship.crewId)
+        if (!crewsToDeleteSet.has(ship.crewId) && ship.id !== playerShip?.id) {
+          const crew = crews.find((crew) => crew.id === ship.crewId)
           const members = characters.filter((char) => char.crewId === crew.id)
-          const captainLevel = characters.find((char) => char.id === crew.captainId) ? characters.find((char) => char.id === crew.captainId).level : 0
+          const captain = characters.find((char) => char.id === crew.captainId)
+          const captainLevel = captain ? captain.level : 0
           const highestLevel = members.reduce((highest, current) =>
             current.level > highest.level ? current : highest,
           ).level
@@ -426,7 +430,7 @@ export class UltraOptimizedWorldUpdateWorker {
           // Promover novos capitães
           if (newCaptains.length > 0) {
             newCaptains.forEach(({ character, crewId }) => {
-              promises.push(db.characters.update(character.id!, { position: 'Captain' }))
+              promises.push(db.characters.update(character.id!, { position: 'Captain', loyalty: 100 }))
               promises.push(db.crews.update(crewId, { captainId: character.id! }))
             })
           }
@@ -503,12 +507,10 @@ export class UltraOptimizedWorldUpdateWorker {
         this.cache.styleCombats = styleCombats
         this.cache.ships = ships
 
-        // ✅ CRIAR MAPAS EM PARALELO
-        await Promise.all([
-          this.createBasicMaps(islands, crews, characters, devilFruits, ships),
-          this.createIndexMaps(characters, crews),
-          this.createOptimizedIndexes(crews, characters),
-        ])
+        // ✅ CRIAR MAPAS E ÍNDICES
+        this.createBasicMaps(islands, crews, characters, devilFruits, ships)
+        this.createIndexMaps(characters, crews)
+        this.createOptimizedIndexes(crews, characters)
 
         this.cache.lastCacheTime = now
         console.log('✅ Cache ultra-otimizado atualizado com sucesso')
@@ -519,86 +521,69 @@ export class UltraOptimizedWorldUpdateWorker {
   }
 
   // ✅ CRIAR MAPAS BÁSICOS EM PARALELO
-  private async createBasicMaps(
+  private createBasicMaps(
     islands: Island[],
     crews: Crew[],
     characters: Character[],
     devilFruits: DevilFruit[],
     ships: any[],
-  ): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        this.cache.islandMap = new Map(islands.map((i) => [i.id!, i]))
-        this.cache.crewMap = new Map(crews.map((c) => [c.id!, c]))
-        this.cache.characterMap = new Map(characters.map((ch) => [ch.id!, ch]))
-        this.cache.devilFruitMap = new Map(devilFruits.map((df) => [df.id!, df]))
-        this.cache.shipMap = new Map(ships.map((s) => [s.id!, s]))
-        resolve()
-      }, 0)
-    })
+  ): void {
+    this.cache.islandMap = new Map(islands.map((i) => [i.id!, i]))
+    this.cache.crewMap = new Map(crews.map((c) => [c.id!, c]))
+    this.cache.characterMap = new Map(characters.map((ch) => [ch.id!, ch]))
+    this.cache.devilFruitMap = new Map(devilFruits.map((df) => [df.id!, df]))
+    this.cache.shipMap = new Map(ships.map((s) => [s.id!, s]))
   }
 
-  // ✅ CRIAR ÍNDICES EM PARALELO
-  private async createIndexMaps(characters: Character[], crews: Crew[]): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        this.cache.charactersByCrewId = new Map()
-        this.cache.crewsByIslandId = new Map()
+  // ✅ CRIAR ÍNDICES
+  private createIndexMaps(characters: Character[], crews: Crew[]): void {
+    this.cache.charactersByCrewId = new Map()
+    this.cache.crewsByIslandId = new Map()
 
-        // ✅ USAR FOR LOOP (MAIS RÁPIDO QUE forEach)
-        for (let i = 0; i < characters.length; i++) {
-          const char = characters[i]
-          if (char.crewId) {
-            const existing = this.cache.charactersByCrewId.get(char.crewId) || []
-            existing.push(char)
-            this.cache.charactersByCrewId.set(char.crewId, existing)
-          }
-        }
+    // ✅ USAR FOR LOOP (MAIS RÁPIDO QUE forEach)
+    for (let i = 0; i < characters.length; i++) {
+      const char = characters[i]
+      if (char.crewId) {
+        const existing = this.cache.charactersByCrewId.get(char.crewId) || []
+        existing.push(char)
+        this.cache.charactersByCrewId.set(char.crewId, existing)
+      }
+    }
 
-        for (let i = 0; i < crews.length; i++) {
-          const crew = crews[i]
-          const existing = this.cache.crewsByIslandId.get(crew.currentIsland) || []
-          existing.push(crew)
-          this.cache.crewsByIslandId.set(crew.currentIsland, existing)
-        }
-
-        resolve()
-      }, 0)
-    })
+    for (let i = 0; i < crews.length; i++) {
+      const crew = crews[i]
+      const existing = this.cache.crewsByIslandId.get(crew.currentIsland) || []
+      existing.push(crew)
+      this.cache.crewsByIslandId.set(crew.currentIsland, existing)
+    }
   }
 
   // ✅ CRIAR ÍNDICES OTIMIZADOS
-  private async createOptimizedIndexes(crews: Crew[], characters: Character[]): Promise<void> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // ✅ CACHE DE CREWS DOCKED POR ILHA
-        this.cache.dockedCrewsByIsland = new Map()
-        for (let i = 0; i < crews.length; i++) {
-          const crew = crews[i]
-          if (crew.docked === 1) {
-            const existing = this.cache.dockedCrewsByIsland.get(crew.currentIsland) || []
-            existing.push(crew)
-            this.cache.dockedCrewsByIsland.set(crew.currentIsland, existing)
-          }
-        }
+  private createOptimizedIndexes(crews: Crew[], characters: Character[]): void {
+    // ✅ CACHE DE CREWS DOCKED POR ILHA
+    this.cache.dockedCrewsByIsland = new Map()
+    for (let i = 0; i < crews.length; i++) {
+      const crew = crews[i]
+      if (crew.docked === 1) {
+        const existing = this.cache.dockedCrewsByIsland.get(crew.currentIsland) || []
+        existing.push(crew)
+        this.cache.dockedCrewsByIsland.set(crew.currentIsland, existing)
+      }
+    }
 
-        // ✅ CACHE DE CAPITÃES
-        this.cache.captainsByCrewId = new Map()
-        for (let i = 0; i < characters.length; i++) {
-          const char = characters[i]
-          if (char.position === 'Captain') {
-            this.cache.captainsByCrewId.set(char.crewId!, char)
-          }
-        }
+    // ✅ CACHE DE CAPITÃES
+    this.cache.captainsByCrewId = new Map()
+    for (let i = 0; i < characters.length; i++) {
+      const char = characters[i]
+      if (char.position === 'Captain') {
+        this.cache.captainsByCrewId.set(char.crewId!, char)
+      }
+    }
 
-        // ✅ CACHE DE CREWS NÃO-JOGADOR
-        this.cache.nonPlayerCrews = crews.filter((crew) => {
-          const captain = this.cache.captainsByCrewId.get(crew.id!)
-          return captain && captain.isPlayer !== 1
-        })
-
-        resolve()
-      }, 0)
+    // ✅ CACHE DE CREWS NÃO-JOGADOR
+    this.cache.nonPlayerCrews = crews.filter((crew) => {
+      const captain = this.cache.captainsByCrewId.get(crew.id!)
+      return captain && captain.isPlayer !== 1
     })
   }
 
@@ -653,9 +638,7 @@ export class UltraOptimizedWorldUpdateWorker {
 
         // ✅ PROCESSAR CHUNK EM PARALELO
         await Promise.all(
-          islandChunk.map(async ([islandId, crews]) => {
-            const island = this.cache.islandMap.get(islandId)!
-
+          islandChunk.map(async ([, crews]) => {
             // ✅ USAR ALGORITMO MAIS EFICIENTE PARA PAIRINGS
             const availableCrews = crews.filter((crew) => !this.cache.crewsUsed.has(crew.id!))
 
@@ -823,14 +806,6 @@ export class UltraOptimizedWorldUpdateWorker {
         loserCrew.id!,
         false,
         batchManager,
-      )
-
-      // ✅ VERIFICAR CREW VAZIO
-      const remainingLoserMembers = this.cache.charactersByCrewId.get(loserCrew.id!) || []
-      const actualRemainingMembers = remainingLoserMembers.filter(
-        (char) =>
-          !recruitmentResult.recruited.find((rec) => rec.id === char.id) &&
-          !recruitmentResult.removed.find((rem) => rem.id === char.id),
       )
 
       // ✅ CRIAR CREW PARA ÓRFÃOS
@@ -1062,7 +1037,7 @@ export class UltraOptimizedWorldUpdateWorker {
     winnerCrewId: number,
     loserCrewId: number,
     isPlayerInvolved: boolean,
-    batchManager: UltraOptimizedBatchManager,
+    _batchManager: UltraOptimizedBatchManager,
   ): Promise<CrewRecruitmentResult> {
     const result: CrewRecruitmentResult = {
       recruited: [],
@@ -1291,7 +1266,9 @@ export class UltraOptimizedWorldUpdateWorker {
       // ✅ ATUALIZAR CACHE APÓS MUDANÇAS
       await this.updateCache()
 
-      const crewMovementFactor = GenerationConfig.createEpic().crewMovementFactor
+      const epicConfig = GenerationConfig.createEpic()
+      const crewMovementFactor = epicConfig.crewMovementFactor
+      const seaRequirements = epicConfig.seaRequirements
       const crewByIslandPower = new Map()
 
       // ✅ CRIAR MAPA DE CREWS POR ILHA COM PODER CALCULADO
@@ -1333,7 +1310,13 @@ export class UltraOptimizedWorldUpdateWorker {
               const totalCrewsOnIsland = crewsWithPower.length || 1
               const percent = currentIndex / totalCrewsOnIsland
 
-              const destinationDecision = await this.selectDestinationIsland(currentIsland, percent)
+              // Verificar qual mar o capitão pode acessar (mesma regra do jogador)
+              const captain = this.cache.characterMap.get(crew.captainId)
+              const maxDifficulty = captain
+                ? GameLogic.getMaxAccessibleDifficulty(captain, seaRequirements)
+                : 5 // East Blue apenas se não encontrar capitão
+
+              const destinationDecision = await this.selectDestinationIsland(currentIsland, percent, maxDifficulty)
 
               if (destinationDecision) {
                 this.cache.crewsUsed.add(crew.id)
@@ -1406,9 +1389,13 @@ export class UltraOptimizedWorldUpdateWorker {
   private async selectDestinationIsland(
   currentIsland: Island,
   percent: number,
+  maxDifficulty: number = 30,
 ): Promise<{ island: Island; type: 'easier' | 'same' | 'harder' } | null> {
   try {
-    const availableIslands = this.cache.islands.filter((island) => island.id !== currentIsland.id)
+    // Filtrar apenas ilhas acessíveis pelo capitão (respeitar requisitos de mar)
+    const availableIslands = this.cache.islands.filter(
+      (island) => island.id !== currentIsland.id && island.difficulty <= maxDifficulty,
+    )
 
     if (availableIslands.length === 0) return null
 
@@ -1449,7 +1436,6 @@ export class UltraOptimizedWorldUpdateWorker {
     const maxPopulation = Math.max(...allPopulations, 1)
 
     // ✅ NOVA LÓGICA DE SELEÇÃO EQUILIBRADA
-    let selectedIslands: { island: Island; weight: number }[] = []
     let movementType: 'easier' | 'same' | 'harder'
 
     // ✅ CREWS FRACOS (percent >= 0.7) - Preferem mais fácil, mas com balanceamento
@@ -1736,41 +1722,27 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
         progress: 25,
       })
 
-      const config = GenerationConfig.createEpic()
+      // Ordenar por poder individual do personagem (mesma lógica do organizeHierarchies)
+      const powerOf = (c: Character) => PowerCache.getCharacterPower(c, this.cache)
 
-      const calculatePowerSafe = (character: Character) => {
-        return PowerCache.getCharacterPower(character, this.cache)
-      }
+      const captains = this.cache.characters.filter((char) => char.position === 'Captain')
 
-      // ✅ FILTRAR E ORDENAR EM PARALELO
-      const [pirates, marines, government] = await Promise.all([
-        Promise.resolve(
-          this.cache.characters
-            .filter((char) => char.type === 'Pirate' && char.position === 'Captain')
-            .sort((a, b) => GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == b.crewId), this.cache.devilFruits) - GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == a.crewId), this.cache.devilFruits)),
-        ),
-        Promise.resolve(
-          this.cache.characters
-            .filter((char) => char.type === 'Marine' && char.position === 'Captain')
-            .sort((a, b) => GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == b.crewId), this.cache.devilFruits) - GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == a.crewId), this.cache.devilFruits)),
-        ),
-        Promise.resolve(
-          this.cache.characters
-            .filter((char) => char.type === 'Government' && char.position === 'Captain')
-            .sort((a, b) => GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == b.crewId), this.cache.devilFruits) - GameLogic.calculateCrewPower(this.cache.characters.filter(char => char.crewId == a.crewId), this.cache.devilFruits)),
-        ),
-      ])
+      const pirates    = captains.filter((c) => c.type === 'Pirate')
+        .sort((a, b) => powerOf(b) - powerOf(a))
+      const marines    = captains.filter((c) => c.type === 'Marine')
+        .sort((a, b) => powerOf(b) - powerOf(a))
+      const government = captains.filter((c) => c.type === 'Government')
+        .sort((a, b) => powerOf(b) - powerOf(a))
 
-      // ✅ LIMPAR TABELAS EM PARALELO
-      const clearOperations = [
+      // Limpar TODAS as tabelas de hierarquia (incluindo marineBases)
+      await Promise.all([
         db.yonkous.clear(),
         db.shichibukais.clear(),
         db.admirals.clear(),
         db.gorouseis.clear(),
         db.cypherPols.clear(),
-      ]
-
-      await Promise.all(clearOperations)
+        db.marineBases.clear(),
+      ])
 
       self.postMessage({
         type: 'PROGRESS',
@@ -1780,18 +1752,17 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
 
       const getBaseIsland = (character: Character) => {
         const crew = this.cache.crewMap.get(character.crewId!)
-        if (!crew) {
-          return this.cache.islands[0]?.id || 1
-        }
-        return crew.currentIsland
+        return crew ? crew.currentIsland : (this.cache.islands[0]?.id || 1)
       }
 
-      // ✅ CRIAR TODAS AS ENTRADAS EM PARALELO
+      const config = GenerationConfig.createEpic()
       const creationPromises: Promise<any>[] = []
 
-      // Yonkou
+      // Yonkou — top N piratas por poder individual
+      const usedPirateIds = new Set<number>()
       for (let i = 0; i < Math.min(config.yonkouCount, pirates.length); i++) {
         const pirate = pirates[i]
+        usedPirateIds.add(pirate.id!)
         creationPromises.push(
           db.yonkous.add({
             captainId: pirate.id!,
@@ -1801,11 +1772,13 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
         )
       }
 
-      // Shichibukai
-      const startIndex = Math.ceil(pirates.length * 0.3)
-      const endIndex = Math.min(startIndex + config.schichibukai, pirates.length)
-      for (let i = startIndex; i < endIndex; i++) {
-        const pirate = pirates[i]
+      // Shichibukai — próximos mais fortes com level <= shichibukaiMaxLevel,
+      // excluindo os já selecionados como Yonkou (mesma lógica do organizeHierarchies)
+      const shichibukaiPool = pirates.filter(
+        (p) => !usedPirateIds.has(p.id!) && p.level <= config.shichibukaiMaxLevel,
+      )
+      for (let i = 0; i < Math.min(config.schichibukai, shichibukaiPool.length); i++) {
+        const pirate = shichibukaiPool[i]
         creationPromises.push(
           db.shichibukais.add({
             captainId: pirate.id!,
@@ -1815,19 +1788,27 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
         )
       }
 
-      // Admirais
+      // Admirais — top N marines + recriar MarineBase (mesma lógica do organizeHierarchies)
       for (let i = 0; i < Math.min(config.admiralCount, marines.length); i++) {
         const marine = marines[i]
+        const baseIsland = getBaseIsland(marine)
         creationPromises.push(
           db.admirals.add({
             marineId: marine.id!,
-            baseIsland: getBaseIsland(marine),
+            baseIsland,
+            foundedAt: new Date(),
+          }),
+        )
+        creationPromises.push(
+          db.marineBases.add({
+            captainId: marine.id!,
+            baseIsland,
             foundedAt: new Date(),
           }),
         )
       }
 
-      // Gorosei
+      // Gorosei — top N governo
       for (let i = 0; i < Math.min(config.gorouseiCount, government.length); i++) {
         const gov = government[i]
         creationPromises.push(
@@ -1839,15 +1820,14 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
         )
       }
 
-      // Cypher Pol
+      // Cypher Pol — restante do governo após Gorosei
       const cpStartIndex = config.gorouseiCount
       const cpEndIndex = Math.min(cpStartIndex + config.cypherPolCount, government.length)
-      const sortedIslands = this.cache.islands.sort((a, b) => a.difficulty - b.difficulty)
+      const sortedIslands = [...this.cache.islands].sort((a, b) => a.difficulty - b.difficulty)
 
       for (let i = cpStartIndex; i < cpEndIndex; i++) {
         const gov = government[i]
         const randomIsland = sortedIslands[GameLogic.randomBetween(0, sortedIslands.length - 1)]
-
         creationPromises.push(
           db.cypherPols.add({
             captainId: gov.id!,
@@ -1864,7 +1844,6 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
         progress: 75,
       })
 
-      // ✅ EXECUTAR TODAS AS CRIAÇÕES EM PARALELO
       await Promise.all(creationPromises)
 
       self.postMessage({
@@ -2103,6 +2082,13 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
       results.territories = territoriesResult
       results.characters = charactersResult
 
+      // ✅ FASE 3: EVENTOS DE ILHA + TRAIÇÕES DE ALIANÇA + ATIVIDADE DE ITENS NPCs
+      await Promise.all([
+        this.generateIslandEvents(),
+        this.checkPlayerAllianceBetrayals(),
+        this.runNPCItemActivity(),
+      ])
+
       // ✅ LIMPAR CACHE DE PODER EXPIRADO
       PowerCache.clearExpired(this.cache)
 
@@ -2132,6 +2118,74 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
         newCharacters: { success: false, created: 0 },
         totalTime: 0,
       }
+    }
+  }
+
+  // ✅ FASE 3: GERAR EVENTOS DE ILHA
+  async generateIslandEvents(): Promise<void> {
+    try {
+      const epicConfig = GenerationConfig.createEpic()
+      const allIslands = this.cache.islands.length > 0
+        ? this.cache.islands
+        : await db.islands.toArray()
+
+      const sample = allIslands
+        .sort(() => Math.random() - 0.5)
+        .slice(0, epicConfig.eventIslandSampleSize)
+
+      await Promise.all(
+        sample.map((island) =>
+          IslandEventSystem.generateEventsForIsland(island.id!, island, epicConfig.eventChancePerIsland),
+        ),
+      )
+      await IslandEventSystem.expireOldEvents()
+    } catch (error) {
+      console.error('❌ Erro ao gerar eventos de ilha:', error)
+    }
+  }
+
+  // ✅ FASE 3: ATIVIDADE DE ITENS DOS NPCs
+  async runNPCItemActivity(): Promise<void> {
+    try {
+      const { InventorySystem } = await import('../utils/inventorySystem')
+
+      const npcCrews = this.cache.crews.length > 0
+        ? this.cache.crews.filter((c) => c.type !== 'Player')
+        : (await db.crews.toArray()).filter((c) => c.type !== 'Player')
+
+      const buyPromises: Promise<void>[] = []
+
+      for (const crew of npcCrews) {
+        if (!crew.currentIsland || !crew.id) continue
+        if (Math.random() >= 0.08) continue // 8% chance per crew per cycle
+
+        buyPromises.push(
+          (async () => {
+            const members = await db.characters.where('crewId').equals(crew.id!).toArray()
+            if (members.length === 0) return
+            const buyer = members[Math.floor(Math.random() * members.length)]
+            const bought = await InventorySystem.npcBuyBestItem(buyer.id!, crew.id!, crew.currentIsland!)
+            if (bought) {
+              await InventorySystem.optimizeEquipment(buyer.id!)
+            }
+          })(),
+        )
+      }
+
+      await Promise.all(buyPromises)
+    } catch {
+      // Silencioso
+    }
+  }
+
+  // ✅ FASE 3: VERIFICAR TRAIÇÕES DE ALIANÇA DO PLAYER
+  async checkPlayerAllianceBetrayals(): Promise<void> {
+    try {
+      const playerCharacter = await db.characters.where('isPlayer').equals(1).first()
+      if (!playerCharacter?.crewId) return
+      await AllianceSystem.checkBetrayals(playerCharacter.crewId)
+    } catch (error) {
+      console.error('❌ Erro ao verificar traições de aliança:', error)
     }
   }
 
@@ -2190,6 +2244,11 @@ self.onmessage = async function (e: MessageEvent<WorkerMessage>) {
 
       case 'UPDATE_CACHE':
         await ultraOptimizedWorker.forceUpdateCache()
+        result = { success: true }
+        break
+
+      case 'GENERATE_EVENTS':
+        await ultraOptimizedWorker.generateIslandEvents()
         result = { success: true }
         break
 

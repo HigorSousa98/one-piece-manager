@@ -84,15 +84,80 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* TaskProgressBar - Active task countdown */
+
 .task-progress-bar {
-  border-radius: 8px;
-  margin: 8px 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
-.progress-text {
-  font-size: 10px;
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.task-title {
+  font-size: 0.82rem;
   font-weight: 600;
-  color: white;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  color: #E8D5A3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.task-time-remaining {
+  font-family: Georgia, serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #D4AF37;
+}
+
+.task-track {
+  height: 8px;
+  background: rgba(10,22,40,0.8);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+.task-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #866700, #D4AF37);
+  transition: width 1s linear;
+  position: relative;
+  overflow: hidden;
+}
+
+.task-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%; width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: task-shimmer 2.5s infinite;
+}
+
+.task-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #90CAF9;
+  background: rgba(144,202,249,0.1);
+  border: 1px solid rgba(144,202,249,0.25);
+  margin-top: 6px;
+}
+
+@keyframes task-shimmer {
+  0%   { left: -60%; }
+  100% { left: 160%; }
 }
 </style>

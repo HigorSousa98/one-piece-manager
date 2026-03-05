@@ -1,23 +1,620 @@
-/* src/style.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ============================================================
+   ONE PIECE MANAGER - Grand Line Dark Theme
+   Game-focused visual identity
+   ============================================================ */
 
-/* Estilos customizados para o tema One Piece */
-@layer components {
-  .card-pirate {
-    @apply bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-300 rounded-lg shadow-lg;
-  }
-  
-  .btn-primary {
-    @apply bg-pirate-gold text-gray-900 font-bold py-2 px-4 rounded hover:bg-yellow-400 transition-colors;
-  }
-  
-  .stat-bar {
-    @apply bg-gray-200 rounded-full h-2 overflow-hidden;
-  }
-  
-  .stat-fill {
-    @apply h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300;
-  }
+/* CSS Custom Properties - Design Tokens */
+:root {
+  /* Core palette */
+  --color-gold:         #D4AF37;
+  --color-gold-bright:  #FFD700;
+  --color-gold-dark:    #9A7B00;
+  --color-navy:         #0A1628;   /* fundo — mais escuro */
+  --color-navy-mid:     #172D48;   /* surface — claramente distinto do fundo */
+  --color-navy-light:   #1E3A5C;   /* elevated — terceiro nível */
+  --color-ocean:        #1E74C8;
+  --color-luffy:        #FF6B35;
+  --color-marine:       #003087;
+  --color-crimson:      #8B0000;
+  --color-error:        #E53935;
+  --color-success:      #43A047;
+  --color-parchment:    #F0E6D8;   /* texto principal — mais brilhante e legível */
+  --color-text-dim:     #B0BFDA;   /* texto secundário — mais visível que antes */
+
+  /* Semantic */
+  --surface-card:       #172D48;   /* sincronizado com surface do Vuetify */
+  --surface-elevated:   #1E3A5C;   /* dialogs, modais */
+  --surface-overlay:    rgba(6, 15, 30, 0.93);
+  --border-gold:        rgba(212, 175, 55, 0.5);   /* mais visível */
+  --border-gold-bright: rgba(255, 215, 0, 0.8);
+  --shadow-gold:        0 0 14px rgba(212, 175, 55, 0.35);
+  --shadow-gold-strong: 0 0 28px rgba(212, 175, 55, 0.6);
+  --shadow-deep:        0 4px 24px rgba(0, 0, 0, 0.7);
+
+  /* Typography */
+  --font-display:       'Georgia', 'Times New Roman', serif;
+  --font-body:          'Segoe UI', system-ui, sans-serif;
+
+  /* Animation speeds */
+  --anim-fast:   0.15s;
+  --anim-normal: 0.3s;
+  --anim-slow:   0.6s;
+}
+
+/* ============================================================
+   BASE RESET & GLOBAL
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-navy);
+  color: var(--color-parchment);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-navy);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold-dark);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+/* ============================================================
+   GAME PAGE HEADER PATTERN
+   Used across views for consistent section headers
+   ============================================================ */
+.page-header {
+  position: relative;
+  padding: 20px 0 16px;
+  margin-bottom: 24px;
+}
+
+.page-header::after {
+  content: '';
+  display: block;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--color-gold) 20%,
+    var(--color-gold-bright) 50%,
+    var(--color-gold) 80%,
+    transparent 100%
+  );
+  margin-top: 12px;
+  border-radius: 1px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--color-gold);
+  text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-dim);
+  margin: 4px 0 0;
+  letter-spacing: 0.03em;
+}
+
+/* ============================================================
+   GAME CARD - Core UI element
+   ============================================================ */
+.game-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  box-shadow: var(--shadow-deep), inset 0 1px 0 rgba(212, 175, 55, 0.1);
+  transition: border-color var(--anim-normal) ease,
+              box-shadow var(--anim-normal) ease,
+              transform var(--anim-normal) ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.game-card:hover {
+  border-color: var(--border-gold-bright);
+  box-shadow: var(--shadow-gold), var(--shadow-deep);
+  transform: translateY(-2px);
+}
+
+.game-card-header {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.15) 0%,
+    rgba(21, 101, 192, 0.1) 100%
+  );
+  border-bottom: 1px solid var(--border-gold);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.game-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-gold);
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+/* Elevated variant */
+.game-card-elevated {
+  background: var(--surface-elevated);
+  border-color: rgba(212, 175, 55, 0.6);
+  box-shadow: var(--shadow-gold), var(--shadow-deep);
+}
+
+/* Danger variant (boss fight, alerts) */
+.game-card-danger {
+  border-color: rgba(198, 40, 40, 0.5);
+  box-shadow: 0 0 12px rgba(198, 40, 40, 0.2), var(--shadow-deep);
+}
+
+.game-card-danger .game-card-header {
+  background: linear-gradient(135deg,
+    rgba(198, 40, 40, 0.2) 0%,
+    rgba(139, 0, 0, 0.15) 100%
+  );
+  border-bottom-color: rgba(198, 40, 40, 0.4);
+}
+
+/* ============================================================
+   STAT BARS (HP, XP, Power)
+   ============================================================ */
+.stat-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.stat-bar-track {
+  height: 8px;
+  background: rgba(13, 27, 46, 0.8);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width var(--anim-slow) ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  animation: stat-shimmer 2s infinite;
+}
+
+/* XP bar - gold */
+.stat-bar-xp .stat-bar-fill {
+  background: linear-gradient(90deg, var(--color-gold-dark), var(--color-gold-bright));
+}
+
+/* HP / health bar - green to red */
+.stat-bar-hp .stat-bar-fill {
+  background: linear-gradient(90deg, #1B5E20, #4CAF50);
+}
+
+/* Power bar - blue */
+.stat-bar-power .stat-bar-fill {
+  background: linear-gradient(90deg, #0D47A1, #2196F3);
+}
+
+/* ============================================================
+   RANK BADGE
+   ============================================================ */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+}
+
+.rank-badge-gold {
+  color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.12);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+.rank-badge-silver {
+  color: #B0BEC5;
+  background: rgba(176, 190, 197, 0.1);
+  border-color: rgba(176, 190, 197, 0.3);
+}
+
+.rank-badge-bronze {
+  color: #A1887F;
+  background: rgba(161, 136, 127, 0.1);
+  border-color: rgba(161, 136, 127, 0.3);
+}
+
+.rank-badge-danger {
+  color: #EF5350;
+  background: rgba(239, 83, 80, 0.1);
+  border-color: rgba(239, 83, 80, 0.35);
+}
+
+/* ============================================================
+   BOUNTY DISPLAY
+   ============================================================ */
+.bounty-value {
+  font-family: var(--font-display);
+  color: var(--color-gold-bright);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+  letter-spacing: 0.02em;
+}
+
+/* ============================================================
+   LOADING STATES
+   ============================================================ */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.loading-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  text-align: left;
+  max-width: 280px;
+  margin-inline: auto;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--color-text-dim);
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all var(--anim-normal) ease;
+}
+
+.step-item.completed {
+  color: var(--color-gold);
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.25);
+}
+
+/* ============================================================
+   ACTION BUTTONS
+   ============================================================ */
+.btn-pirate {
+  background: linear-gradient(135deg, var(--color-gold-dark), var(--color-gold)) !important;
+  color: var(--color-navy) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3) !important;
+  transition: all var(--anim-normal) ease !important;
+}
+
+.btn-pirate:hover {
+  box-shadow: 0 6px 25px rgba(212, 175, 55, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--color-crimson), var(--color-error)) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 15px rgba(198, 40, 40, 0.3) !important;
+}
+
+.btn-ocean {
+  background: linear-gradient(135deg, var(--color-marine), var(--color-ocean)) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+
+/* ============================================================
+   SECTION DIVIDER
+   ============================================================ */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.section-divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-gold), transparent);
+}
+
+.section-divider-icon {
+  color: var(--color-gold);
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+/* ============================================================
+   INFO ROWS (label: value patterns)
+   ============================================================ */
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.875rem;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.75rem;
+}
+
+.info-value {
+  color: var(--color-parchment);
+  font-weight: 600;
+}
+
+.info-value-gold {
+  color: var(--color-gold);
+  font-weight: 700;
+}
+
+/* ============================================================
+   POWER LEVEL INDICATOR
+   ============================================================ */
+.power-level {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.power-level-number {
+  font-size: 1.4rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-gold-bright);
+  line-height: 1;
+}
+
+.power-level-label {
+  font-size: 0.65rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ============================================================
+   BOSS FIGHT SPECIAL STYLES
+   ============================================================ */
+.boss-card {
+  background: linear-gradient(135deg, #1A0A0A, #2D1010) !important;
+  border-color: rgba(198, 40, 40, 0.5) !important;
+  box-shadow: 0 0 20px rgba(198, 40, 40, 0.2), var(--shadow-deep) !important;
+}
+
+.boss-name {
+  color: #FF5252;
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(255, 82, 82, 0.5);
+}
+
+/* ============================================================
+   ISLAND / TERRITORY STYLES
+   ============================================================ */
+.island-card-occupied {
+  border-color: rgba(46, 125, 50, 0.5) !important;
+  box-shadow: 0 0 12px rgba(46, 125, 50, 0.2) !important;
+}
+
+.island-card-hostile {
+  border-color: rgba(198, 40, 40, 0.5) !important;
+  box-shadow: 0 0 12px rgba(198, 40, 40, 0.2) !important;
+}
+
+.island-card-neutral {
+  border-color: rgba(84, 110, 122, 0.4) !important;
+}
+
+/* ============================================================
+   COMBAT / BATTLE LOG
+   ============================================================ */
+.battle-log {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  max-height: 300px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.battle-log-hit    { color: #EF9A9A; }
+.battle-log-crit   { color: #FF5252; font-weight: 700; }
+.battle-log-buff   { color: #80CBC4; }
+.battle-log-system { color: var(--color-text-dim); font-style: italic; }
+.battle-log-win    { color: var(--color-gold); font-weight: 700; }
+
+/* ============================================================
+   NAVIGATION STYLES
+   ============================================================ */
+.nav-route-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-gold);
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all var(--anim-normal) ease;
+}
+
+.nav-route-card:hover {
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-gold);
+  transform: translateY(-2px);
+}
+
+.nav-route-card.active {
+  border-color: var(--color-gold-bright);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(21, 101, 192, 0.1));
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes stat-shimmer {
+  0%   { left: -100%; }
+  100% { left: 200%; }
+}
+
+@keyframes gold-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(212, 175, 55, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(212, 175, 55, 0.7); }
+}
+
+@keyframes danger-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(198, 40, 40, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(198, 40, 40, 0.7); }
+}
+
+@keyframes float-up {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes sword-slash {
+  0%   { transform: rotate(-30deg) scale(0.8); opacity: 0; }
+  50%  { transform: rotate(0deg)   scale(1.1); opacity: 1; }
+  100% { transform: rotate(20deg)  scale(0.9); opacity: 0.7; }
+}
+
+.animate-float   { animation: float-up var(--anim-normal) ease forwards; }
+.animate-pulse-gold   { animation: gold-pulse   2s ease-in-out infinite; }
+.animate-pulse-danger { animation: danger-pulse 2s ease-in-out infinite; }
+
+/* ============================================================
+   VUETIFY OVERRIDES - Align with game theme
+   ============================================================ */
+
+/* Cards get game styling */
+.v-card {
+  background: var(--surface-card) !important;
+  border: 1px solid var(--border-gold) !important;
+  transition: border-color var(--anim-normal) ease,
+              box-shadow var(--anim-normal) ease !important;
+}
+
+.v-card:hover {
+  border-color: rgba(212, 175, 55, 0.65) !important;
+  box-shadow: var(--shadow-gold) !important;
+}
+
+/* Chips get styled */
+.v-chip {
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+}
+
+/* Dialogs get dark overlay */
+.v-overlay__scrim {
+  background: rgba(10, 22, 40, 0.85) !important;
+}
+
+.v-dialog .v-card {
+  background: var(--surface-elevated) !important;
+  border: 1px solid rgba(212, 175, 55, 0.65) !important;
+  box-shadow: var(--shadow-gold-strong), var(--shadow-deep) !important;
+}
+
+/* Progress bars */
+.v-progress-linear__background {
+  background: rgba(13, 27, 46, 0.8) !important;
+}
+
+/* Tooltips */
+.v-tooltip .v-overlay__content {
+  background: var(--surface-elevated) !important;
+  border: 1px solid var(--border-gold) !important;
+  color: var(--color-parchment) !important;
+}
+
+/* List items in nav */
+.v-list-item {
+  border-radius: 8px !important;
+  margin: 2px 8px !important;
+  transition: background var(--anim-fast) ease !important;
+}
+
+.v-list-item--active {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.15),
+    rgba(21, 101, 192, 0.1)
+  ) !important;
+  border-left: 3px solid var(--color-gold) !important;
+}
+
+/* Snackbars */
+.v-snackbar__wrapper {
+  border: 1px solid var(--border-gold) !important;
 }

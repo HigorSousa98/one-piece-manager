@@ -268,6 +268,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ── Grand Line World Reset ── */
 .world-reset-section {
   max-width: 800px;
   margin: 0 auto;
@@ -282,10 +283,12 @@ onMounted(() => {
 .status-item {
   display: flex;
   align-items: center;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.8);
+  padding: 8px 12px;
+  background: rgba(212, 175, 55, 0.06);
+  border: 1px solid rgba(212, 175, 55, 0.15);
   border-radius: 6px;
   font-size: 0.9rem;
+  color: #c4b08a;
 }
 
 .action-buttons {
@@ -299,7 +302,7 @@ onMounted(() => {
   .action-buttons {
     flex-direction: column;
   }
-  
+
   .action-buttons .v-btn {
     width: 100%;
   }

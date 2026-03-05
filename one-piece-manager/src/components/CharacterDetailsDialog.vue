@@ -1,262 +1,191 @@
 <template>
   <v-dialog
     v-model="dialog"
-    max-width="1000"
-    persistent
-    transition="dialog-transition"
+    max-width="880"
+    transition="dialog-bottom-transition"
     @click:outside="closeDialog"
   >
-    <v-card v-if="character" class="character-details-dialog">
-      
-      <!-- Header com Wanted Poster -->
-      <v-card-title class="character-header pa-0">
-        <div class="header-background">
-          <div class="header-content pa-6">
-            
-            <!-- Wanted Poster Section -->
-            <div class="poster-section">
-              <div class="poster-container">
-                <WantedPoster
-                  :character="character"
-                  size="small"
-                  :show-actions="false"
-                  :show-size-controls="false"
-                  class="main-poster"
-                  @download-complete="onPosterDownload"
-                  @share-complete="onPosterShare"
-                />
-              </div>
-              
-              <!-- Rank Badge Overlay -->
-              <div class="rank-overlay">
-                <v-chip
-                  color="amber"
-                  size="large"
-                  variant="elevated"
-                  class="rank-chip-large"
-                >
-                  <v-icon left>mdi-trophy</v-icon>
-                  RANK #{{ character.rank }}
-                </v-chip>
-              </div>
-              
-              <!-- Special Badges -->
-              <div class="special-badges">
-                <v-chip
-                  v-if="character.isPlayer"
-                  color="success"
-                  variant="elevated"
-                  size="small"
-                  prepend-icon="mdi-account-star"
-                  class="special-chip"
-                >
-                  YOU
-                </v-chip>
-                
-                <v-chip
-                  v-if="character.specialTitle"
-                  color="warning"
-                  variant="elevated"
-                  size="small"
-                  class="special-chip"
-                >
-                  {{ character.specialTitle }}
-                </v-chip>
-              </div>
-            </div>
-            
+    <v-card v-if="character" class="cd-card">
+
+      <!-- ── TOP ACCENT LINE ── -->
+      <div class="cd-top-accent" />
+
+      <!-- ══════════════════════════════════════
+           HERO HEADER: Poster + Identidade
+      ══════════════════════════════════════ -->
+      <div class="cd-header">
+        <!-- Wanted Poster -->
+        <div class="cd-poster-wrap">
+          <WantedPoster
+            :character="character"
+            size="small"
+            :show-actions="false"
+            :show-size-controls="false"
+            @download-complete="onPosterDownload"
+            @share-complete="onPosterShare"
+          />
+          <div class="cd-rank-badge">
+            <v-icon size="14">mdi-trophy</v-icon>
+            #{{ character.rank }}
           </div>
         </div>
-      </v-card-title>
 
-      <!-- Content -->
-      <v-card-text class="pa-6">
-        <v-row>
-          <!-- Character Info Column -->
-          <v-col cols="12" md="6">
-            <h3 class="text-h6 font-weight-bold mb-4">
-              <v-icon class="me-2">mdi-account</v-icon>
-              Informações do Personagem
-            </h3>
-            
-            <div class="info-list">
-              <div class="info-item">
-                <v-icon class="info-icon">mdi-account-circle</v-icon>
-                <div>
-                  <div class="info-label">Nome Completo</div>
-                  <div class="info-value">{{ character.name }}</div>
-                </div>
-              </div>
-              
-              <div class="info-item">
-                <v-icon class="info-icon">mdi-account-group</v-icon>
-                <div>
-                  <div class="info-label">Tripulação</div>
-                  <div class="info-value">{{ character.crewName }}</div>
-                </div>
-              </div>
-              
-              <div class="info-item">
-                <v-icon class="info-icon">mdi-crown</v-icon>
-                <div>
-                  <div class="info-label">Posição</div>
-                  <div class="info-value">{{ character.position || 'Capitão' }}</div>
-                </div>
-              </div>
-              
-              <div class="info-item">
-                <v-icon class="info-icon">mdi-shield-account</v-icon>
-                <div>
-                  <div class="info-label">Tipo</div>
-                  <div class="info-value">
-                    <v-chip
-                      :color="getTypeColor(character.type)"
-                      variant="tonal"
-                      size="small"
-                    >
-                      {{ formatType(character.type) }}
-                    </v-chip>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="info-item">
-                <v-icon class="info-icon">mdi-map-marker</v-icon>
-                <div>
-                  <div class="info-label">Localização Atual</div>
-                  <div class="info-value">
-                    {{ character.currentIslandName }}
-                    <v-chip
-                      :color="getDifficultyColor(character.currentIslandDifficulty)"
-                      size="x-small"
-                      variant="tonal"
-                      class="ml-2"
-                    >
-                      Dificuldade {{ character.currentIslandDifficulty }}
-                    </v-chip>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="info-item" v-if="character.devilFruitId">
-                <v-icon class="info-icon">mdi-fruit-grapes</v-icon>
-                <div>
-                  <div class="info-label">Akuma no Mi</div>
-                  <div class="info-value">{{ devilFruit(character.devilFruitId)?.name || 'Desconhecida' }}</div>
-                </div>
-              </div>
+        <!-- Identidade -->
+        <div class="cd-identity">
+          <p class="cd-name">{{ character.name }}</p>
 
-              <!-- Bounty/Rank Details -->
-              <div class="info-item">
-                <v-icon class="info-icon">{{ GameLogic.getBountyIcon(character.type) }}</v-icon>
-                <div>
-                  <div class="info-label">{{ GameLogic.getBountyLabel(character.type) }}</div>
-                  <CharacterBountyDisplay
-                    :character="character"
-                    size="default"
-                    variant="elevated"
-                  />
+          <div class="cd-crew-row">
+            <v-icon size="15" class="cd-crew-icon">mdi-anchor</v-icon>
+            <span class="cd-crew-name">{{ character.crewName || 'Sem tripulação' }}</span>
+          </div>
+
+          <!-- Chips de status -->
+          <div class="cd-chips">
+            <v-chip :color="getTypeColor(character.type)" variant="tonal" size="small" density="comfortable">
+              {{ formatType(character.type) }}
+            </v-chip>
+            <v-chip color="blue-grey" variant="tonal" size="small" density="comfortable">
+              {{ character.position || 'Capitão' }}
+            </v-chip>
+            <v-chip v-if="character.isPlayer" color="success" variant="elevated" size="small" density="comfortable" prepend-icon="mdi-account-star">
+              YOU
+            </v-chip>
+            <v-chip v-if="character.specialTitle" color="warning" variant="elevated" size="small" density="comfortable">
+              {{ character.specialTitle }}
+            </v-chip>
+          </div>
+
+          <!-- Localização -->
+          <div class="cd-location">
+            <v-icon size="14" class="me-1">mdi-map-marker</v-icon>
+            <span>{{ character.currentIslandName || 'Desconhecida' }}</span>
+            <v-chip
+              v-if="character.currentIslandDifficulty"
+              :color="getDifficultyColor(character.currentIslandDifficulty)"
+              variant="tonal" size="x-small" density="comfortable" class="ms-2"
+            >
+              Dif. {{ character.currentIslandDifficulty }}
+            </v-chip>
+          </div>
+
+          <!-- Bounty -->
+          <div class="cd-bounty-row">
+            <span class="cd-bounty-label">{{ GameLogic.getBountyLabel(character.type) }}</span>
+            <CharacterBountyDisplay :character="character" size="default" variant="elevated" />
+          </div>
+        </div>
+      </div>
+
+      <v-divider class="cd-divider" />
+
+      <!-- ══════════════════════════════════════
+           CORPO: Stats + Habilidades
+      ══════════════════════════════════════ -->
+      <v-card-text class="cd-body pa-5">
+        <v-row :gutter="0">
+
+          <!-- ── COLUNA ESQUERDA: Stats de Combate ── -->
+          <v-col cols="12" md="6" class="pe-md-4">
+            <div class="cd-section-label">
+              <v-icon size="16" class="me-2" color="primary">mdi-sword-cross</v-icon>
+              Estatísticas de Combate
+            </div>
+
+            <!-- Level em destaque -->
+            <div class="cd-level-card">
+              <v-icon size="20" color="amber">mdi-star-four-points</v-icon>
+              <span class="cd-level-num">{{ character.level }}</span>
+              <span class="cd-level-label">Level</span>
+            </div>
+
+            <!-- Stats com barra de progresso -->
+            <div class="cd-stats-list">
+              <div
+                v-for="stat in combatStats"
+                :key="stat.key"
+                class="cd-stat-row"
+              >
+                <v-icon :color="stat.color" size="17" class="cd-stat-icon">{{ stat.icon }}</v-icon>
+                <span class="cd-stat-name">{{ stat.label }}</span>
+                <div class="cd-stat-bar-wrap">
+                  <div class="cd-stat-bar" :style="{ width: statPercent(stat.value) + '%', background: stat.bg }" />
                 </div>
+                <span class="cd-stat-val" :style="{ color: stat.color }">{{ stat.value }}</span>
               </div>
             </div>
           </v-col>
-          
-          <!-- Stats Column -->
-          <v-col cols="12" md="6">
-            <h3 class="text-h6 font-weight-bold mb-4">
-              <v-icon class="me-2">mdi-chart-line</v-icon>
-              Estatísticas de Combate
-            </h3>
-            
-            <div class="stats-grid">
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <v-icon color="orange">mdi-star</v-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-label">Level</div>
-                  <div class="stat-value">{{ character.level }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <v-icon color="red">mdi-sword</v-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-label">Ataque</div>
-                  <div class="stat-value">{{ character.stats?.attack || 0 }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <v-icon color="blue">mdi-run-fast</v-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-label">Velocidade</div>
-                  <div class="stat-value">{{ character.stats?.speed || 0 }}</div>
-                </div>
-              </div>
-              
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <v-icon color="green">mdi-shield</v-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-label">Defesa</div>
-                  <div class="stat-value">{{ character.stats?.defense || 0 }}</div>
-                </div>
-              </div>
 
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <v-icon color="dark-blue">mdi-brain</v-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-label">Inteligência</div>
-                  <div class="stat-value">{{ character.stats?.intelligence || 0 }}</div>
-                </div>
-              </div>
+          <!-- ── COLUNA DIREITA: Habilidades especiais ── -->
+          <v-col cols="12" md="6" class="ps-md-4 mt-4 mt-md-0">
 
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <v-icon color="purple">mdi-feather</v-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-label">Habilidade</div>
-                  <div class="stat-value">{{ character.stats?.skill || 0 }}</div>
-                </div>
+            <!-- Akuma no Mi -->
+            <div v-if="character.devilFruitId" class="cd-df-card">
+              <div class="cd-section-label mb-3">
+                <v-icon size="16" class="me-2" color="deep-purple-lighten-2">mdi-fruit-grapes</v-icon>
+                Akuma no Mi
               </div>
-              
-              <div class="stat-item">
-                <div class="stat-icon">
-                  <v-icon color="pink">mdi-heart</v-icon>
-                </div>
-                <div class="stat-content">
-                  <div class="stat-label">Bondade</div>
-                  <div class="stat-value">{{ character.kindness || 0 }}</div>
-                </div>
+              <div class="cd-df-name">{{ devilFruit(character.devilFruitId)?.name || 'Desconhecida' }}</div>
+              <div class="cd-df-type">{{ devilFruit(character.devilFruitId)?.type || '' }}</div>
+              <p v-if="devilFruit(character.devilFruitId)?.description" class="cd-df-desc">
+                {{ devilFruit(character.devilFruitId)?.description }}
+              </p>
+            </div>
+
+            <!-- Haki -->
+            <div class="cd-section-label" :class="character.devilFruitId ? 'mt-4' : ''">
+              <v-icon size="16" class="me-2" color="blue-grey-lighten-2">mdi-wave</v-icon>
+              Haki
+            </div>
+            <div class="cd-haki-grid">
+              <div class="cd-haki-item" :class="{ 'cd-haki-active': character.stats?.armHaki > 0 }">
+                <v-icon size="18" :color="character.stats?.armHaki > 0 ? 'deep-purple-lighten-1' : 'grey-darken-1'">mdi-shield-sword</v-icon>
+                <span class="cd-haki-name">Armamento</span>
+                <span v-if="character.stats?.armHaki > 0" class="cd-haki-tier" :style="{ color: GameLogic.hakiTier(character.stats.armHaki, 'arm').color }">{{ GameLogic.hakiTier(character.stats.armHaki, 'arm').name }}</span>
+                <span class="cd-haki-val">{{ character.stats?.armHaki || 0 }}</span>
+              </div>
+              <div class="cd-haki-item" :class="{ 'cd-haki-active': character.stats?.obsHaki > 0 }">
+                <v-icon size="18" :color="character.stats?.obsHaki > 0 ? 'cyan-lighten-1' : 'grey-darken-1'">mdi-eye-circle</v-icon>
+                <span class="cd-haki-name">Observação</span>
+                <span v-if="character.stats?.obsHaki > 0" class="cd-haki-tier" :style="{ color: GameLogic.hakiTier(character.stats.obsHaki, 'obs').color }">{{ GameLogic.hakiTier(character.stats.obsHaki, 'obs').name }}</span>
+                <span class="cd-haki-val">{{ character.stats?.obsHaki || 0 }}</span>
+              </div>
+              <div class="cd-haki-item" :class="{ 'cd-haki-active': character.stats?.kingHaki > 0 }">
+                <v-icon size="18" :color="character.stats?.kingHaki > 0 ? 'amber-lighten-1' : 'grey-darken-1'">mdi-crown</v-icon>
+                <span class="cd-haki-name">Do Rei</span>
+                <span v-if="character.stats?.kingHaki > 0" class="cd-haki-tier" :style="{ color: GameLogic.hakiTier(character.stats.kingHaki, 'king').color }">{{ GameLogic.hakiTier(character.stats.kingHaki, 'king').name }}</span>
+                <span class="cd-haki-val">{{ character.stats?.kingHaki || 0 }}</span>
               </div>
             </div>
+
+            <!-- Bondade -->
+            <div class="cd-section-label mt-4">
+              <v-icon size="16" class="me-2" color="pink-lighten-2">mdi-heart</v-icon>
+              Bondade
+            </div>
+            <div class="cd-kindness-row">
+              <v-progress-linear
+                :model-value="kindnessPercent"
+                color="pink-lighten-1"
+                bg-color="rgba(255,255,255,0.06)"
+                rounded
+                height="10"
+              />
+              <span class="cd-kindness-val">{{ character.kindness || 0 }}</span>
+            </div>
+
           </v-col>
         </v-row>
-        
       </v-card-text>
 
-      <!-- Actions -->
-      <v-card-actions class="pa-6 pt-0">
- 
+      <!-- ── ACTIONS ── -->
+      <v-divider class="cd-divider" />
+      <v-card-actions class="cd-actions pa-4">
         <v-spacer />
-        
-        <v-btn
-          color="primary"
-          variant="elevated"
-          @click="dialog = false"
-        >
+        <v-btn color="primary" variant="elevated" min-width="120" @click="dialog = false">
           Fechar
         </v-btn>
       </v-card-actions>
+
     </v-card>
   </v-dialog>
 </template>
@@ -295,6 +224,34 @@ const dialog = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+
+const combatStats = computed(() => {
+  const s = props.character?.stats
+  if (!s) return []
+  return [
+    { key: 'attack',       label: 'Ataque',      icon: 'mdi-sword',    color: '#EF5350', bg: 'linear-gradient(90deg,#8B0000,#EF5350)', value: s.attack       || 0 },
+    { key: 'defense',      label: 'Defesa',       icon: 'mdi-shield',   color: '#42A5F5', bg: 'linear-gradient(90deg,#003087,#42A5F5)', value: s.defense      || 0 },
+    { key: 'speed',        label: 'Velocidade',   icon: 'mdi-run-fast', color: '#66BB6A', bg: 'linear-gradient(90deg,#1B5E20,#66BB6A)', value: s.speed        || 0 },
+    { key: 'intelligence', label: 'Inteligência', icon: 'mdi-brain',    color: '#AB47BC', bg: 'linear-gradient(90deg,#4A148C,#AB47BC)', value: s.intelligence || 0 },
+    { key: 'skill',        label: 'Habilidade',   icon: 'mdi-feather',  color: '#FFA726', bg: 'linear-gradient(90deg,#E65100,#FFA726)', value: s.skill        || 0 },
+  ]
+})
+
+const kindnessPercent = computed(() => {
+  const k = props.character?.kindness ?? 0
+  return Math.min(100, Math.max(0, ((k + 100) / 200) * 100))
+})
+
+const maxStat = computed(() => {
+  const values = combatStats.value.map(s => s.value)
+  return values.length > 0 ? Math.max(...values) : 1
+})
+
+const statPercent = (value: number) => {
+  const max = maxStat.value
+  if (max === 0) return 0
+  return Math.min(100, Math.max(0, (value / max) * 100))
+}
 
 // Methods
 const devilFruit = (df: number): DevilFruit | undefined => {
@@ -378,214 +335,315 @@ const closeDialog = () => {
 </script>
 
 <style scoped>
-.character-details-dialog {
-  background: linear-gradient(135deg, #2c1810 0%, #8b4513 100%);
-  color: white;
-}
+/* ── Grand Line Character Sheet Dialog ── */
 
-/* Header */
-.character-header {
-  position: relative;
+.cd-card {
+  background: #172D48 !important;
+  border: 1px solid rgba(212,175,55,0.5) !important;
+  border-radius: 14px !important;
   overflow: hidden;
 }
 
-.header-background {
-  background: linear-gradient(135deg, #8b4513 0%, #d2691e 100%);
-  position: relative;
+/* Linha decorativa de topo */
+.cd-top-accent {
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #D4AF37 30%, #FFD700 50%, #D4AF37 70%, transparent 100%);
 }
 
-.header-background::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.header-content {
-  position: relative;
-  z-index: 1;
-}
-
-/* Poster Section */
-.poster-section {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.poster-container {
-  position: relative;
-}
-
-.main-poster {
-  filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.4));
-}
-
-.rank-overlay {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  z-index: 10;
-}
-
-.rank-chip-large {
-  font-size: 1rem !important;
-  font-weight: bold;
-  padding: 12px 16px;
-  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.4);
-}
-
-.special-badges {
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  z-index: 10;
-}
-
-.special-chip {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-/* Content Styles */
-.info-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.info-item {
+/* ─── HEADER ─── */
+.cd-header {
   display: flex;
   align-items: flex-start;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  gap: 24px;
+  padding: 20px 24px 20px;
+  background: linear-gradient(135deg, rgba(10,22,40,0.6) 0%, rgba(212,175,55,0.06) 100%);
 }
 
-.info-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateX(4px);
+.cd-poster-wrap {
+  position: relative;
+  flex-shrink: 0;
 }
 
-.info-icon {
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 2px;
+.cd-rank-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(212,175,55,0.9);
+  color: #0A1628;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 2px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
-.info-label {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0.25rem;
-  font-weight: 500;
+/* Identidade */
+.cd-identity {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 6px;
 }
 
-.info-value {
-  font-weight: 600;
-  color: white;
+.cd-name {
+  font-family: Georgia, serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #F0E6D8;
+  line-height: 1.2;
+  margin: 0;
+  text-shadow: 0 0 20px rgba(212,175,55,0.3);
+  letter-spacing: 0.02em;
+}
+
+.cd-crew-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #B0BFDA;
+  font-size: 0.88rem;
+}
+
+.cd-crew-icon { opacity: 0.7; }
+
+.cd-crew-name {
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cd-location {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  color: #8B9DC3;
+  font-size: 0.82rem;
+  gap: 2px;
+}
+
+.cd-bounty-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cd-bounty-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #B0BFDA;
+}
+
+/* ─── DIVIDER ─── */
+.cd-divider {
+  border-color: rgba(212,175,55,0.2) !important;
+}
+
+/* ─── BODY ─── */
+.cd-body { color: #F0E6D8; }
+
+.cd-section-label {
+  display: flex;
+  align-items: center;
+  font-family: Georgia, serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #B0BFDA;
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(212,175,55,0.18);
+}
+
+/* Level em destaque */
+.cd-level-card {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: rgba(212,175,55,0.08);
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+}
+
+.cd-level-num {
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #D4AF37;
+  line-height: 1;
+}
+
+.cd-level-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #B0BFDA;
+}
+
+/* Stats com barra */
+.cd-stats-list {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
 }
 
-/* Stats Grid */
-.stats-grid {
+.cd-stat-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 20px 90px 1fr 36px;
+  align-items: center;
+  gap: 8px;
 }
 
-.stat-item {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+.cd-stat-icon { justify-self: center; }
+
+.cd-stat-name {
+  font-size: 0.8rem;
+  color: #B0BFDA;
+  white-space: nowrap;
+}
+
+.cd-stat-bar-wrap {
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cd-stat-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.cd-stat-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
+/* ─── Devil Fruit ─── */
+.cd-df-card {
+  background: rgba(74,20,140,0.12);
+  border: 1px solid rgba(171,71,188,0.3);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.cd-df-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #CE93D8;
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.cd-df-type {
+  font-size: 0.68rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 6px;
+}
+
+.cd-df-desc {
+  font-size: 0.78rem;
+  color: #B0BFDA;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ─── Haki ─── */
+.cd-haki-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cd-haki-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  opacity: 0.45;
+  transition: all 0.2s ease;
 }
 
-.stat-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
+.cd-haki-item.cd-haki-active {
+  opacity: 1;
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.12);
 }
 
-.stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-content {
+.cd-haki-name {
   flex: 1;
+  font-size: 0.82rem;
+  color: #B0BFDA;
 }
 
-.stat-label {
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 0.25rem;
+.cd-haki-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #F0E6D8;
+  font-family: 'Courier New', monospace;
 }
 
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: white;
+.cd-haki-tier {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  opacity: 0.9;
+  margin-right: 2px;
 }
 
-.power-summary {
-  margin-top: 1.5rem;
+/* ─── Kindness ─── */
+.cd-kindness-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .poster-section {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-  
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .rank-overlay {
-    position: static;
-    margin-top: 1rem;
-  }
-  
-  .special-badges {
-    position: static;
-    flex-direction: row;
-    justify-content: center;
-    margin-top: 1rem;
-  }
+.cd-kindness-val {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #F48FB1;
+  min-width: 30px;
+  text-align: right;
+  font-family: 'Courier New', monospace;
 }
 
-/* Animations */
-@keyframes posterGlow {
-  0%, 100% { 
-    filter: drop-shadow(0 8px 32px rgba(0, 0, 0, 0.4));
-  }
-  50% { 
-    filter: drop-shadow(0 12px 48px rgba(139, 69, 19, 0.6));
-  }
+/* ─── Actions ─── */
+.cd-actions {
+  background: rgba(10,22,40,0.4);
 }
 
-.main-poster:hover {
-  animation: posterGlow 2s ease-in-out infinite;
+/* ─── Responsivo ─── */
+@media (max-width: 600px) {
+  .cd-header { flex-direction: column; align-items: center; text-align: center; }
+  .cd-name   { font-size: 1.2rem; }
+  .cd-chips  { justify-content: center; }
+  .cd-crew-row, .cd-location, .cd-bounty-row { justify-content: center; }
+  .cd-stat-row { grid-template-columns: 20px 80px 1fr 32px; }
 }
 </style>

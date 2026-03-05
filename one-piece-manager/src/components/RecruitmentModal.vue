@@ -262,27 +262,92 @@ watch(() => props.isOpen, (newValue) => {
 </script>
 
 <style scoped>
-/* Adicionar animações se necessário */
-.transition-colors {
-  transition: background-color 0.2s ease-in-out;
+/* RecruitmentModal - Pirate recruitment dialog */
+
+.recruitment-modal-header {
+  background: linear-gradient(135deg, rgba(46,125,50,0.15), rgba(212,175,55,0.06));
+  border-bottom: 1px solid rgba(46,125,50,0.3);
+  padding: 16px 20px;
 }
 
-/* Animação de entrada do modal */
-.fixed {
-  animation: fadeIn 0.2s ease-out;
+.recruitment-title {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #81C784;
+  letter-spacing: 0.04em;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.candidate-preview {
+  background: rgba(212,175,55,0.06);
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+  margin: 12px 0;
 }
 
-/* Animação da barra de progresso */
-.h-2 {
-  transition: width 0.3s ease-in-out;
+.candidate-name {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #D4AF37;
+  margin-bottom: 4px;
+}
+
+.candidate-info { font-size: 0.82rem; color: #8B9DC3; }
+
+.recruitment-stats-row {
+  display: flex;
+  justify-content: space-around;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.recruitment-stat {
+  text-align: center;
+  flex: 1;
+}
+
+.recruitment-stat-value {
+  font-family: Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #D4AF37;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.recruitment-stat-label {
+  font-size: 0.68rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.kindness-bar-track {
+  height: 8px;
+  background: rgba(10,22,40,0.8);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.05);
+  margin: 6px 0;
+}
+
+.kindness-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.kindness-positive { background: linear-gradient(90deg, #1B5E20, #4CAF50); }
+.kindness-negative { background: linear-gradient(90deg, #B71C1C, #EF5350); }
+
+.recruit-btn {
+  background: linear-gradient(135deg, #1B5E20, #2E7D32) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.05em !important;
+  box-shadow: 0 4px 16px rgba(46,125,50,0.3) !important;
 }
 </style>

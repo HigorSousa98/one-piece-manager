@@ -260,16 +260,17 @@ const formatPower = (power: number): string => {
 </script>
 
 <style scoped>
+/* ── Grand Line Ranking Card ── */
 .character-rank-card {
   position: relative;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: rgba(255, 255, 255, 0.95);
+  background: linear-gradient(160deg, #132235 0%, #0d1b2e 100%);
   backdrop-filter: blur(10px);
-  border: 2px solid rgba(139, 69, 19, 0.3);
+  border: 2px solid rgba(212, 175, 55, 0.25);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -277,35 +278,35 @@ const formatPower = (power: number): string => {
 
 .character-rank-card:hover {
   transform: translateY(-8px) rotate(1deg);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-  border-color: rgba(139, 69, 19, 0.6);
+  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.3);
+  border-color: rgba(212, 175, 55, 0.6);
 }
 
 .character-rank-card.player-card {
-  border: 3px solid #4CAF50;
-  box-shadow: 0 0 25px rgba(76, 175, 80, 0.4);
+  border: 3px solid rgba(46, 125, 50, 0.8);
+  box-shadow: 0 0 25px rgba(46, 125, 50, 0.35);
 }
 
 .character-rank-card.player-card:hover {
-  box-shadow: 0 12px 40px rgba(76, 175, 80, 0.6);
+  box-shadow: 0 12px 40px rgba(46, 125, 50, 0.5);
 }
 
 .character-rank-card.special-card {
-  border: 3px solid #FF9800;
-  box-shadow: 0 0 25px rgba(255, 152, 0, 0.4);
+  border: 3px solid rgba(212, 175, 55, 0.8);
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.35);
 }
 
 .character-rank-card.special-card:hover {
-  box-shadow: 0 12px 40px rgba(255, 152, 0, 0.6);
+  box-shadow: 0 12px 40px rgba(212, 175, 55, 0.5);
 }
 
 .character-rank-card.search-result {
-  border: 3px solid #FFC107;
-  box-shadow: 0 0 20px rgba(255, 193, 7, 0.4);
+  border: 3px solid rgba(255, 193, 7, 0.8);
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.3);
 }
 
 .character-rank-card.search-result:hover {
-  box-shadow: 0 12px 40px rgba(255, 193, 7, 0.6);
+  box-shadow: 0 12px 40px rgba(255, 193, 7, 0.5);
 }
 
 /* Badges */
@@ -341,7 +342,7 @@ const formatPower = (power: number): string => {
 .rank-chip, .special-chip {
   font-weight: bold;
   font-size: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .pulse-animation {
@@ -393,15 +394,15 @@ const formatPower = (power: number): string => {
   right: 0;
   background: linear-gradient(
     to top,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(255, 255, 255, 0.95) 70%,
-    rgba(255, 255, 255, 0.8) 90%,
+    rgba(13, 27, 46, 0.98) 0%,
+    rgba(13, 27, 46, 0.95) 70%,
+    rgba(13, 27, 46, 0.7) 90%,
     transparent 100%
   );
   padding: 16px 12px 12px;
   text-align: center;
   backdrop-filter: blur(8px);
-  border-top: 1px solid rgba(139, 69, 19, 0.2);
+  border-top: 1px solid rgba(212, 175, 55, 0.2);
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -409,28 +410,29 @@ const formatPower = (power: number): string => {
 }
 
 .character-name {
-  color: #2c1810;
+  color: #e8d5a3;
+  font-family: Georgia, serif;
   line-height: 1.2;
-  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
 }
 
 :deep(.search-highlight) {
-  background: linear-gradient(45deg, #FFC107, #FFD54F);
-  color: #1a1a1a;
+  background: linear-gradient(45deg, #D4AF37, #FFD700);
+  color: #0d1b2e;
   padding: 0.1rem 0.3rem;
   border-radius: 4px;
   font-weight: bold;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   animation: highlight-glow 2s ease-in-out infinite;
 }
 
 @keyframes highlight-glow {
-  0%, 100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); }
-  50% { box-shadow: 0 2px 8px rgba(255, 193, 7, 0.4); }
+  0%, 100% { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); }
+  50% { box-shadow: 0 2px 8px rgba(212, 175, 55, 0.6); }
 }
 
 .crew-name {
-  color: rgba(44, 24, 16, 0.7);
+  color: #8b9dc3;
   font-style: italic;
 }
 
@@ -445,23 +447,23 @@ const formatPower = (power: number): string => {
 .stat-item {
   display: flex;
   align-items: center;
-  color: rgba(44, 24, 16, 0.8);
-  background: rgba(255, 255, 255, 0.7);
+  color: #c4b08a;
+  background: rgba(212, 175, 55, 0.1);
   padding: 3px 8px;
   border-radius: 12px;
   font-size: 0.75rem;
-  border: 1px solid rgba(139, 69, 19, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.2);
 }
 
 .level-stat {
-  background: linear-gradient(45deg, rgba(255, 193, 7, 0.2), rgba(255, 213, 79, 0.2));
+  background: linear-gradient(45deg, rgba(212, 175, 55, 0.15), rgba(255, 215, 0, 0.15));
 }
 
 .location-info {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(44, 24, 16, 0.7);
+  color: #8b9dc3;
   flex-wrap: wrap;
   gap: 4px;
   font-size: 0.75rem;
@@ -495,8 +497,8 @@ const formatPower = (power: number): string => {
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(139, 69, 19, 0.95) 0%,
-    rgba(101, 67, 33, 0.95) 100%
+    rgba(13, 27, 46, 0.96) 0%,
+    rgba(19, 34, 53, 0.96) 100%
   );
   display: flex;
   align-items: center;
@@ -504,6 +506,7 @@ const formatPower = (power: number): string => {
   opacity: 0;
   transition: all 0.3s ease;
   backdrop-filter: blur(8px);
+  border: 2px solid rgba(212, 175, 55, 0.4);
 }
 
 .character-rank-card:hover .hover-overlay {
@@ -512,11 +515,12 @@ const formatPower = (power: number): string => {
 
 .hover-content {
   text-align: center;
-  color: white;
+  color: #e8d5a3;
 }
 
 .hover-icon {
-  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
+  color: #D4AF37 !important;
+  filter: drop-shadow(2px 2px 6px rgba(212, 175, 55, 0.6));
   animation: bounce 2s ease-in-out infinite;
 }
 
@@ -527,7 +531,8 @@ const formatPower = (power: number): string => {
 
 .hover-text {
   font-weight: 500;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  color: #c4b08a;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .quick-stats {
@@ -544,6 +549,7 @@ const formatPower = (power: number): string => {
   gap: 2px;
   font-size: 0.75rem;
   font-weight: bold;
+  color: #D4AF37;
 }
 
 /* Loading Overlay */
@@ -553,7 +559,7 @@ const formatPower = (power: number): string => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(13, 27, 46, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -562,69 +568,40 @@ const formatPower = (power: number): string => {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .poster-container {
-    height: 240px;
-  }
-  
-  .character-poster {
-    transform: scale(0.75);
-  }
-  
-  .character-rank-card:hover .character-poster {
-    transform: scale(0.8) rotate(-1deg);
-  }
-  
-  .character-info-overlay {
-    padding: 12px 8px 8px;
-  }
-  
-  .character-name {
-    font-size: 0.9rem;
-  }
-  
-  .stats-row {
-    flex-direction: column;
-    gap: 2px;
-  }
-  
-  .quick-stats {
-    gap: 8px;
-  }
+  .poster-container { height: 240px; }
+  .character-poster { transform: scale(0.75); }
+  .character-rank-card:hover .character-poster { transform: scale(0.8) rotate(-1deg); }
+  .character-info-overlay { padding: 12px 8px 8px; }
+  .character-name { font-size: 0.9rem; }
+  .stats-row { flex-direction: column; gap: 2px; }
+  .quick-stats { gap: 8px; }
 }
 
 @media (max-width: 480px) {
-  .character-rank-card {
-    border-radius: 12px;
-  }
-  
-  .poster-container {
-    height: 200px;
-  }
-  
-  .rank-badge, .special-badge, .player-badge {
-    top: 4px;
-  }
-  
+  .character-rank-card { border-radius: 12px; }
+  .poster-container { height: 200px; }
+  .rank-badge, .special-badge, .player-badge { top: 4px; }
   .rank-badge { left: 4px; }
   .special-badge { right: 4px; }
   .player-badge { right: 4px; top: 32px; }
 }
 
-/* Animation for special effects */
+/* Glow animations */
 @keyframes wanted-glow {
-  0%, 100% { 
-    box-shadow: 0 0 20px rgba(139, 69, 19, 0.3);
-  }
-  50% { 
-    box-shadow: 0 0 30px rgba(139, 69, 19, 0.6);
-  }
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.5); }
 }
 
 .character-rank-card.special-card {
   animation: wanted-glow 3s ease-in-out infinite;
 }
 
+@keyframes player-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(46, 125, 50, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(46, 125, 50, 0.5); }
+}
+
 .character-rank-card.player-card {
-  animation: wanted-glow 3s ease-in-out infinite;
+  animation: player-glow 3s ease-in-out infinite;
 }
 </style>

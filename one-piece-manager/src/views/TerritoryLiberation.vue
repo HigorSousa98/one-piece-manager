@@ -339,11 +339,9 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.territory-liberation-view {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 16px;
-}
+/* ============================================================
+   Territory Liberation - Grand Line Conquest
+   ============================================================ */
 
 .loading-container {
   min-height: 400px;
@@ -355,83 +353,160 @@ onMounted(async () => {
 .loading-steps {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 20px;
   max-width: 300px;
-  margin: 0 auto;
+  margin-inline: auto;
 }
 
 .step-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px;
+  font-size: 0.875rem;
+  color: #8B9DC3;
+  padding: 8px 14px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
 }
 
 .step-item.completed {
-  background-color: rgba(76, 175, 80, 0.1);
+  color: #D4AF37;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.25);
 }
 
-.current-island-section {
-  background: rgba(33, 150, 243, 0.05);
-  border-radius: 8px;
-  padding: 16px;
-  border: 1px solid rgba(33, 150, 243, 0.2);
+/* Page header */
+.liberation-header {
+  background: linear-gradient(135deg,
+    rgba(198, 40, 40, 0.1),
+    rgba(212, 175, 55, 0.06)
+  );
+  border: 1px solid rgba(198, 40, 40, 0.3);
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 20px;
+  position: relative;
 }
 
-.islands-list {
-  max-height: 500px;
-  overflow-y: auto;
+.liberation-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #C62828, #FF5252, #C62828, transparent
+  );
+  border-radius: 14px 14px 0 0;
 }
 
-.island-list-item {
-  border-radius: 8px;
-  margin-bottom: 8px;
-  transition: all 0.3s ease;
+.liberation-title {
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #EF5350;
+  text-shadow: 0 0 16px rgba(239, 83, 80, 0.35);
+  letter-spacing: 0.05em;
 }
 
-.island-list-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
+/* Territory cards */
+.territory-card {
+  background: #132235;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  height: 100%;
 }
 
-.v-card {
-  transition: all 0.3s ease;
-}
-
-.v-card:hover {
+.territory-card:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.18);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.territory-card.liberated {
+  border-color: rgba(46, 125, 50, 0.5);
+  background: linear-gradient(135deg, #0A2010, #0F2E18);
+  box-shadow: 0 0 12px rgba(46, 125, 50, 0.2);
 }
 
-.mdi-spin {
-  animation: spin 1s linear infinite;
+.territory-card.occupied {
+  border-color: rgba(198, 40, 40, 0.45);
+  box-shadow: 0 0 12px rgba(198, 40, 40, 0.15);
 }
 
-/* RESPONSIVE DESIGN */
-@media (max-width: 768px) {
-  .territory-liberation-view {
-    padding: 8px;
-  }
-  
-  .islands-list {
-    max-height: 300px;
-  }
+.territory-card.in-battle {
+  border-color: rgba(255, 167, 38, 0.5);
+  box-shadow: 0 0 16px rgba(255, 167, 38, 0.2);
+  animation: battle-pulse 2s ease-in-out infinite;
 }
 
-/* CORES CUSTOMIZADAS */
-.text-success-darken-3 { color: #2e7d32 !important; }
-.text-warning-darken-3 { color: #ef6c00 !important; }
-.text-purple-darken-3 { color: #6a1b9a !important; }
-.text-blue-darken-3 { color: #1565c0 !important; }
+.territory-card-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-.success-lighten-5 { background-color: #e8f5e8 !important; }
-.warning-lighten-5 { background-color: #fff3e0 !important; }
-.purple-lighten-5 { background-color: #f3e5f5 !important; }
-.blue-lighten-5 { background-color: #e3f2fd !important; }
+.territory-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #E8D5A3;
+  font-size: 0.95rem;
+}
+
+.territory-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.status-liberated { color: #81C784; background: rgba(129, 199, 132, 0.1); border: 1px solid rgba(129, 199, 132, 0.3); }
+.status-occupied  { color: #EF5350; background: rgba(239, 83, 80, 0.1);  border: 1px solid rgba(239, 83, 80, 0.3); }
+.status-neutral   { color: #78909C; background: rgba(120, 144, 156, 0.1); border: 1px solid rgba(120, 144, 156, 0.25); }
+.status-battle    { color: #FFA726; background: rgba(255, 167, 38, 0.1);  border: 1px solid rgba(255, 167, 38, 0.3); }
+
+/* Combat power display */
+.power-vs-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.power-side {
+  flex: 1;
+  text-align: center;
+}
+
+.power-value {
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.power-value.player { color: #D4AF37; text-shadow: 0 0 10px rgba(212,175,55,0.4); }
+.power-value.enemy  { color: #EF5350; text-shadow: 0 0 10px rgba(239,83,80,0.4); }
+
+.vs-text {
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #8B9DC3;
+}
+
+@keyframes battle-pulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(255, 167, 38, 0.2); }
+  50%       { box-shadow: 0 0 24px rgba(255, 167, 38, 0.45); }
+}
 </style>

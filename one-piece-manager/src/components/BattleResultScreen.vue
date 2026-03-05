@@ -155,12 +155,95 @@ const handleRecruitmentFailed = (target: Character): void => {
 </script>
 
 <style scoped>
-.battle-result-screen {
-  max-width: 800px;
-  margin: 0 auto;
+/* ============================================================
+   BattleResultScreen - Victory/Defeat overlay
+   ============================================================ */
+
+.result-screen {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: center;
 }
 
-.transition-colors {
-  transition: background-color 0.2s ease-in-out;
+.result-screen.victory {
+  background: linear-gradient(135deg, #0A2010, #143020, #0A2010);
+  border: 1px solid rgba(46, 125, 50, 0.5);
+  box-shadow: 0 0 40px rgba(46, 125, 50, 0.3);
+}
+
+.result-screen.defeat {
+  background: linear-gradient(135deg, #1A0808, #2D1010, #1A0808);
+  border: 1px solid rgba(198, 40, 40, 0.5);
+  box-shadow: 0 0 40px rgba(198, 40, 40, 0.3);
+}
+
+.result-banner { padding: 24px; position: relative; }
+
+.result-title {
+  font-family: Georgia, serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  margin: 0 0 8px;
+  text-shadow: 0 0 30px currentColor;
+}
+
+.result-title.victory { color: #FFD700; }
+.result-title.defeat  { color: #FF5252; }
+
+.result-subtitle {
+  font-size: 1rem;
+  color: #8B9DC3;
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+}
+
+.rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.reward-box {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.reward-icon { font-size: 1.8rem; display: block; margin-bottom: 4px; }
+
+.reward-label {
+  font-size: 0.68rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.reward-value {
+  font-family: Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #FFD700;
+  text-shadow: 0 0 8px rgba(255,215,0,0.4);
+}
+
+.continue-btn {
+  background: linear-gradient(135deg, #866700, #D4AF37) !important;
+  color: #0D1B2E !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  letter-spacing: 0.06em !important;
+  padding: 12px 36px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 20px rgba(212,175,55,0.4) !important;
+}
+
+.continue-btn:hover {
+  box-shadow: 0 6px 28px rgba(212,175,55,0.6) !important;
+  transform: translateY(-2px) !important;
 }
 </style>

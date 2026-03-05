@@ -326,200 +326,49 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ============================================================
+   BattleLogDisplay - Combat message log
+   ============================================================ */
+
 .battle-log-display {
-  width: 100%;
-}
-
-.battle-log-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.battle-log-title {
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.battle-log-container {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.battle-log-content {
-  max-height: 250px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 10px;
+  padding: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  max-height: 260px;
   overflow-y: auto;
-  padding: 8px;
-  background: rgba(0, 0, 0, 0.2);
+  line-height: 1.7;
 }
 
-.battle-log-content::-webkit-scrollbar {
-  width: 6px;
-}
+.battle-log-display::-webkit-scrollbar { width: 4px; }
+.battle-log-display::-webkit-scrollbar-track { background: transparent; }
+.battle-log-display::-webkit-scrollbar-thumb { background: rgba(212, 175, 55, 0.3); border-radius: 2px; }
 
-.battle-log-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.battle-log-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 3px;
-}
-
-.battle-log-entry {
+.log-line {
+  padding: 2px 0;
   display: flex;
-  align-items: center;
-  margin-bottom: 6px;
-  padding: 6px 8px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.05);
-  border-left: 3px solid transparent;
-  transition: all 0.3s ease;
-  font-size: 0.875rem;
+  gap: 6px;
 }
 
-.battle-log-entry-animated {
-  animation: slideInLeft 0.3s ease-out forwards;
-  opacity: 0;
-  transform: translateX(-20px);
-}
-
-.battle-log-entry:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateX(2px);
-}
-
-/* Tipos de Entrada */
-.attack-entry {
-  border-left-color: #ff6b6b;
-}
-
-.defense-entry {
-  border-left-color: #feca57;
-}
-
-.special-entry {
-  border-left-color: #a55eea;
-}
-
-.victory-entry {
-  border-left-color: #26de81;
-}
-
-.defeat-entry {
-  border-left-color: #ff4757;
-}
-
-.neutral-entry {
-  border-left-color: #74b9ff;
-}
-
-.log-icon {
-  margin-right: 8px;
+.log-line-timestamp {
+  color: #546E7A;
+  font-size: 0.72rem;
   flex-shrink: 0;
 }
 
-.log-message {
-  flex: 1;
-  color: rgba(255, 255, 255, 0.9);
-  line-height: 1.3;
-}
+.log-line-text { flex: 1; }
 
-.character-name {
-  color: #26de81;
-  font-weight: bold;
-}
-
-.damage-number {
-  color: #ff6b6b;
-  font-weight: bold;
-  background: rgba(255, 107, 107, 0.2);
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 0.8em;
-}
-
-.keyword {
-  color: #feca57;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 0.8em;
-}
-
-.damage-indicator {
-  margin-left: 8px;
-  background: #ff6b6b;
-  color: white;
-  padding: 2px 6px;
-  border-radius: 8px;
-  font-weight: bold;
-  font-size: 0.75em;
-  flex-shrink: 0;
-}
-
-.heal-indicator {
-  background: #26de81;
-}
-
-.log-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.battle-log-controls {
-  background: rgba(255, 255, 255, 0.05);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px 8px;
-}
-
-.battle-stat-card {
-  background: rgba(255, 255, 255, 0.05);
-  transition: transform 0.2s ease;
-}
-
-.battle-stat-card:hover {
-  transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* Animações */
-@keyframes slideInLeft {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.auto-scrolling {
-  scroll-behavior: smooth;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .battle-log-content {
-    max-height: 200px;
-    font-size: 0.8rem;
-  }
-  
-  .battle-log-entry {
-    padding: 4px 6px;
-    margin-bottom: 4px;
-  }
-  
-  .log-icon .v-avatar {
-    width: 16px !important;
-    height: 16px !important;
-  }
-  
-  .log-icon .v-icon {
-    font-size: 10px !important;
-  }
-}
+.log-type-hit     { color: #EF9A9A; }
+.log-type-crit    { color: #FF5252; font-weight: 700; }
+.log-type-miss    { color: #78909C; font-style: italic; }
+.log-type-buff    { color: #80CBC4; }
+.log-type-debuff  { color: #CE93D8; }
+.log-type-heal    { color: #81C784; }
+.log-type-system  { color: #8B9DC3; font-style: italic; }
+.log-type-victory { color: #FFD700; font-weight: 700; }
+.log-type-defeat  { color: #FF5252; font-weight: 700; }
+.log-type-xp      { color: #90CAF9; }
+.log-type-bounty  { color: #D4AF37; }
 </style>

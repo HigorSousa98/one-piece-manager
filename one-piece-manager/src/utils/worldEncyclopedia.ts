@@ -1,5 +1,12 @@
-import { db, DevilFruit, type Character, type Crew, type Island } from '@/utils/database'
+import { db, DevilFruit, type Character, type Crew, type Island, type Item } from '@/utils/database'
 import { GameLogic } from './gameLogic'
+
+export interface LegendaryWeaponHolder {
+  rank: number
+  character: RankingCharacter
+  weapon: Item
+  equipped: boolean // true = equipped, false = in crew chest
+}
 
 export interface RankingCharacter extends Character {
   crewName: string
@@ -33,6 +40,8 @@ export interface WorldRankings {
   playerInfo: PlayerRankingInfo | null
   allDevilFruits: DevilFruit[]
   devilFruitsUser: RankingCharacter[]
+  legendaryWeapons: LegendaryWeaponHolder[]
+  famousCharacters: RankingCharacter[]
 }
 
 export class WorldEncyclopedia {
@@ -87,7 +96,9 @@ export class WorldEncyclopedia {
           ? this.getPlayerRankingInfo(enrichedCharacters, playerCharacterId)
           : null,
         allDevilFruits: await db.devilFruits.toArray(),
-        devilFruitsUser: this.getDFUsers(enrichedCharacters)
+        devilFruitsUser: this.getDFUsers(enrichedCharacters),
+        legendaryWeapons: await this.getLegendaryWeaponsRanking(enrichedCharacters, crews, islands),
+        famousCharacters: this.getFamousRanking(enrichedCaptains, crews),
       }
 
       return rankings
@@ -235,6 +246,21 @@ export class WorldEncyclopedia {
       }))
   }
 
+  private static getFamousRanking(
+    captains: RankingCharacter[],
+    crews: Crew[],
+  ): RankingCharacter[] {
+    const crewMap = new Map(crews.map((c) => [c.id, c]))
+    return captains
+      .map((c) => ({
+        char: c,
+        fameScore: GameLogic.getWorldFame(c, crewMap.get(c.crewId)?.reputation ?? 0).score,
+      }))
+      .sort((a, b) => b.fameScore - a.fameScore)
+      .slice(0, 20)
+      .map(({ char }, index) => ({ ...char, rank: index + 1 }))
+  }
+
   private static getDFUsers(
     users: RankingCharacter[]
   ): RankingCharacter[] {
@@ -245,6 +271,69 @@ export class WorldEncyclopedia {
         ...captain,
         rank: index + 1,
       }))
+  }
+
+  /**
+   * Detentores de armas únicas (todas as classes) — ordenadas por classe depois level
+   */
+  private static async getLegendaryWeaponsRanking(
+    enrichedCharacters: RankingCharacter[],
+    crews: Crew[],
+    islands: Island[],
+  ): Promise<LegendaryWeaponHolder[]> {
+    const classOrder: Record<string, number> = { S: 0, A: 1, B: 2, C: 3, D: 4, E: 5, F: 6 }
+    const uniqueItems = await db.items.filter(i => i.unique === true).toArray()
+    if (uniqueItems.length === 0) return []
+
+    const allCharacters = await db.characters.toArray()
+    const charMap = new Map(enrichedCharacters.map(c => [c.id!, c]))
+
+    const result: LegendaryWeaponHolder[] = []
+
+    for (const weapon of uniqueItems) {
+      // 1. Verificar se algum personagem tem a arma equipada no slot weapon
+      const holder = allCharacters.find(c => c.weapon === weapon.id)
+      if (holder) {
+        const enriched = charMap.get(holder.id!) ?? {
+          ...holder,
+          crewName: crews.find(cr => cr.id === holder.crewId)?.name ?? '—',
+          currentIslandName: islands.find(i => i.id === crews.find(cr => cr.id === holder.crewId)?.currentIsland)?.name ?? '—',
+          currentIslandDifficulty: 0,
+          rank: 0,
+          isPlayer: holder.isPlayer as 0 | 1,
+        }
+        result.push({ rank: 0, character: enriched, weapon, equipped: true })
+        continue
+      }
+
+      // 2. Se não equipada, encontrar a crew que possui no baú
+      const inv = await db.inventories.where('itemId').equals(weapon.id!).first()
+      if (inv) {
+        const crew = crews.find(c => c.id === inv.crewId)
+        if (crew) {
+          const captain = allCharacters.find(c => c.id === crew.captainId)
+          if (captain) {
+            const enriched = charMap.get(captain.id!) ?? {
+              ...captain,
+              crewName: crew.name,
+              currentIslandName: islands.find(i => i.id === crew.currentIsland)?.name ?? '—',
+              currentIslandDifficulty: 0,
+              rank: 0,
+              isPlayer: captain.isPlayer as 0 | 1,
+            }
+            result.push({ rank: 0, character: enriched, weapon, equipped: false })
+          }
+        }
+      }
+    }
+
+    return result
+      .sort((a, b) => {
+        const classDiff = (classOrder[a.weapon.class] ?? 9) - (classOrder[b.weapon.class] ?? 9)
+        if (classDiff !== 0) return classDiff
+        return b.character.level - a.character.level
+      })
+      .map((r, i) => ({ ...r, rank: i + 1 }))
   }
 
   /**

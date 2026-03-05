@@ -71,6 +71,109 @@
         </v-col>
       </v-row>
       
+      <!-- EVENTOS DINÂMICOS DA ILHA -->
+      <v-row v-if="activeEvents.length > 0">
+        <v-col cols="12">
+          <div class="events-section-header mb-2">
+            <v-icon color="#D4AF37" class="me-1">mdi-lightning-bolt</v-icon>
+            <span class="events-section-title">EVENTOS ATIVOS NA ILHA</span>
+          </div>
+          <v-card
+            v-for="event in activeEvents"
+            :key="event.id"
+            class="mb-3 island-event-card"
+            :class="`event-type-${event.type}`"
+          >
+            <v-card-title class="d-flex align-center pa-3">
+              <v-icon class="me-2" :color="eventIconColor(event.type)">{{ eventIcon(event.type) }}</v-icon>
+              <span class="event-title">{{ event.data.title }}</span>
+              <v-spacer />
+              <TimeRemaining :end-time="new Date(event.expiresAt)" />
+            </v-card-title>
+            <v-card-text class="pb-2 pt-1">
+              <p class="text-body-2 mb-2">{{ event.data.description }}</p>
+              <div class="d-flex flex-wrap gap-2">
+                <v-chip size="small" color="orange" variant="tonal">
+                  Dificuldade {{ event.data.difficulty }}
+                </v-chip>
+                <v-chip v-if="event.data.rewards.experience" size="small" color="blue" variant="tonal">
+                  +{{ event.data.rewards.experience?.toLocaleString() }} XP
+                </v-chip>
+                <v-chip v-if="event.data.rewards.bounty" size="small" color="amber" variant="tonal">
+                  +{{ event.data.rewards.bounty?.toLocaleString() }} B$
+                </v-chip>
+                <v-chip v-if="event.data.rewards.reputation" size="small" color="green" variant="tonal">
+                  +{{ event.data.rewards.reputation }} Rep
+                </v-chip>
+              </div>
+            </v-card-text>
+            <v-card-actions class="pt-0 px-3 pb-3">
+              <v-spacer />
+              <v-btn
+                color="primary"
+                variant="elevated"
+                size="small"
+                :loading="participatingEventId === event.id"
+                @click="participateInEvent(event)"
+              >
+                Participar
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- MODAL: RESULTADO DO EVENTO -->
+      <v-dialog v-model="showEventResult" max-width="500">
+        <v-card v-if="eventResult">
+          <v-card-title
+            class="py-3 px-4"
+            :style="{ background: eventResult.success ? 'linear-gradient(135deg,#1B5E20,#388E3C)' : 'linear-gradient(135deg,#7F0000,#C62828)' }"
+          >
+            <v-icon class="me-2">{{ eventResult.success ? 'mdi-check-circle' : 'mdi-close-circle' }}</v-icon>
+            <span class="text-white">{{ eventResult.success ? 'Sucesso!' : 'Falhou!' }}</span>
+          </v-card-title>
+          <v-card-text class="pa-4">
+            <p class="text-body-1 mb-3">{{ eventResult.message }}</p>
+
+            <!-- Battle log -->
+            <div v-if="eventResult.battleLog && eventResult.battleLog.length > 0" class="battle-log mb-3">
+              <div v-for="(line, i) in eventResult.battleLog" :key="i" class="text-body-2 text-medium-emphasis">
+                {{ line }}
+              </div>
+            </div>
+
+            <!-- Rewards -->
+            <div v-if="eventResult.success" class="rewards-section">
+              <div class="text-subtitle-2 mb-2">Recompensas:</div>
+              <div class="d-flex flex-wrap gap-2">
+                <v-chip v-if="eventResult.rewards.experience > 0" size="small" color="blue" variant="tonal">
+                  +{{ eventResult.rewards.experience.toLocaleString() }} XP
+                </v-chip>
+                <v-chip v-if="eventResult.rewards.bounty > 0" size="small" color="amber" variant="tonal">
+                  +{{ eventResult.rewards.bounty.toLocaleString() }} B$
+                </v-chip>
+                <v-chip v-if="eventResult.rewards.reputation > 0" size="small" color="green" variant="tonal">
+                  +{{ eventResult.rewards.reputation }} Rep
+                </v-chip>
+                <v-chip v-if="eventResult.rewards.item" size="small" color="purple" variant="tonal">
+                  Item: {{ eventResult.rewards.item.name }}
+                </v-chip>
+              </div>
+            </div>
+
+            <!-- New crew member (escaped_prisoner) -->
+            <v-alert v-if="eventResult.rewards.newMember" type="success" density="compact" variant="tonal" class="mt-3">
+              🏴‍☠️ {{ eventResult.rewards.newMember.name }} (Lv {{ eventResult.rewards.newMember.level }}) juntou-se à sua tripulação!
+            </v-alert>
+          </v-card-text>
+          <v-card-actions class="pa-3">
+            <v-spacer />
+            <v-btn color="primary" @click="showEventResult = false">Fechar</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <!-- TAREFAS ATIVAS COM MELHOR CONTRASTE -->
       <v-row v-if="activeTasks.length > 0">
         <v-col cols="12">
@@ -531,13 +634,15 @@ import { useCharacterStore } from '@/stores/characterStore'
 import { useTimeRemaining } from '@/composables/useTimeRemaining'
 import { IslandExplorationSystem, type CivilianEncounter, type TaskOption } from '@/utils/islandExplorationSystem'
 import { CivilianRecruitmentSystem } from '@/utils/civilianRecruitmentSystem'
+import { IslandEventSystem, type IslandEventResult } from '@/utils/islandEventSystem'
+import { AllianceSystem } from '@/utils/allianceSystem'
 import { useRouter } from 'vue-router'
 import TimeRemaining from '@/components/TimeRemaining.vue'
 import TaskProgressBar from '@/components/TaskProgressBar.vue'
 import CivilianRecruitmentModal from '@/components/CivilianRecruitmentModal.vue'
 // ✅ IMPORT DO COMPONENTE DE AVATAR
 import CharacterAvatar from '@/components/CharacterAvatar.vue'
-import type { Character, Task } from '@/utils/database'
+import type { Character, Task, IslandEvent } from '@/utils/database'
 
 const characterStore = useCharacterStore()
 const router = useRouter()
@@ -568,6 +673,12 @@ const islandName = ref('')
 // Recrutamento
 const showRecruitmentModal = ref(false)
 const recruitmentTarget = ref<Character | null>(null)
+
+// 🌟 ISLAND EVENTS
+const activeEvents = ref<IslandEvent[]>([])
+const participatingEventId = ref<number | null>(null)
+const showEventResult = ref(false)
+const eventResult = ref<IslandEventResult | null>(null)
 
 // 📊 COMPUTED
 const playerCharacter = computed(() => characterStore.playerCharacter)
@@ -626,9 +737,12 @@ const loadDataSequentially = async () => {
       islandName.value = 'Ilha Desconhecida'
     }
     
-    // 2. Carregar tarefas ativas
-    console.log('🔄 Carregando tarefas ativas...')
-    await loadActiveTasks()
+    // 2. Carregar tarefas ativas e eventos da ilha em paralelo
+    console.log('🔄 Carregando tarefas ativas e eventos...')
+    await Promise.all([
+      loadActiveTasks(),
+      loadActiveEvents(),
+    ])
 
     // 3. ✅ INICIALIZAR SISTEMA DE AVATARES
     console.log('🎨 Inicializando sistema de avatares...')
@@ -914,6 +1028,55 @@ const getTaskProgress = (task: Task): number => {
   return Math.min(100, Math.max(0, progress))
 }
 
+// 🌟 ISLAND EVENT METHODS
+const loadActiveEvents = async () => {
+  if (!playerCrew.value?.currentIsland) return
+  activeEvents.value = await IslandEventSystem.getActiveEvents(playerCrew.value.currentIsland)
+}
+
+const participateInEvent = async (event: IslandEvent) => {
+  if (!playerCharacter.value || !playerCrew.value?.id) return
+  participatingEventId.value = event.id!
+
+  try {
+    const alliedBonus = await AllianceSystem.getAlliedPowerBonus(playerCrew.value.id)
+    const result = await IslandEventSystem.participateInEvent(
+      event.id!,
+      playerCharacter.value,
+      playerCrew.value.id,
+      alliedBonus,
+    )
+    eventResult.value = result
+    showEventResult.value = true
+    await Promise.all([
+      loadActiveEvents(),
+      characterStore.loadPlayerCharacter(),
+    ])
+  } finally {
+    participatingEventId.value = null
+  }
+}
+
+const eventIcon = (type: IslandEvent['type']): string => {
+  const icons: Record<IslandEvent['type'], string> = {
+    marine_invasion: 'mdi-shield-sword',
+    pirate_festival: 'mdi-party-popper',
+    ancient_shipwreck: 'mdi-anchor',
+    escaped_prisoner: 'mdi-account-arrow-right',
+  }
+  return icons[type]
+}
+
+const eventIconColor = (type: IslandEvent['type']): string => {
+  const colors: Record<IslandEvent['type'], string> = {
+    marine_invasion: '#EF5350',
+    pirate_festival: '#D4AF37',
+    ancient_shipwreck: '#42A5F5',
+    escaped_prisoner: '#66BB6A',
+  }
+  return colors[type]
+}
+
 // 🔄 LIFECYCLE
 onMounted(async () => {
   console.log('🚀 Componente montado, iniciando carregamento...')
@@ -922,11 +1085,9 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.island-exploration {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 16px;
-}
+/* ============================================================
+   Island Exploration - Grand Line Islands
+   ============================================================ */
 
 .loading-container {
   min-height: 400px;
@@ -938,521 +1099,233 @@ onMounted(async () => {
 .loading-steps {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 20px;
   max-width: 300px;
-  margin: 0 auto;
+  margin-inline: auto;
 }
 
 .step-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px;
+  font-size: 0.875rem;
+  color: #8B9DC3;
+  padding: 8px 14px;
   border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   transition: all 0.3s ease;
 }
 
 .step-item.completed {
-  background-color: rgba(76, 175, 80, 0.1);
+  color: #D4AF37;
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.25);
 }
 
-/* ✅ ESTILOS PARA AVATARES */
-.player-exploration-avatar {
-  position: relative;
-  display: inline-block;
-}
-
-.exploration-avatar {
-  border: 4px solid rgba(76, 175, 80, 0.3);
-  transition: all 0.3s ease;
-}
-
-.exploration-avatar:hover {
-  border-color: rgba(76, 175, 80, 0.6);
-  transform: scale(1.05);
-}
-
-/* ✅ ESTILOS PARA COMPARAÇÃO DE ENCONTRO */
-.encounter-comparison-card {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
-  border: 2px solid rgba(76, 175, 80, 0.3);
-}
-
-.encounter-participant {
-  padding: 16px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.participant-avatar {
-  transition: all 0.3s ease;
-}
-
-.player-participant .participant-avatar {
-  border: 3px solid rgba(25, 118, 210, 0.4);
-}
-
-.civilian-participant .participant-avatar {
-  border: 3px solid rgba(76, 175, 80, 0.4);
-}
-
-.encounter-symbol {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-/* ✅ ESTILOS PARA RECRUTAMENTO */
-.recruitment-candidate-section {
-  padding: 20px;
-  background: rgba(25, 118, 210, 0.05);
-  border-radius: 16px;
-  border: 2px solid rgba(25, 118, 210, 0.2);
-}
-
-.recruitment-candidate-avatar {
-  border: 3px solid rgba(25, 118, 210, 0.6);
-  transition: all 0.3s ease;
-}
-
-.recruitment-candidate-avatar:hover {
-  transform: scale(1.05);
-  border-color: rgba(25, 118, 210, 0.8);
-}
-
-/* ✅ CARDS ESPECIAIS */
+/* Page header */
 .exploration-header {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(76, 175, 80, 0.05) 100%);
-  border: 2px solid rgba(76, 175, 80, 0.2);
-}
-
-.exploration-main-card {
-  background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(25, 118, 210, 0.1) 100%);
-  border: 2px solid rgba(25, 118, 210, 0.2);
-}
-
-.encounter-card {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
-  border: 2px solid rgba(76, 175, 80, 0.3);
-}
-
-.active-tasks-card {
-  border: 2px solid rgba(25, 118, 210, 0.3);
-}
-
-.civilian-info-card {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
-  border: 2px solid rgba(76, 175, 80, 0.2);
-}
-
-.task-options-card {
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.05) 0%, rgba(255, 193, 7, 0.1) 100%);
-  border: 2px solid rgba(255, 193, 7, 0.2);
-}
-
-.task-option-card {
-  transition: all 0.3s ease;
-}
-
-.task-option-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.island-info-card {
-  background: linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(76, 175, 80, 0.1) 100%);
-  border: 2px solid rgba(76, 175, 80, 0.2);
-}
-
-/* ✅ BOTÕES ESPECIAIS */
-.explore-btn {
-  background: linear-gradient(45deg, #4CAF50, #388E3C) !important;
-  color: white !important;
-  font-weight: 700 !important;
-  font-size: 1.1rem !important;
-  padding: 16px 32px !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3) !important;
-  transition: all 0.3s ease !important;
-}
-
-.explore-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4) !important;
-}
-
-.pulse-animation {
-  animation: pulse-glow 2s infinite;
-}
-
-.v-card {
-  transition: all 0.3s ease;
-  border-radius: 12px !important;
-}
-
-.v-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.v-progress-linear {
-  border-radius: 10px;
-}
-
-.text-h6 {
-  font-weight: 600;
-}
-
-.v-alert {
-  border-radius: 12px;
-}
-
-.v-btn {
-  border-radius: 8px;
-  font-weight: 600;
-}
-
-/* MELHOR CONTRASTE PARA CHIPS */
-.difficulty-chip {
-  color: white !important;
-  font-weight: 700 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-}
-
-.difficulty-chip .v-chip__content {
-  color: white !important;
-}
-
-.v-chip {
-  font-weight: 700 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-}
-
-.v-chip .v-chip__content {
-  font-weight: 700 !important;
-}
-
-/* ANIMAÇÕES */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
-  }
-  100% {
-    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
-  }
-}
-
-.mdi-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* HOVER EFFECTS */
-.v-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.v-chip:hover {
-  transform: scale(1.05);
-}
-
-.participant-avatar:hover {
-  transform: scale(1.05);
-}
-
-/* RESPONSIVE DESIGN */
-@media (max-width: 768px) {
-  .island-exploration {
-    padding: 8px;
-  }
-  
-  .v-card-text {
-    padding: 12px;
-  }
-  
-  .text-h5 {
-    font-size: 1.3rem !important;
-  }
-  
-  .v-btn.v-btn--size-x-large {
-    font-size: 1rem;
-    padding: 12px 24px;
-  }
-
-  .encounter-participant {
-    padding: 8px;
-  }
-
-  .encounter-symbol {
-    padding: 10px;
-  }
-
-  .player-exploration-avatar {
-    margin-bottom: 16px;
-  }
-
-  .encounter-comparison-card .v-row {
-    flex-direction: column;
-  }
-
-  .encounter-comparison-card .v-col {
-    max-width: 100%;
-    flex-basis: auto;
-  }
-}
-
-/* CORES CUSTOMIZADAS */
-.text-green-darken-3 {
-  color: #1b5e20 !important;
-}
-
-.text-green-darken-4 {
-  color: #0d5016 !important;
-}
-
-.text-blue-darken-3 {
-  color: #1565c0 !important;
-}
-
-.text-blue-darken-4 {
-  color: #0d47a1 !important;
-}
-
-/* SOMBRAS CUSTOMIZADAS */
-.v-card.v-card--variant-elevated {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.v-alert.v-alert--variant-elevated {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.v-btn.v-btn--variant-elevated {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-
-.v-chip.v-chip--variant-elevated {
-  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-}
-
-/* EFEITOS ESPECIAIS PARA AVATARES */
-.exploration-avatar {
+  background: linear-gradient(135deg,
+    rgba(0, 137, 123, 0.12),
+    rgba(212, 175, 55, 0.06)
+  );
+  border: 1px solid rgba(0, 137, 123, 0.3);
+  border-radius: 14px;
+  padding: 18px 24px;
+  margin-bottom: 20px;
   position: relative;
 }
 
-.exploration-avatar::after {
+.exploration-header::before {
   content: '';
   position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  border-radius: inherit;
-  background: linear-gradient(45deg, #4CAF50, #81C784, #4CAF50);
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent, #00897B, #4DB6AC, #00897B, transparent
+  );
+  border-radius: 14px 14px 0 0;
 }
 
-.exploration-avatar:hover::after {
-  opacity: 0.3;
+/* Island cards */
+.island-card {
+  background: #132235;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  overflow: hidden;
+  height: 100%;
 }
 
-.participant-avatar {
-  position: relative;
+.island-card:hover {
+  border-color: rgba(212, 175, 55, 0.5);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.18);
+  transform: translateY(-2px);
+}
+
+.island-card.player-here {
+  border-color: #D4AF37;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.1),
+    rgba(21, 101, 192, 0.06)
+  );
+}
+
+.island-card.hostile {
+  border-color: rgba(198, 40, 40, 0.45);
+  box-shadow: 0 0 12px rgba(198, 40, 40, 0.15);
+}
+
+.island-card.friendly {
+  border-color: rgba(46, 125, 50, 0.45);
+  box-shadow: 0 0 12px rgba(46, 125, 50, 0.15);
+}
+
+.island-card-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.island-name {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #E8D5A3;
+  font-size: 0.95rem;
+}
+
+.island-region {
+  font-size: 0.72rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-top: 2px;
+}
+
+.island-card-body {
+  padding: 12px 14px;
+}
+
+.island-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 5px;
+  color: #8B9DC3;
+}
+
+.island-stat-value {
+  color: #E8D5A3;
+  font-weight: 600;
+}
+
+/* Detail panel */
+.island-detail-panel {
+  background: linear-gradient(135deg, #132235, #1A2F45);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 14px;
   overflow: hidden;
 }
 
-.participant-avatar::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.5s ease;
+.island-detail-header {
+  background: linear-gradient(135deg,
+    rgba(212, 175, 55, 0.12),
+    rgba(0, 137, 123, 0.06)
+  );
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 16px 20px;
 }
 
-.participant-avatar:hover::before {
-  left: 100%;
+.island-detail-name {
+  font-family: Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #D4AF37;
+  text-shadow: 0 0 12px rgba(212, 175, 55, 0.35);
 }
 
-.recruitment-candidate-avatar {
-  position: relative;
+/* Crew list on island */
+.crew-on-island-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+  color: #E8D5A3;
+  transition: background 0.2s ease;
 }
 
-.recruitment-candidate-avatar::after {
-  content: '';
-  position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
-  border-radius: inherit;
-  background: linear-gradient(45deg, #1976D2, #42A5F5, #1976D2);
-  z-index: -1;
-  animation: recruitmentGlow 3s ease-in-out infinite;
+.crew-on-island-item:hover {
+  background: rgba(212, 175, 55, 0.06);
+  border-color: rgba(212, 175, 55, 0.2);
 }
 
-@keyframes recruitmentGlow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.7; }
+.crew-on-island-item.player-crew {
+  border-color: rgba(212, 175, 55, 0.4);
+  background: rgba(212, 175, 55, 0.07);
 }
 
-/* ESTADOS DE LOADING PARA AVATARES */
-.avatar-loading {
-  position: relative;
+/* Dynamic Island Events */
+.events-section-header {
+  display: flex;
+  align-items: center;
 }
 
-.avatar-loading::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top: 2px solid #fff;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.events-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #D4AF37;
 }
 
-/* TRANSIÇÕES SUAVES PARA MUDANÇAS DE ESTADO */
-.encounter-card {
-  transition: all 0.5s ease;
+.island-event-card {
+  border-left: 4px solid;
 }
 
-.encounter-card.entering {
-  opacity: 0;
-  transform: translateY(20px);
+.event-type-marine_invasion {
+  border-left-color: #EF5350;
+  background: rgba(239, 83, 80, 0.05);
 }
 
-.encounter-card.entered {
-  opacity: 1;
-  transform: translateY(0);
+.event-type-pirate_festival {
+  border-left-color: #D4AF37;
+  background: rgba(212, 175, 55, 0.05);
 }
 
-.task-option-card {
-  transition: all 0.3s ease;
+.event-type-ancient_shipwreck {
+  border-left-color: #42A5F5;
+  background: rgba(66, 165, 245, 0.05);
 }
 
-.task-option-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+.event-type-escaped_prisoner {
+  border-left-color: #66BB6A;
+  background: rgba(102, 187, 106, 0.05);
 }
 
-/* INDICADORES VISUAIS PARA DIFERENTES TIPOS DE ENCONTRO */
-.encounter-card[data-urgency="high"] {
-  border-left: 5px solid #f44336;
+.event-title {
+  font-weight: 700;
+  font-size: 0.95rem;
 }
 
-.encounter-card[data-urgency="medium"] {
-  border-left: 5px solid #ff9800;
+.battle-log {
+  max-height: 150px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.2);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: monospace;
 }
 
-.encounter-card[data-urgency="low"] {
-  border-left: 5px solid #4caf50;
-}
-
-/* MELHORIAS PARA ACESSIBILIDADE */
-.v-btn:focus {
-  outline: 2px solid #1976D2;
-  outline-offset: 2px;
-}
-
-.participant-avatar:focus {
-  outline: 3px solid #1976D2;
-  outline-offset: 3px;
-}
-
-/* ANIMAÇÕES DE ENTRADA PARA ELEMENTOS */
-@keyframes slideInFromLeft {
-  0% {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInFromRight {
-  0% {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.player-participant {
-  animation: slideInFromLeft 0.6s ease-out;
-}
-
-.civilian-participant {
-  animation: slideInFromRight 0.6s ease-out;
-}
-
-.encounter-symbol {
-  animation: fadeInUp 0.8s ease-out 0.3s both;
-}
-
-.task-option-card {
-  animation: fadeInUp 0.5s ease-out;
-}
-
-.task-option-card:nth-child(1) { animation-delay: 0.1s; }
-.task-option-card:nth-child(2) { animation-delay: 0.2s; }
-.task-option-card:nth-child(3) { animation-delay: 0.3s; }
-
-/* EFEITOS PARA DIFERENTES DIFICULDADES DE TAREFA */
-.task-option-card[data-difficulty="easy"] {
-  border-left: 4px solid #4caf50;
-}
-
-.task-option-card[data-difficulty="medium"] {
-  border-left: 4px solid #ff9800;
-}
-
-.task-option-card[data-difficulty="hard"] {
-  border-left: 4px solid #f44336;
-}
-
-.task-option-card[data-difficulty="easy"]:hover {
-  box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
-}
-
-.task-option-card[data-difficulty="medium"]:hover {
-  box-shadow: 0 8px 25px rgba(255, 152, 0, 0.3);
-}
-
-.task-option-card[data-difficulty="hard"]:hover {
-  box-shadow: 0 8px 25px rgba(244, 67, 54, 0.3);
+.rewards-section {
+  background: rgba(212, 175, 55, 0.06);
+  border-radius: 6px;
+  padding: 8px 12px;
 }
 </style>

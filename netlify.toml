@@ -1,22 +1,36 @@
 # netlify.toml
 [build]
-  base = "one-piece-manager"
-  publish = "dist"  # ✅ CORRIGIDO: apenas "dist" pois já está no base
+  base    = "one-piece-manager"
+  publish = "dist"
   command = "npm run build"
 
 [build.environment]
-  NODE_VERSION = "20"  # ✅ ATUALIZADO para Node 20
+  NODE_VERSION = "20"
 
+# ── Cache longo para assets com hash (JS/CSS/fonts/images)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ── Sem cache para index.html (sempre busca a versão mais recente)
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# ── Headers de segurança para todas as rotas
 [[headers]]
   for = "/*"
   [headers.values]
-    X-Frame-Options = "DENY"
-    X-XSS-Protection = "1; mode=block"
-    X-Content-Type-Options = "nosniff"
-    Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; frame-src https://googleads.g.doubleclick.net; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+    X-Frame-Options           = "DENY"
+    X-XSS-Protection          = "1; mode=block"
+    X-Content-Type-Options    = "nosniff"
+    Referrer-Policy           = "strict-origin-when-cross-origin"
+    Content-Security-Policy   = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net; worker-src 'self' blob:; frame-src https://googleads.g.doubleclick.net; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
 
+# ── SPA: redireciona tudo para index.html
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from   = "/*"
+  to     = "/index.html"
   status = 200

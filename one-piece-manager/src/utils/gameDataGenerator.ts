@@ -23,6 +23,8 @@ import { ShipNameGenerator } from '@/data/shipNameGenerator'
 import DEVIL_FRUITS from '@/data/devilFruits'
 import ISLANDS from '@/data/islands'
 import STYLES from '@/data/styleCombats'
+import EQUIPMENT_CONCEPTS from '@/data/equipmentConcept'
+import { LEGENDARY_WEAPONS } from '@/data/legendaryWeapons'
 
 export class GameDataGenerator {
   private config: GenerationConfig
@@ -90,6 +92,13 @@ export class GameDataGenerator {
       console.log('🏝️ Distribuindo personagens nas ilhas...')
       await this.distributeCharactersOnIslands()*/
 
+      // 9. Gerar itens, distribuir únicos e popular lojas
+      console.log('🗡️ Gerando itens e lojas...')
+      await this.generateItems()
+      await this.distributeUniqueItems()
+      await this.distributeCommonItems()
+      await this.populateIslandStores()
+
       console.log('✅ Mundo de One Piece gerado com sucesso!')
     } catch (error) {
       console.error('❌ Erro ao gerar dados iniciais:', error)
@@ -101,7 +110,7 @@ export class GameDataGenerator {
     await Promise.all([
       db.characters.clear(),
       db.crews.clear(),
-      db.ships.clear(), // ✅ Limpar navios também
+      db.ships.clear(),
       db.yonkous.clear(),
       db.shichibukais.clear(),
       db.admirals.clear(),
@@ -113,6 +122,9 @@ export class GameDataGenerator {
       db.islands.clear(),
       db.battles.clear(),
       db.tasks.clear(),
+      db.items.clear(),
+      db.inventories.clear(),
+      db.stores.clear(),
     ])
   }
 
@@ -297,7 +309,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalPirates; i++) {
-      const level = GameLogic.randomBetween(1, 100)
+      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
       const styleCombatId =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
 
@@ -338,7 +350,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalBountyHunter; i++) {
-      const level = GameLogic.randomBetween(1, 100)
+      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
       const styleCombatId =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random()
@@ -383,7 +395,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalMarines; i++) {
-      const level = GameLogic.randomBetween(1, 100)
+      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
       const styleCombatId =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random()
@@ -423,7 +435,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalGovernment; i++) {
-      const level = GameLogic.randomBetween(1, 100)
+      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
       const styleCombatId =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random()
@@ -460,7 +472,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalCivillians; i++) {
-      const level = GameLogic.randomBetween(1, 100)
+      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
       const styleCombatId =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random()
@@ -719,7 +731,7 @@ export class GameDataGenerator {
       })
 
       const territories = await this.generateTerritories(
-        Array.from(mapStrongestCrewByIsland.values()),
+        Array.from(mapStrongestCrewByIsland.values()).filter((c): c is Crew => c !== null),
       )
     } catch (error) {
       console.error('❌ Erro ao criar territórios:', error)
@@ -732,6 +744,7 @@ export class GameDataGenerator {
 
     for (let i = 0; i < crews.length; i++) {
       const crew = crews[i]
+      if (!crew || !crew.id || !crew.currentIsland) continue
       territory.push({
         islandId: crew.currentIsland,
         crewId: crew.id,
@@ -1020,6 +1033,11 @@ export class GameDataGenerator {
       const allCaptains = []
       console.log(`🎯 Encontradas ${allCrews.length} tripulações para gerar navios`)
 
+      // ✅ Map de capitães: O(1) lookup ao invés de O(n) find() em cada iteração
+      const characterMap = new Map<number, Character>(
+        allCharacters.map((char) => [char.id!, char])
+      )
+
       const ships: Omit<Ship, 'id'>[] = []
       const captainsUpdate = []
       let shipsGenerated = 0
@@ -1027,8 +1045,8 @@ export class GameDataGenerator {
 
       for (const crew of allCrews) {
         try {
-          // Buscar o capitão da tripulação
-          const captain = allCharacters.find(char => char.id == crew.captainId)
+          // ✅ O(1) lookup via Map
+          const captain = crew.captainId ? characterMap.get(crew.captainId) : undefined
 
           if (!captain) {
             console.warn(`⚠️ Capitão não encontrado para crew ${crew.id}`)
@@ -1200,27 +1218,31 @@ export class GameDataGenerator {
 
   // 🏝️ SELECIONAR ILHA PARA O CREW
   private selectIslandForCrew(captain: Character, islands: Island[]): number {
-    // Selecionar ilha baseada no level do capitão
-    // Capitães de level alto vão para ilhas mais difíceis
-    const suitableIslands = islands.filter((island) => {
-      const levelDiff = Math.abs(island.difficulty - captain.level / (100 / 30))
-      return levelDiff <= 1.2 // Ilhas com dificuldade próxima ao level do capitão
-    })
+    // Mapeia level → dificuldade alvo (level 1 → 0.3, level 100 → 30)
+    const targetDifficulty = captain.level / (100 / 30)
 
-    if (suitableIslands.length === 0) {
-      // Se não encontrar ilha adequada, usar qualquer uma
-      const suitableIslandsExpanded = islands.filter((island) => {
-        const levelDiff = Math.abs(island.difficulty - captain.level / (100 / 30))
-        return levelDiff <= 2.4 // Ilhas com dificuldade próxima ao level do capitão
-      })
-      return (
-        suitableIslandsExpanded[GameLogic.randomBetween(0, suitableIslandsExpanded.length - 1)]
-          ?.id || 1
-      )
+    // Tolerância apertada: ±0.5 — personagens ficam próximos ao tier correto
+    // Isso evita que personagens de level alto apareçam em ilhas iniciais
+    const suitableIslands = islands.filter((island) =>
+      Math.abs(island.difficulty - targetDifficulty) <= 0.5
+    )
+    if (suitableIslands.length > 0) {
+      return suitableIslands[GameLogic.randomBetween(0, suitableIslands.length - 1)]?.id || 1
     }
 
-    const selectedIsland = suitableIslands[GameLogic.randomBetween(0, suitableIslands.length - 1)]
-    return selectedIsland?.id || 1
+    // Fallback moderado: ±1.0
+    const fallbackIslands = islands.filter((island) =>
+      Math.abs(island.difficulty - targetDifficulty) <= 1.0
+    )
+    if (fallbackIslands.length > 0) {
+      return fallbackIslands[GameLogic.randomBetween(0, fallbackIslands.length - 1)]?.id || 1
+    }
+
+    // Fallback final: ilha mais próxima disponível (nunca força island 1 para personagens fortes)
+    const sorted = [...islands].sort(
+      (a, b) => Math.abs(a.difficulty - targetDifficulty) - Math.abs(b.difficulty - targetDifficulty)
+    )
+    return sorted[0]?.id || 1
   }
 
   // 👥 CALCULAR TAMANHO DA TRIPULAÇÃO BASEADO NO LEVEL
@@ -1307,12 +1329,16 @@ export class GameDataGenerator {
     const allCharacters = await db.characters.toArray()
     const allIslands = await db.islands.toArray()
 
+    // ✅ Map de ilhas para lookup O(1) (antes era find() O(n) dentro do loop)
+    const islandMap = new Map<number, Island>(
+      allIslands.map((island) => [island.id!, { ...island, npcs: [...(island.npcs || [])] }])
+    )
+
+    // ✅ Acumular mudanças em memória — zero writes intermediários no DB
     for (const character of allCharacters) {
       let targetIslandId: number
 
-      // Distribuir baseado no level e tipo
       if (character.level >= 90) {
-        // Personagens muito fortes vão para ilhas de alta dificuldade
         targetIslandId = this.getIslandByDifficultyRange(25, 30)
       } else if (character.level >= 70) {
         targetIslandId = this.getIslandByDifficultyRange(20, 29)
@@ -1324,13 +1350,14 @@ export class GameDataGenerator {
         targetIslandId = this.getIslandByDifficultyRange(1, 14)
       }
 
-      // Atualizar a ilha com o NPC
-      const island = allIslands.find((i) => i.id === targetIslandId)
+      const island = islandMap.get(targetIslandId)
       if (island) {
-        const updatedNpcs = [...(island.npcs || []), character.id!]
-        await db.islands.update(targetIslandId, { npcs: updatedNpcs })
+        island.npcs!.push(character.id!)
       }
     }
+
+    // ✅ Um único bulkPut ao invés de N updates individuais
+    await db.islands.bulkPut([...islandMap.values()])
   }
 
   private shuffleArray<T>(array: T[]): T[] {
@@ -1419,5 +1446,192 @@ export class GameDataGenerator {
       console.error(`❌ Erro ao gerar navio para tripulação ${crewId}:`, error)
       return null
     }
+  }
+
+  // ── Sistema de Itens ────────────────────────────────────────────────────────
+
+  private async generateItems(): Promise<void> {
+    // Mapear IDs hardcoded (posição 1-based) para IDs reais no banco.
+    // Os estilos são inseridos em ordem pelo generateStyleCombats(),
+    // então o estilo de índice 0 tem ID real = styles[0].id, etc.
+    const styles = await db.styleCombats.orderBy('id').toArray()
+    // hardcodedIndex → realId  (hardcoded usa 1-based: id=1 → styles[0])
+    const styleIdMap = new Map<number, number>()
+    styles.forEach((s, i) => { styleIdMap.set(i + 1, s.id!) })
+
+    const remap = (ids?: number[]): number[] | undefined => {
+      if (!ids?.length) return ids
+      return ids.map(id => styleIdMap.get(id) ?? id)
+    }
+
+    const allConcepts = [
+      ...EQUIPMENT_CONCEPTS.map(e => ({
+        ...e,
+        createdAt: new Date(),
+        requirements: {
+          ...e.requirements,
+          styleCombatId: remap(e.requirements?.styleCombatId),
+        },
+      })),
+      ...LEGENDARY_WEAPONS.map(w => ({
+        ...w,
+        createdAt: new Date(),
+        requirements: {
+          ...w.requirements,
+          styleCombatId: remap(w.requirements?.styleCombatId),
+        },
+      })),
+    ]
+    await db.items.bulkAdd(allConcepts as any)
+    console.log(`🗡️ ${allConcepts.length} itens inseridos no banco.`)
+  }
+
+  private async distributeUniqueItems(): Promise<void> {
+    const uniqueItems = await db.items.filter(item => item.unique === true).toArray()
+    if (uniqueItems.length === 0) return
+
+    // Buscar personagens de alto nível (não civis) ordenados por poder
+    const highLevelChars = (await db.characters.toArray())
+      .filter(c => c.type !== 'Civillian' && c.isPlayer === 0)
+      .sort((a, b) => b.level - a.level)
+
+    const sClass = uniqueItems.filter(i => i.class === 'S')
+    const aClass = uniqueItems.filter(i => i.class === 'A')
+    const bClass = uniqueItems.filter(i => i.class === 'B')
+
+    // Itens S → personagens mais poderosos (um item por personagem, garante todos distribuídos)
+    const topForS = highLevelChars.slice(0, sClass.length)
+    for (let i = 0; i < Math.min(sClass.length, topForS.length); i++) {
+      const char = topForS[i]
+      if (!char.crewId) continue
+      await db.inventories.add({
+        crewId: char.crewId,
+        itemId: sClass[i].id!,
+        acquiredAt: new Date(),
+      })
+    }
+
+    // Itens A → personagens logo abaixo dos que receberam S
+    const aStart = sClass.length
+    const topForA = this.shuffleArray([...highLevelChars.slice(aStart, aStart + aClass.length + 5)])
+    for (let i = 0; i < Math.min(aClass.length, topForA.length); i++) {
+      const char = topForA[i]
+      if (!char.crewId) continue
+      await db.inventories.add({
+        crewId: char.crewId,
+        itemId: aClass[i].id!,
+        acquiredAt: new Date(),
+      })
+    }
+
+    // Itens B únicos → personagens de nível intermediário
+    const bStart = aStart + aClass.length + 5
+    const topForB = this.shuffleArray([...highLevelChars.slice(bStart, bStart + bClass.length + 10)])
+    for (let i = 0; i < Math.min(bClass.length, topForB.length); i++) {
+      const char = topForB[i]
+      if (!char.crewId) continue
+      await db.inventories.add({
+        crewId: char.crewId,
+        itemId: bClass[i].id!,
+        acquiredAt: new Date(),
+      })
+    }
+
+    console.log(`🏆 ${uniqueItems.length} itens únicos distribuídos.`)
+  }
+
+  // Distribui 1-3 itens comuns (C/D/E/F) para NPCs com base no nível do personagem
+  private async distributeCommonItems(): Promise<void> {
+    const commonItems = await db.items.filter((item) => item.unique === false).toArray()
+    if (commonItems.length === 0) return
+
+    // Separar itens por classe
+    const byClass: Record<string, typeof commonItems> = {}
+    for (const item of commonItems) {
+      if (!byClass[item.class]) byClass[item.class] = []
+      byClass[item.class].push(item)
+    }
+
+    // Classe de item para cada faixa de nível
+    const classForLevel = (level: number): string => {
+      if (level >= 81) return 'C'
+      if (level >= 61) return 'D'
+      if (level >= 41) return 'E'
+      if (level >= 21) return 'F'
+      return 'F'
+    }
+
+    const npcs = (await db.characters.toArray()).filter(
+      (c) => c.type !== 'Civillian' && c.isPlayer === 0 && c.crewId,
+    )
+
+    const inventoryEntries: { crewId: number; itemId: number; acquiredAt: Date }[] = []
+
+    for (const char of npcs) {
+      const cls = classForLevel(char.level)
+      const pool = byClass[cls] ?? byClass['F'] ?? []
+      if (pool.length === 0) continue
+
+      const count = Math.floor(Math.random() * 2) + 1 // 1 ou 2 itens por NPC
+      const shuffled = this.shuffleArray([...pool])
+      for (let i = 0; i < Math.min(count, shuffled.length); i++) {
+        inventoryEntries.push({
+          crewId: char.crewId!,
+          itemId: shuffled[i].id!,
+          acquiredAt: new Date(),
+        })
+      }
+    }
+
+    if (inventoryEntries.length > 0) {
+      await db.inventories.bulkAdd(inventoryEntries as any)
+    }
+    console.log(`🎒 ${inventoryEntries.length} itens comuns distribuídos para ${npcs.length} NPCs.`)
+  }
+
+  private async populateIslandStores(): Promise<void> {
+    const islands = await db.islands.toArray()
+    const allItems = await db.items.filter(item => item.unique === false).toArray()
+
+    // Mapeamento de dificuldade → classes permitidas
+    const classesForDifficulty = (difficulty: number): string[] => {
+      if (difficulty <= 5)  return ['F', 'E']
+      if (difficulty <= 10) return ['E', 'D']
+      if (difficulty <= 15) return ['D', 'C']
+      if (difficulty <= 20) return ['C', 'B']
+      return ['B', 'A']
+    }
+
+    // Preço base por classe (calibrado com economia real: bounty min = level × 1.000 Berry)
+    const basePrice: Record<string, number> = {
+      F: 6_000_000, E: 30_000_000, D: 120_000_000,
+      C: 450_000_000, B: 1_500_000_000, A: 4_500_000_000,
+    }
+
+    const calcPrice = (item: { class: string; rarity: number }): number => {
+      const bp = basePrice[item.class] ?? 5_000
+      return Math.round(bp * (0.5 + item.rarity))
+    }
+
+    const storeEntries: { currentIslandId: number; itemId: number; price: number }[] = []
+
+    for (const island of islands) {
+      const allowedClasses = classesForDifficulty(island.difficulty)
+      const eligible = allItems.filter(item => allowedClasses.includes(item.class))
+      const shuffled = this.shuffleArray([...eligible])
+      const count = GameLogic.randomBetween(12, 18)
+      const selected = shuffled.slice(0, Math.min(count, shuffled.length))
+
+      for (const item of selected) {
+        storeEntries.push({
+          currentIslandId: island.id!,
+          itemId: item.id!,
+          price: calcPrice(item),
+        })
+      }
+    }
+
+    await db.stores.bulkAdd(storeEntries)
+    console.log(`🏪 ${storeEntries.length} entradas de loja criadas para ${islands.length} ilhas.`)
   }
 }

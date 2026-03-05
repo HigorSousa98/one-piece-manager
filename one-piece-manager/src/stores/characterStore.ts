@@ -36,24 +36,21 @@ export const useCharacterStore = defineStore('character', {
       this.isLoading = true
       try {
         console.log('👤 Carregando personagem do jogador...')
-        const shipFactor = GenerationConfig.createEpic().shipFactor
-        this.shipFactor = shipFactor
-        const allCharacters = await db.characters.toArray()
-        const player = allCharacters.find((char) => char.isPlayer === 1)
+        this.shipFactor = GenerationConfig.createEpic().shipFactor
+
+        // ✅ Busca direta pelo índice isPlayer — O(log n) ao invés de toArray() O(n)
+        const player = await db.characters.where('isPlayer').equals(1).first()
         if (player) {
           this.playerCharacter = player
           console.log('✅ Personagem carregado:', player.name)
-          const crews = await db.crews.toArray()
-          const crew = crews.find((crew) => crew.id === player.crewId)
+
+          // ✅ Busca por primary key — O(1) ao invés de toArray().find()
+          const crew = player.crewId ? await db.crews.get(player.crewId) : undefined
           if (crew) {
             this.playerCrew = crew
             console.log('✅ Tripulação carregada:', crew.name)
 
-            const ship = await db.ships
-              .where('crewId')
-              .equals(crew.id || 0)
-              .first()
-
+            const ship = await db.ships.where('crewId').equals(crew.id || 0).first()
             this.playerShip = ship || null
           } else {
             console.log('❌ Nenhuma tripulação do jogador encontrado')

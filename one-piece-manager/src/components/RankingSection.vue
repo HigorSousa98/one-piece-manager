@@ -167,7 +167,7 @@ import CharacterRankCard from '@/components/CharacterRankCard.vue'
 
 // Props
 interface Props {
-  title: string
+  title?: string
   subtitle?: string
   characters: RankingCharacter[]
   maxItems?: number
@@ -178,6 +178,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  title: '',
   maxItems: undefined,
   specialBadge: undefined,
   badgeColor: 'primary',
@@ -264,70 +265,80 @@ defineExpose({
 </script>
 
 <style scoped>
-.ranking-section {
-  width: 100%;
-}
+/* RankingSection - Leaderboard display */
 
-.section-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
+.ranking-section { width: 100%; }
 
-.search-section {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-.search-input {
-  margin-bottom: 0;
-}
-
-.search-info {
+.ranking-section-header {
+  background: linear-gradient(135deg, rgba(212,175,55,0.1), rgba(21,101,192,0.06));
+  border: 1px solid rgba(212,175,55,0.25);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
   display: flex;
-  justify-content: center;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 8px;
 }
 
-.search-results-header {
-  margin-bottom: 1rem;
+.ranking-section-title {
+  font-family: Georgia, serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #D4AF37;
+  letter-spacing: 0.04em;
 }
 
-.character-grid {
-  width: 100%;
+.rank-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.empty-state {
-  padding: 4rem 0;
-  opacity: 0.7;
+.rank-entry:hover {
+  background: rgba(212,175,55,0.06);
+  border-color: rgba(212,175,55,0.2);
 }
 
-.pagination-info {
-  position: absolute;
-  margin-top: 3rem;
+.rank-entry.rank-player {
+  background: rgba(212,175,55,0.08);
+  border-color: rgba(212,175,55,0.35);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .section-header {
-    margin-bottom: 1rem;
-  }
-  
-  .search-section {
-    max-width: 100%;
-    padding: 0 1rem;
-  }
-  
-  .search-results-header .d-flex {
-    flex-direction: column;
-    align-items: flex-start !important;
-    gap: 0.5rem;
-  }
+.rank-position {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #D4AF37;
+  min-width: 28px;
+  font-size: 0.95rem;
+  text-align: center;
 }
 
-@media (max-width: 480px) {
-  .search-info {
-    flex-direction: column;
-    align-items: center;
-  }
+.rank-position.top-1 { color: #FFD700; font-size: 1.1rem; }
+.rank-position.top-2 { color: #B0BEC5; }
+.rank-position.top-3 { color: #A1887F; }
+
+.rank-entry-name {
+  flex: 1;
+  font-weight: 600;
+  color: #E8D5A3;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-entry-value {
+  font-family: Georgia, serif;
+  font-weight: 700;
+  color: #D4AF37;
+  font-size: 0.88rem;
+  white-space: nowrap;
 }
 </style>
