@@ -136,7 +136,7 @@ export class IslandExplorationSystem {
     // Buscar civis compatíveis (level similar)
     const civilians = await db.characters
       .where('type')
-      .equals('Civillian')
+      .equals('Civilian')
       .and(
         (char) =>
           char.level >= character.level - 10 && char.level <= character.level + 5 && !char.crewId, // Não está em crew

@@ -343,8 +343,8 @@ export class GameLogic {
       return Math.random() < 0.5 ? 'neutral' : 'hostile'
     }
 
-    // Civillian sempre tenta ser pacífico
-    if (player === 'Civillian' || opponent === 'Civillian') {
+    // Civilian sempre tenta ser pacífico
+    if (player === 'Civilian' || opponent === 'Civilian') {
       return Math.random() < 0.8 ? 'friendly' : 'neutral'
     }
 
@@ -362,7 +362,7 @@ export class GameLogic {
       Marine: ['Marine', 'Government'],
       BountyHunter: ['BountyHunter', 'Pirate'],
       Government: ['Government', 'Marine'], // Assumindo que Government pode recrutar Marines
-      Civillian: [], // Civis não recrutam ninguém
+      Civilian: [], // Civis não recrutam ninguém
     }
 
     return compatibilityMatrix[recruiterType]?.includes(targetType) || false
@@ -1236,7 +1236,7 @@ export class GameLogic {
       case 'Government':
         return this.formatGovernmentRank(character.bounty)
 
-      case 'Civillian':
+      case 'Civilian':
         return 'Civil'
 
       default:
@@ -1258,7 +1258,7 @@ export class GameLogic {
       case 'Government':
         return 'orange-darken-2'
 
-      case 'Civillian':
+      case 'Civilian':
         return 'grey-darken-1'
 
       default:
@@ -1280,7 +1280,7 @@ export class GameLogic {
       case 'Government':
         return 'mdi-shield-crown'
 
-      case 'Civillian':
+      case 'Civilian':
         return 'mdi-account'
 
       default:

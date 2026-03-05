@@ -428,7 +428,7 @@ export class AdventureSystem {
         return 'um agente misterioso do governo mundial'
       case 'BountyHunter':
         return 'um caçador de recompensas experiente'
-      case 'Civillian':
+      case 'Civilian':
         return 'um civil pacífico'
       default:
         return 'um indivíduo misterioso'

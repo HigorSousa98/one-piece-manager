@@ -130,14 +130,14 @@ export class WorldResetSystem {
       const gameState = await db.gameState.get(1)
 
       if (!gameState) {
-        console.log('⚠️ GameState não encontrado')
-        return false
+        console.log('⚠️ GameState não encontrado — personagem ainda não criado')
+        return true
       }
 
       return !gameState.playerCharacterCreated
     } catch (error) {
       console.error('❌ Erro ao verificar necessidade de criação de personagem:', error)
-      return false
+      return true
     }
   }
 

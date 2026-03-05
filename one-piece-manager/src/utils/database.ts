@@ -111,7 +111,7 @@ export interface Character {
   level: number
   experience: number
   bounty: number
-  type: 'Pirate' | 'Marine' | 'BountyHunter' | 'Civillian' | 'Government'
+  type: 'Pirate' | 'Marine' | 'BountyHunter' | 'Civilian' | 'Government'
   crewId?: number
   stats: {
     attack: number

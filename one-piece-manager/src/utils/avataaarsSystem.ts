@@ -17,7 +17,7 @@ export class AvataaarsOnePieceSystem {
     try {
       const characterType = character.type as keyof typeof AVATAAARS_THEME_CONFIGS
       const themeConfig =
-        AVATAAARS_THEME_CONFIGS[characterType] || AVATAAARS_THEME_CONFIGS['Civillian']
+        AVATAAARS_THEME_CONFIGS[characterType] || AVATAAARS_THEME_CONFIGS['Civilian']
 
       // Usar ID do personagem como seed para consistência
       const seed = character.id || 1
@@ -113,7 +113,7 @@ export class AvataaarsOnePieceSystem {
     // Aplicar variação mantendo a temática
     const characterType = character.type as keyof typeof AVATAAARS_THEME_CONFIGS
     const themeConfig =
-      AVATAAARS_THEME_CONFIGS[characterType] || AVATAAARS_THEME_CONFIGS['Civillian']
+      AVATAAARS_THEME_CONFIGS[characterType] || AVATAAARS_THEME_CONFIGS['Civilian']
     const seed = (character.id || 1) + variationSeed
 
     // Variar apenas alguns elementos

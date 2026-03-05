@@ -296,10 +296,10 @@ export class AvatarGenerationSystem {
       Government: ['#2F4F4F', '#696969', '#000000'],
       Pirate: ['#8B0000', '#DC143C', '#4B0082'],
       BountyHunter: ['#556B2F', '#8FBC8F', '#2E8B57'],
-      Civillian: ['#87CEEB', '#B0C4DE', '#F0F8FF'],
+      Civilian: ['#87CEEB', '#B0C4DE', '#F0F8FF'],
     }
 
-    const colors = backgroundColors[character.type] || backgroundColors.Civillian
+    const colors = backgroundColors[character.type] || backgroundColors.Civilian
     const color = colors[Math.floor(random() * colors.length)]
 
     const patterns = ['solid', 'gradient', 'stars', 'waves'] as const

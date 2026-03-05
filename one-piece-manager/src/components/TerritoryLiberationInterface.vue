@@ -1129,7 +1129,7 @@ const getCharacterAvatarColor = (character: Character): string => {
   switch (character.type) {
     case 'Pirate': return 'red-darken-2'
     case 'Marine': return 'blue-darken-2'
-    case 'Civillian': return 'green-darken-2'
+    case 'Civilian': return 'green-darken-2'
     default: return 'grey-darken-2'
   }
 }
@@ -1138,7 +1138,7 @@ const getCharacterEmoji = (character: Character): string => {
   switch (character.type) {
     case 'Pirate': return '🏴‍☠️'
     case 'Marine': return '⚓'
-    case 'Civillian': return '👤'
+    case 'Civilian': return '👤'
     default: return '❓'
   }
 }

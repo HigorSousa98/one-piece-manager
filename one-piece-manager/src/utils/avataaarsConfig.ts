@@ -474,7 +474,7 @@ export const AVATAAARS_THEME_CONFIGS = {
     mouthTypes: ['Default', 'Smile', 'Serious', 'Grimace'] as AvataarsMouthType[],
   },
 
-  Civillian: {
+  Civilian: {
     topTypes: [
       'LongHairStraight',
       'LongHairCurly',

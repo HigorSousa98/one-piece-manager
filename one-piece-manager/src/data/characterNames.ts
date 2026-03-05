@@ -4286,7 +4286,7 @@ export const CHARACTER_NAMES: NameData = {
 export class NameGenerator {
   // 🎲 GERAR NOME COMPLETO ALEATÓRIO
   static generateRandomName(
-    type?: 'Pirate' | 'Marine' | 'Government' | 'BountyHunter' | 'Civillian',
+    type?: 'Pirate' | 'Marine' | 'Government' | 'BountyHunter' | 'Civilian',
   ): string {
     const firstName = this.getRandomElement(CHARACTER_NAMES.firstNames)
     const lastName = this.getRandomElement(CHARACTER_NAMES.lastNames)
@@ -4322,7 +4322,7 @@ export class NameGenerator {
         }
         break
 
-      case 'Civillian':
+      case 'Civilian':
         if (Math.random() < 0.3) {
           // 40% chance de ter profissão
           title = `"${this.getRandomElement(CHARACTER_NAMES.civilianProfessions)}" `
@@ -4355,7 +4355,7 @@ export class NameGenerator {
 
   // 👥 GERAR NOME DE CIVIL
   static generateCivilianName(): string {
-    return this.generateRandomName('Civillian')
+    return this.generateRandomName('Civilian')
   }
 
   // 🎲 ELEMENTO ALEATÓRIO

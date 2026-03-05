@@ -289,6 +289,7 @@ const gameLoaded = ref(false)
 // ✅ BOSS FIGHT STATE
 const detectedBossesCount = ref(0)
 const lastCheckedIsland = ref<number | null>(null)
+let bossDetectionInterval: ReturnType<typeof setInterval> | null = null
 
 const worldInitializing = ref(false)
 const worldInitProgress = ref(0)
@@ -503,26 +504,23 @@ onMounted(async () => {
   try {
     // Inicializar o jogo primeiro
     await gameStore.initializeGame()
-    
-    // Aguardar um pouco para garantir que tudo foi criado
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+
     // Carregar personagem do jogador
     await characterStore.loadPlayerCharacter()
-    
+
     if (playerCharacter.value) {
       showNotification(`Bem-vindo de volta, ${playerCharacter.value.name}!`)
       gameLoaded.value = true
-      
+
       // ✅ INICIALIZAR SISTEMA DE MUNDO
       await initializeWorldSystem()
-      
+
       // ✅ DETECTAR BOSSES APÓS CARREGAR O JOGO
       setTimeout(detectBossesOnCurrentIsland, 3000)
-      
+
       // ✅ VERIFICAR PERIODICAMENTE POR NOVOS BOSSES
-      setInterval(detectBossesOnCurrentIsland, 60000) // A cada 1 minuto
-      
+      bossDetectionInterval = setInterval(detectBossesOnCurrentIsland, 60000)
+
     } else {
       showNotification('Clique em "Criar Personagem" para começar!', 'info')
     }
@@ -534,7 +532,11 @@ onMounted(async () => {
 
 // ✅ CLEANUP NO UNMOUNT
 onUnmounted(() => {
-  // Cleanup será feito automaticamente pelos watchers
+  if (bossDetectionInterval) {
+    clearInterval(bossDetectionInterval)
+    bossDetectionInterval = null
+  }
+  gameStore.stopGameLoop()
 })
 </script>
 

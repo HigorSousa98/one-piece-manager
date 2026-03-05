@@ -568,12 +568,17 @@ export class InventorySystem {
 
   static readonly STORE_REFRESH_INTERVAL = 60 * 60 * 1000
 
-  private static storageKey(islandId: number): string {
+  private static dbKey(islandId: number): string {
     return `storeLastRefresh_${islandId}`
   }
 
-  static getTimeUntilRefresh(islandId: number): number {
-    const last = parseInt(localStorage.getItem(this.storageKey(islandId)) ?? '0', 10)
+  private static async getLastRefresh(islandId: number): Promise<number> {
+    const entry = await db.gameState.where('key').equals(this.dbKey(islandId)).first()
+    return entry?.value ?? 0
+  }
+
+  static async getTimeUntilRefresh(islandId: number): Promise<number> {
+    const last = await this.getLastRefresh(islandId)
     if (!last) return 0
     return Math.max(0, this.STORE_REFRESH_INTERVAL - (Date.now() - last))
   }
@@ -609,13 +614,20 @@ export class InventorySystem {
       )
     }
 
-    localStorage.setItem(this.storageKey(islandId), Date.now().toString())
+    // Persistir timestamp no IndexedDB (sincronizado com o resto dos dados do jogo)
+    const key = this.dbKey(islandId)
+    const existing = await db.gameState.where('key').equals(key).first()
+    if (existing) {
+      await db.gameState.update(existing.id!, { value: Date.now(), updatedAt: new Date() })
+    } else {
+      await db.gameState.add({ key, value: Date.now(), updatedAt: new Date() })
+    }
   }
 
   static async checkAndRefreshStore(
     islandId: number,
   ): Promise<{ refreshed: boolean; nextRefreshIn: number }> {
-    const timeLeft = this.getTimeUntilRefresh(islandId)
+    const timeLeft = await this.getTimeUntilRefresh(islandId)
     if (timeLeft === 0) {
       await this.refreshIslandStore(islandId)
       return { refreshed: true, nextRefreshIn: this.STORE_REFRESH_INTERVAL }

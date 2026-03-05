@@ -1,7 +1,6 @@
-// src/stores/gameStore.ts - Adicionar estado de loading
+// src/stores/gameStore.ts
 import { defineStore } from 'pinia'
-import { db, GameState } from '@/utils/database'
-import { GameDataGenerator } from '@/utils/gameDataGenerator'
+import { db } from '@/utils/database'
 
 export const useGameStore = defineStore('game', {
   state: () => ({
@@ -9,6 +8,7 @@ export const useGameStore = defineStore('game', {
     isInitializing: false,
     currentTime: new Date(),
     gameSpeed: 1,
+    _gameLoopInterval: null as ReturnType<typeof setInterval> | null,
   }),
 
   actions: {
@@ -20,24 +20,22 @@ export const useGameStore = defineStore('game', {
       try {
         console.log('🏴‍☠️ Verificando inicialização do jogo...')
 
-        // Verificar se o jogo já foi inicializado
-        const gameInit = await db.gameState.where('key').equals('initialized').first()
-
-        if (!gameInit) {
-          console.log('🌊 Primeira inicialização - gerando mundo de One Piece...')
-
-          const generator = new GameDataGenerator('EPIC')
-          //await generator.generateInitialData()
-
-          /*await db.gameState.add({
+        // Garantir que existe um gameState base (id=1) para o sistema de status funcionar.
+        // O mundo em si é gerado pelo WorldResetSystem após a criação do personagem.
+        const gameState = await db.gameState.get(1)
+        if (!gameState) {
+          console.log('🌊 Primeira execução — criando gameState inicial...')
+          await db.gameState.add({
+            id: 1,
             key: 'initialized',
             value: true,
-            updatedAt: new Date()
-          })*/
-
-          console.log('✅ Mundo de One Piece gerado com sucesso!')
+            worldGenerated: false,
+            playerCharacterCreated: false,
+            lastWorldUpdate: new Date(),
+            updatedAt: new Date(),
+          })
         } else {
-          console.log('🏴‍☠️ Mundo já existe - carregando dados...')
+          console.log('🏴‍☠️ GameState encontrado — carregando jogo...')
         }
 
         this.isInitialized = true
@@ -51,10 +49,17 @@ export const useGameStore = defineStore('game', {
     },
 
     startGameLoop() {
-      // Atualizar tempo do jogo a cada segundo
-      setInterval(() => {
+      if (this._gameLoopInterval) return
+      this._gameLoopInterval = setInterval(() => {
         this.currentTime = new Date()
       }, 1000)
+    },
+
+    stopGameLoop() {
+      if (this._gameLoopInterval) {
+        clearInterval(this._gameLoopInterval)
+        this._gameLoopInterval = null
+      }
     },
 
     async saveGameState(key: string, value: any) {

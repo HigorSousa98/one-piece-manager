@@ -64,6 +64,10 @@ const router = createRouter({
       name: 'Inventory',
       component: () => import('@/views/Inventory.vue'),
     },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
+    },
   ],
 })
 

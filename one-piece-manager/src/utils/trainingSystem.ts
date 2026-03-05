@@ -45,24 +45,15 @@ export class TrainingSystem {
     }
   }
 
-  // ✅ VERIFICAR SE JÁ EXISTE TASK DE TREINO ATIVA
+  // ✅ VERIFICAR SE JÁ EXISTE TASK DE TREINO ATIVA (em andamento, ainda não concluída)
   static async hasActiveTrainingTask(): Promise<Task | null> {
     try {
       const now = new Date()
 
-      // ✅ Buscar task de treino que não foi completada OU que acabou de ser completada
       const activeTask = await db.tasks
         .where('type')
         .equals('training')
-        .and((task) => {
-          // Task não completada E ainda não passou do tempo
-          const notCompletedAndActive = !task.isCompleted && new Date(task.endTime) > now
-
-          // Task que acabou de completar (tempo passou mas ainda não foi marcada como completa)
-          const justFinished = !task.isCompleted && new Date(task.endTime) <= now
-
-          return notCompletedAndActive || justFinished
-        })
+        .and((task) => !task.isCompleted && new Date(task.endTime) > now)
         .first()
 
       return activeTask || null

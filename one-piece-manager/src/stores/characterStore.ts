@@ -67,16 +67,15 @@ export const useCharacterStore = defineStore('character', {
         this.isLoading = false
       }
     },
-    async loadPlayerShip() {
+    async loadPlayerShip(): Promise<void> {
       try {
-        if (!this.playerCrew?.id) return null
+        if (!this.playerCrew?.id) return
 
         const ship = await db.ships.where('crewId').equals(this.playerCrew.id).first()
 
         this.playerShip = ship || null
       } catch (error) {
         console.error('❌ Erro ao carregar navio do jogador:', error)
-        return null
       }
     },
     async loadPlayerCrew() {

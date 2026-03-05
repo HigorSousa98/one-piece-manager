@@ -264,7 +264,7 @@ export class IslandEventSystem {
     // 3 rounds vs NPCs on the island, win 2/3 to claim prize
     const islandNpcs = await db.characters
       .where('type')
-      .notEqual('Civillian')
+      .notEqual('Civilian')
       .toArray()
     const difficultyLevel = event.data.difficulty * 5
 

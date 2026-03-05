@@ -74,6 +74,17 @@
               </v-form>
             </v-card-text>
             
+            <v-alert
+              v-if="errorMessage"
+              type="error"
+              variant="tonal"
+              class="mx-6 mb-2"
+              closable
+              @click:close="errorMessage = ''"
+            >
+              {{ errorMessage }}
+            </v-alert>
+
             <v-card-actions class="pa-6">
               <v-btn
                 color="grey"
@@ -121,6 +132,7 @@ const characterStore = useCharacterStore()
 // Estados
 const formValid = ref(false)
 const isCreating = ref(false)
+const errorMessage = ref('')
 
 const characterData = ref({
   name: '',
@@ -172,22 +184,24 @@ const loadData = async () => {
 const createCharacter = async () => {
   try {
     isCreating.value = true
-    
+    errorMessage.value = ''
+
     console.log('👤 Criando personagem:', characterData.value)
-    
+
     const result = await WorldResetSystem.generateWorldAfterCharacterCreation(characterData.value)
     console.log('result', result)
-    
+
     if (result.success) {
       console.log('✅ Personagem criado, redirecionando...')
       router.push('/')
     } else {
       console.error('❌ Erro na criação:', result.message)
-      // Aqui você pode mostrar um snackbar ou modal de erro
+      errorMessage.value = result.message || 'Erro ao criar personagem. Tente novamente.'
     }
-    
+
   } catch (error) {
     console.error('❌ Erro inesperado:', error)
+    errorMessage.value = 'Erro inesperado. Verifique o console e tente novamente.'
   } finally {
     isCreating.value = false
   }

@@ -1370,9 +1370,9 @@ async function createNewCharactersWorkerOptimized(data: any): Promise<any> {
 
         const newCharacter: Omit<Character, 'id'> = {
           name: NameGenerator.generateRandomName(
-            type as 'Pirate' | 'Marine' | 'BountyHunter' | 'Civillian' | 'Government',
+            type as 'Pirate' | 'Marine' | 'BountyHunter' | 'Civilian' | 'Government',
           ),
-          type: type as 'Pirate' | 'Marine' | 'BountyHunter' | 'Civillian' | 'Government',
+          type: type as 'Pirate' | 'Marine' | 'BountyHunter' | 'Civilian' | 'Government',
           level: 1,
           experience: 0,
           bounty: 0,

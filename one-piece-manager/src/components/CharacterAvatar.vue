@@ -223,7 +223,7 @@ const getFallbackIcon = () => {
     'Marine': 'mdi-anchor',
     'Government': 'mdi-account-tie',
     'BountyHunter': 'mdi-target',
-    'Civillian': 'mdi-account'
+    'Civilian': 'mdi-account'
   }
   return iconMap[props.character.type] || 'mdi-account'
 }

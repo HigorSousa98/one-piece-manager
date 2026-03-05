@@ -5,7 +5,7 @@ export interface GenerationSettings {
   totalMarines: number
   totalGovernment: number
   totalBountyHunter: number
-  totalCivillians: number
+  totalCivilians: number
   devilFruitDistributionRate: number // Porcentagem (0.0 - 1.0)
   yonkouCount: number
   schichibukai: number
@@ -50,7 +50,7 @@ export class GenerationConfig {
     totalMarines: 1000,
     totalGovernment: 300,
     totalBountyHunter: 500,
-    totalCivillians: 2000,
+    totalCivilians: 2000,
     devilFruitDistributionRate: 0.2,
     yonkouCount: 4,
     schichibukai: 7,
@@ -102,7 +102,7 @@ export class GenerationConfig {
       totalMarines: 100,
       totalGovernment: 30,
       totalBountyHunter: 50,
-      totalCivillians: 20,
+      totalCivilians: 20,
       totalIslands: 20,
       difficultyLevels: 10,
       islandsPerLevel: 2,
@@ -121,7 +121,7 @@ export class GenerationConfig {
       totalMarines: 500,
       totalGovernment: 150,
       totalBountyHunter: 250,
-      totalCivillians: 100,
+      totalCivilians: 100,
       totalIslands: 60,
       difficultyLevels: 20,
       islandsPerLevel: 3,
@@ -143,7 +143,7 @@ export class GenerationConfig {
       totalMarines: 4000,
       totalGovernment: 4000,
       totalBountyHunter: 4000,
-      totalCivillians: 2000,
+      totalCivilians: 2000,
       totalIslands: 200,
       difficultyLevels: 30,
       islandsPerLevel: 4,
@@ -187,8 +187,8 @@ export class GenerationConfig {
   get totalBountyHunter(): number {
     return this.config.totalBountyHunter
   }
-  get totalCivillians(): number {
-    return this.config.totalCivillians
+  get totalCivilians(): number {
+    return this.config.totalCivilians
   }
   get devilFruitDistributionRate(): number {
     return this.config.devilFruitDistributionRate
@@ -302,7 +302,7 @@ export class GenerationConfig {
       this.totalMarines +
       this.totalGovernment +
       this.totalBountyHunter +
-      this.totalCivillians
+      this.totalCivilians
     )
   }
 
@@ -332,7 +332,7 @@ export class GenerationConfig {
       Marine: this.totalMarines,
       Government: this.totalGovernment,
       BountyHunter: this.totalBountyHunter,
-      Civillian: this.totalCivillians,
+      Civilian: this.totalCivilians,
     }
   }
 
@@ -425,7 +425,7 @@ export class GenerationConfig {
    • Marines: ${this.totalMarines.toLocaleString()}
    • Governo: ${this.totalGovernment.toLocaleString()}
    • Bounty Hunters: ${this.totalBountyHunter.toLocaleString()}
-   • Civis: ${this.totalCivillians.toLocaleString()}
+   • Civis: ${this.totalCivilians.toLocaleString()}
 
 🏴‍☠️ POSIÇÕES ESPECIAIS:
    • Yonkous: ${this.yonkouCount}

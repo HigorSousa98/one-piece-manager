@@ -66,7 +66,7 @@ export class GameDataGenerator {
       const bountyHunters = await this.generateBountyHunters()
       const marines = await this.generateMarines()
       const government = await this.generateGovernment()
-      const civillians = await this.generateCivillian()
+      const civillians = await this.generateCivilian()
 
       // 4. Organizar hierarquias
       console.log('👑 Organizando hierarquias...')
@@ -182,7 +182,7 @@ export class GameDataGenerator {
           | 'Pirate'
           | 'Marine'
           | 'BountyHunter'
-          | 'Civillian'
+          | 'Civilian'
           | 'Government',
         level: 1,
         experience: 0,
@@ -467,21 +467,21 @@ export class GameDataGenerator {
     return government.map((gov, index) => ({ ...gov, id: govIds[index] }))
   }
 
-  private async generateCivillian(): Promise<Character[]> {
+  private async generateCivilian(): Promise<Character[]> {
     const civillian: Omit<Character, 'id'>[] = []
     const allStyleCombat = await db.styleCombats.toArray()
 
-    for (let i = 0; i < this.config.totalCivillians; i++) {
+    for (let i = 0; i < this.config.totalCivilians; i++) {
       const level = GameLogic.generate(1, 100, 'weighted', 'medium')
       const styleCombatId =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random()
       civillian.push({
-        name: NameGenerator.generateRandomName('Civillian'),
+        name: NameGenerator.generateRandomName('Civilian'),
         level,
         experience: 0,
         bounty: 0,
-        type: 'Civillian',
+        type: 'Civilian',
         stats: GameLogic.generateStats(
           level,
           allStyleCombat.find((st) => st.id == styleCombatId).name,
@@ -659,7 +659,7 @@ export class GameDataGenerator {
   private async distributeDevilFruits(): Promise<void> {
     const allCharacters = await db.characters.toArray()
     const allDevilFruits = await db.devilFruits.toArray()
-    const allCharactersFiltered = allCharacters.filter((char) => char.type != 'Civillian')
+    const allCharactersFiltered = allCharacters.filter((char) => char.type != 'Civilian')
 
     // Calcular quantos personagens devem ter Devil Fruit
     const charactersWithDF = Math.floor(
@@ -1492,7 +1492,7 @@ export class GameDataGenerator {
 
     // Buscar personagens de alto nível (não civis) ordenados por poder
     const highLevelChars = (await db.characters.toArray())
-      .filter(c => c.type !== 'Civillian' && c.isPlayer === 0)
+      .filter(c => c.type !== 'Civilian' && c.isPlayer === 0)
       .sort((a, b) => b.level - a.level)
 
     const sClass = uniqueItems.filter(i => i.class === 'S')
@@ -1562,7 +1562,7 @@ export class GameDataGenerator {
     }
 
     const npcs = (await db.characters.toArray()).filter(
-      (c) => c.type !== 'Civillian' && c.isPlayer === 0 && c.crewId,
+      (c) => c.type !== 'Civilian' && c.isPlayer === 0 && c.crewId,
     )
 
     const inventoryEntries: { crewId: number; itemId: number; acquiredAt: Date }[] = []
