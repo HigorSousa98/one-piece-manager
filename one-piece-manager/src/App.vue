@@ -80,21 +80,50 @@
 
       <!-- Player Info no Menu -->
       <template v-slot:append>
-        <div class="pa-2" v-if="playerCharacter">
-          <v-card class="player-info-card">
-            <v-card-text class="py-2">
-              <div class="text-caption">{{ playerCharacter.name }}</div>
-              <div class="text-body-2">Level {{ playerCharacter.level }}</div>
-              <div class="text-caption">Exp {{ playerCharacter.experience }} / {{ expForNextLevel }}</div>
-              <div class="text-caption">
-                <CharacterBountyDisplay 
-                  :character="playerCharacter" 
-                  size="small" 
-                  variant="elevated" 
-                />
+        <div class="pa-3" v-if="playerCharacter">
+          <div class="player-info-card">
+            <!-- Nome e tipo -->
+            <div class="pi-header">
+              <div class="pi-avatar">
+                <v-icon size="18" color="#D4AF37">mdi-pirate</v-icon>
               </div>
-            </v-card-text>
-          </v-card>
+              <div class="pi-name-block">
+                <div class="pi-name">{{ playerCharacter.name }}</div>
+                <div class="pi-type">{{ playerCharacter.type }}</div>
+              </div>
+            </div>
+
+            <!-- Level + EXP bar -->
+            <div class="pi-level-row">
+              <span class="pi-level-label">Nível</span>
+              <span class="pi-level-val">{{ playerCharacter.level }}</span>
+              <span class="pi-exp-frac">{{ playerCharacter.experience.toLocaleString('pt-BR') }} / {{ expForNextLevel.toLocaleString('pt-BR') }} XP</span>
+            </div>
+            <v-progress-linear
+              :model-value="expForNextLevel > 0 ? (playerCharacter.experience / expForNextLevel) * 100 : 0"
+              color="#D4AF37"
+              bg-color="rgba(212,175,55,0.12)"
+              height="5"
+              rounded
+              class="pi-exp-bar"
+            />
+
+            <!-- Power -->
+            <div class="pi-power-row">
+              <v-icon size="13" color="#AB47BC" class="mr-1">mdi-flash</v-icon>
+              <span class="pi-power-label">Poder</span>
+              <span class="pi-power-val">{{ playerPower.toLocaleString('pt-BR') }}</span>
+            </div>
+
+            <!-- Bounty -->
+            <div class="pi-bounty-row">
+              <CharacterBountyDisplay
+                :character="playerCharacter"
+                size="small"
+                variant="elevated"
+              />
+            </div>
+          </div>
         </div>
       </template>
     </v-navigation-drawer>
@@ -322,6 +351,11 @@ const bossNotification = reactive({
 const expForNextLevel = computed(() => {
   if (!playerCharacter.value) return 0
   return GameLogic.nextLevelUp(playerCharacter.value)
+})
+
+const playerPower = computed(() => {
+  if (!playerCharacter.value) return 0
+  return GameLogic.calculatePower(playerCharacter.value)
 })
 
 // ✅ COMPUTED PARA MOSTRAR BOSS FIGHT
@@ -599,18 +633,99 @@ onUnmounted(() => {
 
 /* Player info card at bottom of drawer */
 .player-info-card {
-  background: rgba(212, 175, 55, 0.1) !important;
-  border: 1px solid rgba(212, 175, 55, 0.35) !important;
-  border-radius: 10px !important;
+  background: rgba(10, 22, 40, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 10px;
+  padding: 10px 12px;
 }
 
-.player-info-card :deep(.text-caption) {
-  color: #B0BFDA !important;
+.pi-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.player-info-card :deep(.text-body-2) {
-  color: #D4AF37 !important;
-  font-weight: 600 !important;
+.pi-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(212,175,55,0.12);
+  border: 1px solid rgba(212,175,55,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pi-name-block { overflow: hidden; }
+
+.pi-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #F0E6D8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pi-type {
+  font-size: 0.64rem;
+  color: #8B9DC3;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pi-level-row {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 3px;
+}
+
+.pi-level-label {
+  font-size: 0.68rem;
+  color: #8B9DC3;
+}
+
+.pi-level-val {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #D4AF37;
+}
+
+.pi-exp-frac {
+  font-size: 0.6rem;
+  color: #8B9DC3;
+  margin-left: auto;
+}
+
+.pi-exp-bar {
+  margin-bottom: 6px;
+}
+
+.pi-power-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 6px;
+}
+
+.pi-power-label {
+  font-size: 0.68rem;
+  color: #8B9DC3;
+  flex: 1;
+}
+
+.pi-power-val {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #AB47BC;
+}
+
+.pi-bounty-row {
+  display: flex;
+  justify-content: center;
 }
 
 /* Boss Fight menu item - pulsing danger */

@@ -29,18 +29,77 @@ export interface InventorySlot {
   item: Item
 }
 
+export interface SellAllResult {
+  success: boolean
+  message: string
+  itemsSold: number
+  berryGained: number
+}
+
 const EQUIP_SLOTS: EquipSlot[] = ['weapon', 'clothing', 'helmet', 'gloves', 'boots']
 
-// Preços base por classe (mesmos usados na loja)
+// Preços base por classe
 const BASE_PRICE: Record<string, number> = {
   F: 6_000_000, E: 30_000_000, D: 120_000_000,
   C: 450_000_000, B: 1_500_000_000, A: 4_500_000_000,
 }
 
 export class InventorySystem {
+
+  // ── Rarity generation ────────────────────────────────────────────────────────
+
+  /**
+   * Generates a unique rarity value (0–100) for a new item instance.
+   * Higher rarity is rarer: distribution is weighted toward lower values.
+   * Class determines the achievable range, making high-class items always more powerful.
+   */
+  static generateInstanceRarity(itemClass: string): number {
+    const ranges: Record<string, [number, number]> = {
+      S: [80, 100], A: [65, 95], B: [50, 90],
+      C: [35, 80], D: [20, 70], E: [10, 60], F: [1, 40],
+    }
+    const [min, max] = ranges[itemClass] ?? [1, 100]
+    // Power-law distribution: Math.pow(random, 1.8) biases toward lower values
+    const weighted = Math.pow(Math.random(), 1.8)
+    return Math.round(min + weighted * (max - min))
+  }
+
+  /**
+   * Creates a new item instance by cloning a template item and rolling a unique rarity.
+   * The instance has `templateId` set to the template's id to distinguish it.
+   */
+  static async createItemInstance(templateItem: Item): Promise<Item> {
+    const rarity = templateItem.unique
+      ? 100 // unique/legendary items always have max rarity
+      : this.generateInstanceRarity(templateItem.class)
+
+    const newId = await db.items.add({
+      name: templateItem.name,
+      description: templateItem.description,
+      type: templateItem.type,
+      subtype: templateItem.subtype,
+      class: templateItem.class,
+      rarity,
+      templateId: templateItem.id!,
+      statsInfluence: { ...templateItem.statsInfluence },
+      requirements: { ...templateItem.requirements },
+      isStackable: templateItem.isStackable,
+      maxStack: templateItem.maxStack,
+      weight: templateItem.weight,
+      imageUrl: templateItem.imageUrl,
+      unique: templateItem.unique,
+      lore: templateItem.lore,
+      isBreakable: templateItem.isBreakable,
+      durability: templateItem.durability,
+      createdAt: new Date(),
+    })
+
+    return (await db.items.get(newId))!
+  }
+
   // ── Baú da Tripulação ────────────────────────────────────────────────────────
 
-  /** Todos os itens no baú da tripulação (sem filtros). Inclui duplicatas. */
+  /** Todos os itens no baú da tripulação (sem filtros). */
   static async getCrewChest(crewId: number): Promise<InventorySlot[]> {
     const entries = await db.inventories.where('crewId').equals(crewId).toArray()
     if (entries.length === 0) return []
@@ -52,8 +111,7 @@ export class InventorySystem {
 
   /**
    * Itens do baú disponíveis para um personagem.
-   * Para cada itemId, conta quantas cópias existem no baú e quantas outros membros
-   * já estão usando — só disponibiliza cópias excedentes.
+   * Cada item é uma instância única — disponível se não equipado por outro membro.
    */
   static async getAvailableItemsForChar(crewId: number, characterId: number): Promise<InventorySlot[]> {
     const [chestSlots, members] = await Promise.all([
@@ -63,36 +121,17 @@ export class InventorySystem {
 
     const others = members.filter(m => m.id !== characterId)
 
-    // Conta quantas vezes cada itemId está equipado por OUTROS membros
-    const usedByOthers = new Map<number, number>()
+    // IDs de itens equipados por OUTROS membros
+    const equippedByOthers = new Set<number>()
     for (const member of others) {
       for (const slot of EQUIP_SLOTS) {
         const id = member[slot]
-        if (id != null) usedByOthers.set(id, (usedByOthers.get(id) ?? 0) + 1)
+        if (id != null) equippedByOthers.add(id)
       }
     }
 
-    // Conta o total de cópias por itemId no baú
-    const totalCopies = new Map<number, number>()
-    for (const s of chestSlots) {
-      const id = s.item.id!
-      totalCopies.set(id, (totalCopies.get(id) ?? 0) + 1)
-    }
-
-    // Para cada slot do baú, libera apenas se ainda há cópias disponíveis
-    const releasedCopies = new Map<number, number>() // quantas já "alocamos" nesta iteração
-    const result: InventorySlot[] = []
-    for (const slot of chestSlots) {
-      const id = slot.item.id!
-      const used = usedByOthers.get(id) ?? 0
-      const released = releasedCopies.get(id) ?? 0
-      const total = totalCopies.get(id) ?? 0
-      if (released + used < total) {
-        releasedCopies.set(id, released + 1)
-        result.push(slot)
-      }
-    }
-    return result
+    // Cada item é uma instância única: disponível se não estiver equipado por outro
+    return chestSlots.filter(s => !equippedByOthers.has(s.item.id!))
   }
 
   /** Inventário por membro: cada membro vê o baú filtrado pelos itens disponíveis para ele. */
@@ -126,23 +165,15 @@ export class InventorySystem {
 
     // Item deve estar no baú da tripulação
     const owned = await db.inventories
-      .where('crewId')
-      .equals(crewId)
-      .and(e => e.itemId === itemId)
-      .first()
+      .where('crewId').equals(crewId).and(e => e.itemId === itemId).first()
     if (!owned) return { success: false, message: 'Item não está no baú da tripulação.' }
 
-    // Verificar disponibilidade: cópias no baú vs. cópias em uso por outros
+    // Com instâncias únicas: verificar se não está equipado por outro
     const members = await db.characters.where('crewId').equals(crewId).toArray()
     const others = members.filter(m => m.id !== characterId)
-    let othersUsing = 0
-    for (const member of others) {
-      if (EQUIP_SLOTS.some(s => member[s] === itemId)) othersUsing++
-    }
-    const totalCopies = await db.inventories
-      .where('crewId').equals(crewId).and(e => e.itemId === itemId).count()
-    if (othersUsing >= totalCopies) {
-      return { success: false, message: 'Todas as cópias deste item já estão em uso.' }
+    const usedByOther = others.some(m => EQUIP_SLOTS.some(s => m[s] === itemId))
+    if (usedByOther) {
+      return { success: false, message: 'Este item está sendo usado por outro membro.' }
     }
 
     // Slot deve ser compatível com o tipo do item
@@ -152,27 +183,19 @@ export class InventorySystem {
 
     // Requisito de level
     if (character.level < item.requirements.level) {
-      return {
-        success: false,
-        message: `Level insuficiente. Requerido: ${item.requirements.level}.`,
-      }
+      return { success: false, message: `Level insuficiente. Requerido: ${item.requirements.level}.` }
     }
 
     // Requisito de tipo de personagem
-    if (item.requirements.characterType && item.requirements.characterType.length > 0) {
+    if (item.requirements.characterType?.length) {
       const ok = item.requirements.characterType.includes(character.type as any)
       if (!ok) {
-        return {
-          success: false,
-          message: `Item exclusivo para: ${item.requirements.characterType.join(', ')}.`,
-        }
+        return { success: false, message: `Item exclusivo para: ${item.requirements.characterType.join(', ')}.` }
       }
     }
 
     // Requisito de estilo de combate
-    // Usa findIndex no array ordenado para obter a posição real de cada ID,
-    // depois Math.floor(pos/3) = grupo lógico (Combatente/Espadachim/Atirador/Suporte).
-    if (item.requirements.styleCombatId && item.requirements.styleCombatId.length > 0) {
+    if (item.requirements.styleCombatId?.length) {
       const allStyles = await db.styleCombats.orderBy('id').toArray()
       const charStyleIndex = allStyles.findIndex(s => s.id === character.styleCombatId)
       const charGroup = charStyleIndex >= 0 ? Math.floor(charStyleIndex / 3) : -1
@@ -199,7 +222,7 @@ export class InventorySystem {
   /**
    * Vende uma entrada específica do baú (por entryId) para a loja.
    * O item não pode estar equipado por nenhum membro.
-   * Retorna 50% do preço base do item para o treasury da tripulação.
+   * Deleta a instância do item de db.items (se for instância com templateId).
    */
   static async sellItem(
     crewId: number,
@@ -217,15 +240,9 @@ export class InventorySystem {
     if (!item) return { success: false, message: 'Item não encontrado.', berryGained: 0 }
 
     // Verificar que o item não está equipado por nenhum membro
-    // (só bloqueia se este é o único exemplar equipado)
     const members = await db.characters.where('crewId').equals(crewId).toArray()
-    const copies = await db.inventories
-      .where('crewId').equals(crewId).and(e => e.itemId === item.id!).count()
-    let equipped = 0
-    for (const member of members) {
-      if (EQUIP_SLOTS.some(s => member[s] === item.id)) equipped++
-    }
-    if (equipped >= copies) {
+    const isEquipped = members.some(m => EQUIP_SLOTS.some(s => m[s] === item.id))
+    if (isEquipped) {
       return {
         success: false,
         message: `${item.name} está equipado. Desequipe antes de vender.`,
@@ -233,9 +250,17 @@ export class InventorySystem {
       }
     }
 
-    const sellPrice = Math.round((BASE_PRICE[item.class] ?? 6_000_000) * (0.5 + item.rarity) * 0.5)
+    // Preço de venda: 50% do preço base, escalado pela raridade
+    const sellPrice = Math.round((BASE_PRICE[item.class] ?? 6_000_000) * (0.5 + item.rarity / 100) * 0.5)
 
+    // Remover entrada do inventário
     await db.inventories.delete(entryId)
+
+    // Deletar instância do db.items (se for instância, não template)
+    if (item.templateId != null) {
+      await db.items.delete(item.id!)
+    }
+
     await db.crews.update(crewId, { treasury: crew.treasury + sellPrice })
 
     return {
@@ -245,14 +270,71 @@ export class InventorySystem {
     }
   }
 
+  /**
+   * Vende todos os itens do baú que NÃO estão equipados por nenhum membro da tripulação.
+   */
+  static async sellAllUnusedItems(crewId: number): Promise<SellAllResult> {
+    const crew = await db.crews.get(crewId)
+    if (!crew) return { success: false, message: 'Tripulação não encontrada.', itemsSold: 0, berryGained: 0 }
+
+    const [chestSlots, members] = await Promise.all([
+      this.getCrewChest(crewId),
+      db.characters.where('crewId').equals(crewId).toArray(),
+    ])
+
+    // IDs de todos os itens equipados por qualquer membro
+    const equippedIds = new Set<number>()
+    for (const member of members) {
+      for (const slot of EQUIP_SLOTS) {
+        const id = member[slot]
+        if (id != null) equippedIds.add(id)
+      }
+    }
+
+    const unusedSlots = chestSlots.filter(s => !equippedIds.has(s.item.id!))
+    if (unusedSlots.length === 0) {
+      return { success: true, message: 'Nenhum item não utilizado para vender.', itemsSold: 0, berryGained: 0 }
+    }
+
+    let totalBerry = 0
+    const entryIdsToDelete: number[] = []
+    const instanceIdsToDelete: number[] = []
+
+    for (const slot of unusedSlots) {
+      const item = slot.item
+      const sellPrice = Math.round((BASE_PRICE[item.class] ?? 6_000_000) * (0.5 + item.rarity / 100) * 0.5)
+      totalBerry += sellPrice
+      entryIdsToDelete.push(slot.entryId)
+      if (item.templateId != null) {
+        instanceIdsToDelete.push(item.id!)
+      }
+    }
+
+    await db.inventories.bulkDelete(entryIdsToDelete)
+    if (instanceIdsToDelete.length > 0) {
+      await db.items.bulkDelete(instanceIdsToDelete)
+    }
+    await db.crews.update(crewId, { treasury: crew.treasury + totalBerry })
+
+    return {
+      success: true,
+      message: `${unusedSlots.length} item(s) vendido(s) por ${totalBerry.toLocaleString('pt-BR')} Berry!`,
+      itemsSold: unusedSlots.length,
+      berryGained: totalBerry,
+    }
+  }
+
   // ── Bônus de itens ─────────────────────────────────────────────────────────
 
-  // Multiplicadores de classe: escalam os bônus dos itens proporcionalmente à
-  // curva de distribuição de pontos do jogador (level 11 ≈ 193 pts, level 100 ≈ 5000+ pts).
   static readonly CLASS_MULT: Record<string, number> = {
     F: 3, E: 3, D: 4, C: 5, B: 6, A: 7, S: 8,
   }
 
+  /**
+   * Calcula bônus de stats dos itens equipados por um personagem.
+   * Fórmula: statsInfluence * (1 + rarity/100)
+   * statsInfluence já está em pontos absolutos; rarity escala o bônus (0=base, 100=2×base).
+   */
   static async calculateItemBonuses(character: Character): Promise<StatBonuses> {
     const bonuses: StatBonuses = { attack: 0, defense: 0, speed: 0, skill: 0, intelligence: 0 }
 
@@ -263,13 +345,12 @@ export class InventorySystem {
     for (const item of items) {
       if (!item) continue
       const inf = item.statsInfluence
-      const r = item.rarity
-      const m = InventorySystem.CLASS_MULT[item.class] ?? 3
-      if (inf.attack) bonuses.attack += Math.round(inf.attack * r * m)
-      if (inf.defense) bonuses.defense += Math.round(inf.defense * r * m)
-      if (inf.speed) bonuses.speed += Math.round(inf.speed * r * m)
-      if (inf.skill) bonuses.skill += Math.round(inf.skill * r * m)
-      if (inf.intelligence) bonuses.intelligence += Math.round(inf.intelligence * r * m)
+      const r = item.rarity / 100 // normalize to 0–1 for math
+      if (inf.attack)        bonuses.attack        += Math.round(inf.attack        * (1 + r))
+      if (inf.defense)       bonuses.defense       += Math.round(inf.defense       * (1 + r))
+      if (inf.speed)         bonuses.speed         += Math.round(inf.speed         * (1 + r))
+      if (inf.skill)         bonuses.skill         += Math.round(inf.skill         * (1 + r))
+      if (inf.intelligence)  bonuses.intelligence  += Math.round(inf.intelligence  * (1 + r))
     }
     return bonuses
   }
@@ -356,9 +437,10 @@ export class InventorySystem {
 
   private static itemScore(item: Item): number {
     const inf = item.statsInfluence
+    const r = item.rarity / 100
     return (
       ((inf.attack ?? 0) + (inf.defense ?? 0) + (inf.speed ?? 0) +
-        (inf.skill ?? 0) + (inf.intelligence ?? 0)) * item.rarity
+        (inf.skill ?? 0) + (inf.intelligence ?? 0)) * (1 + r)
     )
   }
 
@@ -369,7 +451,6 @@ export class InventorySystem {
     const bagSlots = await this.getAvailableItemsForChar(character.crewId, characterId)
     if (bagSlots.length === 0) return
 
-    // Re-fetch character para ter slots atualizados (caso chamado em loop)
     let current = character
     for (const slot of EQUIP_SLOTS) {
       current = (await db.characters.get(characterId)) ?? current
@@ -411,15 +492,20 @@ export class InventorySystem {
     if (storeEntries.length === 0) return false
 
     const chestSlots = await this.getCrewChest(crewId)
-    const ownedItemIds = new Set(chestSlots.map(s => s.item.id!))
+    const ownedTemplateIds = new Set(
+      chestSlots.map(s => s.item.templateId ?? s.item.id!),
+    )
 
     let bestGain = 0
     let bestEntry: StoreEntry | null = null
 
     for (const entry of storeEntries) {
       if (entry.price > crew.treasury) continue
-      // NPCs não compram duplicatas de itens únicos
-      if (entry.item.unique && ownedItemIds.has(entry.item.id!)) continue
+      // NPCs não compram outro item do mesmo template se já têm um único
+      if (entry.item.unique) {
+        const baseId = entry.item.templateId ?? entry.item.id!
+        if (ownedTemplateIds.has(baseId)) continue
+      }
 
       const item = entry.item
       const itemS = this.itemScore(item)
@@ -440,11 +526,6 @@ export class InventorySystem {
 
   // ── Melhor Compra (jogador) ────────────────────────────────────────────────
 
-  /**
-   * Compra automaticamente a melhor combinação de itens da loja para toda a tripulação,
-   * priorizando Capitão → membros por level decrescente, dentro do orçamento disponível.
-   * Após cada membro, chama optimizeEquipment para equipar o que foi comprado.
-   */
   static async bestBuyForCrew(
     crewId: number,
     islandId: number,
@@ -457,7 +538,6 @@ export class InventorySystem {
     if (!crew) return { purchased: [], totalSpent: 0, budgetAfter: 0 }
     let remainingBudget = crew.treasury
 
-    // Capitão primeiro, depois por level decrescente
     const members = await db.characters.where('crewId').equals(crewId).toArray()
     const captain = members.find(m => m.id === crew.captainId)
     const others = members
@@ -470,15 +550,14 @@ export class InventorySystem {
 
     const allStyles = await db.styleCombats.orderBy('id').toArray()
 
-    // Pontuação efetiva: statsInfluence × rarity × CLASS_MULT (reflete bônus real)
+    // Pontuação efetiva usando a nova fórmula de raridade
     const effectiveScore = (item: Item): number => {
       const inf = item.statsInfluence
-      const m = this.CLASS_MULT[item.class] ?? 3
+      const r = item.rarity / 100
       return (
         ((inf.attack ?? 0) + (inf.defense ?? 0) + (inf.speed ?? 0) +
           (inf.skill ?? 0) + (inf.intelligence ?? 0)) *
-        item.rarity *
-        m
+        (1 + r)
       )
     }
 
@@ -505,7 +584,6 @@ export class InventorySystem {
     let totalSpent = 0
 
     for (const member of sortedMembers) {
-      // Re-fetch para ter slots atualizados após optimizeEquipment do membro anterior
       const current = (await db.characters.get(member.id!)) ?? member
 
       for (const slot of EQUIP_SLOTS) {
@@ -514,18 +592,16 @@ export class InventorySystem {
         const currentScore = currentItem ? effectiveScore(currentItem) : 0
 
         let bestEntry: StoreEntry | null = null
-        let bestScore = currentScore // só compra se for melhor que o atual
+        let bestScore = currentScore
 
         for (const entry of storeEntries) {
           if (entry.item.type !== slot) continue
           if (entry.price > remainingBudget) continue
           if (!canMemberEquip(entry.item, current)) continue
           if (entry.item.unique) {
-            const alreadyOwned = await db.inventories
-              .where('crewId')
-              .equals(crewId)
-              .and(e => e.itemId === entry.item.id!)
-              .first()
+            const baseId = entry.item.templateId ?? entry.item.id!
+            const chestSlots = await this.getCrewChest(crewId)
+            const alreadyOwned = chestSlots.some(s => (s.item.templateId ?? s.item.id!) === baseId)
             if (alreadyOwned) continue
           }
           const score = effectiveScore(entry.item)
@@ -550,7 +626,6 @@ export class InventorySystem {
         }
       }
 
-      // Equipar imediatamente os itens comprados para este membro antes de avançar
       if (purchased.some(p => p.memberName === current.name)) {
         await this.optimizeEquipment(current.id!)
       }
@@ -566,29 +641,50 @@ export class InventorySystem {
 
   // ── Loja ───────────────────────────────────────────────────────────────────
 
+  /** Intervalo de atualização global de todas as lojas (1 hora). */
   static readonly STORE_REFRESH_INTERVAL = 60 * 60 * 1000
 
-  private static dbKey(islandId: number): string {
-    return `storeLastRefresh_${islandId}`
-  }
+  private static readonly GLOBAL_STORE_REFRESH_KEY = 'storeGlobalLastRefresh'
 
-  private static async getLastRefresh(islandId: number): Promise<number> {
-    const entry = await db.gameState.where('key').equals(this.dbKey(islandId)).first()
+  private static async getLastGlobalRefresh(): Promise<number> {
+    const entry = await db.gameState.where('key').equals(this.GLOBAL_STORE_REFRESH_KEY).first()
     return entry?.value ?? 0
   }
 
-  static async getTimeUntilRefresh(islandId: number): Promise<number> {
-    const last = await this.getLastRefresh(islandId)
+  /** Retorna milissegundos até a próxima atualização global das lojas. */
+  static async getTimeUntilRefresh(): Promise<number> {
+    const last = await this.getLastGlobalRefresh()
     if (!last) return 0
     return Math.max(0, this.STORE_REFRESH_INTERVAL - (Date.now() - last))
   }
 
+  /**
+   * Atualiza a loja de UMA ilha específica:
+   * 1. Deleta store entries antigas + instâncias de itens não vendidas.
+   * 2. Cria novas instâncias com rarity único para cada slot.
+   * 3. Cria novos store entries apontando para as instâncias.
+   */
   static async refreshIslandStore(islandId: number): Promise<void> {
     const island = await db.islands.get(islandId)
     if (!island) return
 
-    const allItems = await db.items.filter(item => !item.unique).toArray()
+    // Deletar instâncias de itens que ainda estão na loja (não foram comprados)
+    const oldEntries = await db.stores.where('currentIslandId').equals(islandId).toArray()
+    const oldItemIds = oldEntries.map(e => e.itemId)
 
+    await db.stores.where('currentIslandId').equals(islandId).delete()
+
+    if (oldItemIds.length > 0) {
+      const oldItems = await db.items.bulkGet(oldItemIds)
+      const instanceIds = oldItems
+        .filter((item): item is Item => item != null && item.templateId != null)
+        .map(item => item.id!)
+      if (instanceIds.length > 0) {
+        await db.items.bulkDelete(instanceIds)
+      }
+    }
+
+    // Selecionar templates elegíveis para a dificuldade da ilha
     const classesForDifficulty = (d: number): string[] => {
       if (d <= 5)  return ['F', 'E']
       if (d <= 10) return ['E', 'D']
@@ -598,24 +694,39 @@ export class InventorySystem {
     }
 
     const allowed = classesForDifficulty(island.difficulty)
-    const eligible = allItems.filter(item => allowed.includes(item.class))
-    const shuffled = [...eligible].sort(() => Math.random() - 0.5)
+
+    // Templates = itens sem templateId (criados durante a geração do mundo)
+    const allTemplates = await db.items
+      .filter(item => item.templateId == null && !item.unique && allowed.includes(item.class))
+      .toArray()
+
+    const shuffled = [...allTemplates].sort(() => Math.random() - 0.5)
     const count = Math.floor(Math.random() * 7) + 12
     const selected = shuffled.slice(0, Math.min(count, shuffled.length))
 
-    await db.stores.where('currentIslandId').equals(islandId).delete()
-    if (selected.length > 0) {
-      await db.stores.bulkAdd(
-        selected.map(item => ({
-          currentIslandId: islandId,
-          itemId: item.id!,
-          price: Math.round((BASE_PRICE[item.class] ?? 5_000_000) * (0.5 + item.rarity)),
-        })),
-      )
+    // Criar instâncias e store entries
+    for (const template of selected) {
+      const instance = await this.createItemInstance(template)
+      const price = Math.round((BASE_PRICE[instance.class] ?? 5_000_000) * (0.5 + instance.rarity / 100))
+      await db.stores.add({
+        currentIslandId: islandId,
+        itemId: instance.id!,
+        price,
+      })
+    }
+  }
+
+  /**
+   * Atualiza TODAS as lojas de todas as ilhas ao mesmo tempo e grava o timestamp global.
+   */
+  static async refreshAllIslandStores(): Promise<void> {
+    const islands = await db.islands.toArray()
+    for (const island of islands) {
+      await this.refreshIslandStore(island.id!)
     }
 
-    // Persistir timestamp no IndexedDB (sincronizado com o resto dos dados do jogo)
-    const key = this.dbKey(islandId)
+    // Gravar timestamp global
+    const key = this.GLOBAL_STORE_REFRESH_KEY
     const existing = await db.gameState.where('key').equals(key).first()
     if (existing) {
       await db.gameState.update(existing.id!, { value: Date.now(), updatedAt: new Date() })
@@ -624,12 +735,14 @@ export class InventorySystem {
     }
   }
 
-  static async checkAndRefreshStore(
-    islandId: number,
-  ): Promise<{ refreshed: boolean; nextRefreshIn: number }> {
-    const timeLeft = await this.getTimeUntilRefresh(islandId)
+  /**
+   * Verifica se é hora de atualizar as lojas (timer global).
+   * Se sim, atualiza TODAS as ilhas de uma vez.
+   */
+  static async checkAndRefreshAllStores(): Promise<{ refreshed: boolean; nextRefreshIn: number }> {
+    const timeLeft = await this.getTimeUntilRefresh()
     if (timeLeft === 0) {
-      await this.refreshIslandStore(islandId)
+      await this.refreshAllIslandStores()
       return { refreshed: true, nextRefreshIn: this.STORE_REFRESH_INTERVAL }
     }
     return { refreshed: false, nextRefreshIn: timeLeft }
@@ -644,6 +757,12 @@ export class InventorySystem {
       .filter(e => e.item != null)
   }
 
+  /**
+   * Compra um item da loja:
+   * - O store entry aponta para uma instância pré-gerada.
+   * - A instância é movida do store para o inventário da tripulação.
+   * - O store entry é deletado (item "esgotado").
+   */
   static async buyItem(
     crewId: number,
     storeId: number,
@@ -664,14 +783,19 @@ export class InventorySystem {
     const item = await db.items.get(storeEntry.itemId)
     if (!item) return { success: false, message: 'Item não encontrado.' }
 
+    // Para itens únicos/lendários: verificar se já possuem um (pelo templateId ou id)
     if (item.unique) {
-      const alreadyOwned = await db.inventories
-        .where('crewId').equals(crewId).and(e => e.itemId === storeEntry.itemId).first()
+      const baseId = item.templateId ?? item.id!
+      const chest = await this.getCrewChest(crewId)
+      const alreadyOwned = chest.some(s => (s.item.templateId ?? s.item.id!) === baseId)
       if (alreadyOwned) return { success: false, message: 'A tripulação já possui este item único.' }
     }
 
     await db.crews.update(crewId, { treasury: crew.treasury - storeEntry.price })
+
+    // Mover instância para inventário e remover da loja
     await db.inventories.add({ crewId, itemId: storeEntry.itemId, acquiredAt: new Date() })
+    await db.stores.delete(storeId)
 
     return { success: true, message: `${item.name} comprado para o baú da tripulação!` }
   }

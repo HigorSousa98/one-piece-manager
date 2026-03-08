@@ -172,8 +172,10 @@
             <span class="md-stat-name">{{ stat.label }}</span>
             <div class="md-stat-bar-wrap">
               <div class="md-stat-bar" :style="{ width: mdStatPercent(stat.value) + '%', background: stat.bg }" />
+              <div v-if="stat.bonus > 0" class="md-stat-bar md-stat-bar-bonus"
+                :style="{ width: mdStatPercent(stat.bonus) + '%', left: mdStatPercent(stat.value) + '%' }" />
             </div>
-            <span class="md-stat-val" :style="{ color: stat.color }">{{ stat.value }}</span>
+            <span class="md-stat-val" :style="{ color: stat.color }">{{ stat.value }}<span v-if="stat.bonus > 0" class="md-stat-bonus-val">+{{ stat.bonus }}</span></span>
           </div>
         </div>
       </div>
@@ -411,6 +413,7 @@ interface Props {
   isCaptain: boolean
   style: string
   devilFruit: DevilFruit | null
+  itemBonuses?: Record<string, number>
 }
 
 const props = defineProps<Props>()
@@ -434,17 +437,18 @@ const hasHakiStats = computed(() => {
 
 const memberCombatStats = computed(() => {
   const s = props.member.stats
+  const b = props.itemBonuses ?? {}
   return [
-    { key: 'attack',       label: 'Ataque',      icon: 'mdi-sword',    color: '#EF5350', bg: 'linear-gradient(90deg,#8B0000,#EF5350)', value: s.attack       || 0 },
-    { key: 'defense',      label: 'Defesa',       icon: 'mdi-shield',   color: '#42A5F5', bg: 'linear-gradient(90deg,#003087,#42A5F5)', value: s.defense      || 0 },
-    { key: 'speed',        label: 'Velocidade',   icon: 'mdi-run-fast', color: '#66BB6A', bg: 'linear-gradient(90deg,#1B5E20,#66BB6A)', value: s.speed        || 0 },
-    { key: 'intelligence', label: 'Inteligência', icon: 'mdi-brain',    color: '#AB47BC', bg: 'linear-gradient(90deg,#4A148C,#AB47BC)', value: s.intelligence || 0 },
-    { key: 'skill',        label: 'Habilidade',   icon: 'mdi-feather',  color: '#FFA726', bg: 'linear-gradient(90deg,#E65100,#FFA726)', value: s.skill        || 0 },
+    { key: 'attack',       label: 'Ataque',      icon: 'mdi-sword',    color: '#EF5350', bg: 'linear-gradient(90deg,#8B0000,#EF5350)', value: s.attack       || 0, bonus: (b.attack       || 0) },
+    { key: 'defense',      label: 'Defesa',       icon: 'mdi-shield',   color: '#42A5F5', bg: 'linear-gradient(90deg,#003087,#42A5F5)', value: s.defense      || 0, bonus: (b.defense      || 0) },
+    { key: 'speed',        label: 'Velocidade',   icon: 'mdi-run-fast', color: '#66BB6A', bg: 'linear-gradient(90deg,#1B5E20,#66BB6A)', value: s.speed        || 0, bonus: (b.speed        || 0) },
+    { key: 'intelligence', label: 'Inteligência', icon: 'mdi-brain',    color: '#AB47BC', bg: 'linear-gradient(90deg,#4A148C,#AB47BC)', value: s.intelligence || 0, bonus: (b.intelligence || 0) },
+    { key: 'skill',        label: 'Habilidade',   icon: 'mdi-feather',  color: '#FFA726', bg: 'linear-gradient(90deg,#E65100,#FFA726)', value: s.skill        || 0, bonus: (b.skill        || 0) },
   ]
 })
 
 const memberMaxStat = computed(() => {
-  const values = memberCombatStats.value.map(s => s.value)
+  const values = memberCombatStats.value.map(s => s.value + s.bonus)
   return values.length > 0 ? Math.max(...values) : 1
 })
 
@@ -520,7 +524,7 @@ const handleRemoveConfirmation = async () => {
 
 // 🎮 METHODS
 const calculatePower = (character: Character): number => {
-  return GameLogic.calculatePower(character, props.devilFruit)
+  return GameLogic.calculatePower(character, props.devilFruit, props.itemBonuses as any)
 }
 
 const getPowerRankColor = (rank: string): string => {
@@ -735,6 +739,7 @@ const getKindnessDescription = (kindness: number): string => {
 }
 
 .md-stat-bar-wrap {
+  position: relative;
   height: 7px;
   background: rgba(255,255,255,0.06);
   border-radius: 4px;
@@ -742,9 +747,16 @@ const getKindnessDescription = (kindness: number): string => {
 }
 
 .md-stat-bar {
+  position: absolute;
+  top: 0; left: 0;
   height: 100%;
   border-radius: 4px;
   transition: width 0.5s ease;
+}
+
+.md-stat-bar-bonus {
+  background: linear-gradient(90deg, #B8860B, #FFD700) !important;
+  opacity: 0.85;
 }
 
 .md-stat-val {
@@ -752,6 +764,12 @@ const getKindnessDescription = (kindness: number): string => {
   font-weight: 700;
   text-align: right;
   font-family: 'Courier New', monospace;
+}
+
+.md-stat-bonus-val {
+  font-size: 0.7rem;
+  color: #FFD700;
+  margin-left: 2px;
 }
 
 .md-haki-tier {

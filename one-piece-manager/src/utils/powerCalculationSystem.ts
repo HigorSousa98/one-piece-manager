@@ -58,10 +58,12 @@ export const POWER_CONFIG = {
     skillBonus: 0.04, // Skill melhora a eficiência
   },
 
-  // Sistema de Level (mantido)
+  // Sistema de Level
   level: {
     basePowerPerLevel: 15,
-    multiplierPerLevel: 0.0,
+    // Multiplicador acumulado por level aplicado sobre o poder total.
+    // Ex: level 100 → 1.0 + 100 * 0.002 = 1.20 (20% de bônus multiplicativo)
+    multiplierPerLevel: 0.002,
     veteranThreshold: 50,
     veteranBonusPerLevel: 25,
   },
@@ -91,6 +93,14 @@ export const POWER_CONFIG = {
 } as const
 
 // ✅ INTERFACES ATUALIZADAS
+export interface ItemBonuses {
+  attack?: number
+  defense?: number
+  speed?: number
+  intelligence?: number
+  skill?: number
+}
+
 export interface PowerBreakdown {
   physical: number
   mental: number // Novo componente
@@ -99,6 +109,7 @@ export interface PowerBreakdown {
   level: number
   specialization: number
   synergy: number
+  equipment: number // Bônus de equipamentos
   multipliers: {
     conqueror: number
     devilFruit: number
@@ -120,8 +131,12 @@ export interface PowerAnalysis {
 
 export class PowerCalculationSystem {
   // ✅ MÉTODO PRINCIPAL (mantido)
-  static calculatePower(character: Character, fruit: DevilFruit | null = null): number {
-    const breakdown = this.calculatePowerBreakdown(character, fruit)
+  static calculatePower(
+    character: Character,
+    fruit: DevilFruit | null = null,
+    itemBonuses?: ItemBonuses,
+  ): number {
+    const breakdown = this.calculatePowerBreakdown(character, fruit, itemBonuses)
     return breakdown.total
   }
 
@@ -129,8 +144,20 @@ export class PowerCalculationSystem {
   static calculatePowerBreakdown(
     character: Character,
     fruit: DevilFruit | null = null,
+    itemBonuses?: ItemBonuses,
   ): PowerBreakdown {
-    const stats = character.stats
+    // Aplicar bônus de equipamento nos stats para o cálculo
+    const baseStats = character.stats
+    const stats = itemBonuses
+      ? {
+          ...baseStats,
+          attack:       (baseStats.attack       || 0) + (itemBonuses.attack       || 0),
+          defense:      (baseStats.defense      || 0) + (itemBonuses.defense      || 0),
+          speed:        (baseStats.speed        || 0) + (itemBonuses.speed        || 0),
+          intelligence: (baseStats.intelligence || 0) + (itemBonuses.intelligence || 0),
+          skill:        (baseStats.skill        || 0) + (itemBonuses.skill        || 0),
+        }
+      : baseStats
 
     // Calcular cada componente
     const physical = this.calculatePhysicalPower(stats)
@@ -140,6 +167,17 @@ export class PowerCalculationSystem {
     const level = this.calculateLevelPower(character.level)
     const specialization = this.calculateSpecializationBonus(stats)
     const synergy = this.calculateSynergyBonus(stats)
+
+    // Calcular bônus de equipamento como diferença no poder físico+mental
+    const equipment = itemBonuses
+      ? Math.round(
+          (itemBonuses.attack       || 0) * POWER_CONFIG.physical.attack  +
+          (itemBonuses.defense      || 0) * POWER_CONFIG.physical.defense +
+          (itemBonuses.speed        || 0) * POWER_CONFIG.physical.speed   +
+          (itemBonuses.intelligence || 0) * POWER_CONFIG.mental.intelligence +
+          (itemBonuses.skill        || 0) * POWER_CONFIG.mental.skill,
+        )
+      : 0
 
     // Calcular multiplicadores
     const multipliers = this.calculateMultipliers(stats, fruit, character)
@@ -168,6 +206,7 @@ export class PowerCalculationSystem {
       level,
       specialization,
       synergy,
+      equipment,
       multipliers,
       bountyInfluence,
       total: Math.max(1, Math.ceil(totalPower)),

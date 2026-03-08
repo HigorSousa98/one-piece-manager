@@ -16,6 +16,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['html-to-image']
   },
+  worker: {
+    format: 'es',
+  },
   build: {
     commonjsOptions: {
       include: [/html-to-image/, /node_modules/]

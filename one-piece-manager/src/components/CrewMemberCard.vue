@@ -104,9 +104,23 @@
             <span class="cm-stat-name">{{ stat.label }}</span>
             <div class="cm-stat-bar-wrap">
               <div class="cm-stat-bar" :style="{ width: cmStatPercent(stat.value) + '%', background: stat.bg }" />
+              <div
+                v-if="stat.bonus > 0"
+                class="cm-stat-bar cm-stat-bar-bonus"
+                :style="{ width: cmStatPercent(stat.bonus) + '%', left: cmStatPercent(stat.value) + '%' }"
+              />
             </div>
-            <span class="cm-stat-val" :style="{ color: stat.color }">{{ stat.value }}</span>
+            <span class="cm-stat-val" :style="{ color: stat.color }">
+              {{ stat.value }}<span v-if="stat.bonus > 0" class="cm-stat-bonus-val">+{{ stat.bonus }}</span>
+            </span>
           </div>
+        </div>
+
+        <!-- Bônus de equipamento -->
+        <div v-if="hasEquipmentBonuses" class="cm-equip-bonus-row mt-2">
+          <v-icon size="13" color="#D4AF37" class="mr-1">mdi-sword-cross</v-icon>
+          <span class="cm-equip-bonus-label">Equipamentos</span>
+          <span class="cm-equip-bonus-power">+{{ calculatePower(member) - GameLogic.calculatePower(member, devilFruit) }}</span>
         </div>
 
         <!-- HAKI STATS (se tiver) -->
@@ -249,6 +263,7 @@ interface Props {
   isCaptain: boolean
   style: string
   devilFruit: DevilFruit | null
+  itemBonuses?: { attack?: number; defense?: number; speed?: number; intelligence?: number; skill?: number }
 }
 
 const props = defineProps<Props>()
@@ -265,17 +280,24 @@ const hasHakiStats = computed(() => {
 
 const combatStats = computed(() => {
   const s = props.member.stats
+  const b = props.itemBonuses ?? {}
   return [
-    { key: 'attack',       label: 'Ataque',      icon: 'mdi-sword',    color: '#EF5350', bg: 'linear-gradient(90deg,#8B0000,#EF5350)', value: s.attack       || 0 },
-    { key: 'defense',      label: 'Defesa',       icon: 'mdi-shield',   color: '#42A5F5', bg: 'linear-gradient(90deg,#003087,#42A5F5)', value: s.defense      || 0 },
-    { key: 'speed',        label: 'Velocidade',   icon: 'mdi-run-fast', color: '#66BB6A', bg: 'linear-gradient(90deg,#1B5E20,#66BB6A)', value: s.speed        || 0 },
-    { key: 'intelligence', label: 'Inteligência', icon: 'mdi-brain',    color: '#AB47BC', bg: 'linear-gradient(90deg,#4A148C,#AB47BC)', value: s.intelligence || 0 },
-    { key: 'skill',        label: 'Habilidade',   icon: 'mdi-feather',  color: '#FFA726', bg: 'linear-gradient(90deg,#E65100,#FFA726)', value: s.skill        || 0 },
+    { key: 'attack',       label: 'Ataque',      icon: 'mdi-sword',    color: '#EF5350', bg: 'linear-gradient(90deg,#8B0000,#EF5350)', value: s.attack       || 0, bonus: b.attack       || 0 },
+    { key: 'defense',      label: 'Defesa',       icon: 'mdi-shield',   color: '#42A5F5', bg: 'linear-gradient(90deg,#003087,#42A5F5)', value: s.defense      || 0, bonus: b.defense      || 0 },
+    { key: 'speed',        label: 'Velocidade',   icon: 'mdi-run-fast', color: '#66BB6A', bg: 'linear-gradient(90deg,#1B5E20,#66BB6A)', value: s.speed        || 0, bonus: b.speed        || 0 },
+    { key: 'intelligence', label: 'Inteligência', icon: 'mdi-brain',    color: '#AB47BC', bg: 'linear-gradient(90deg,#4A148C,#AB47BC)', value: s.intelligence || 0, bonus: b.intelligence || 0 },
+    { key: 'skill',        label: 'Habilidade',   icon: 'mdi-feather',  color: '#FFA726', bg: 'linear-gradient(90deg,#E65100,#FFA726)', value: s.skill        || 0, bonus: b.skill        || 0 },
   ]
 })
 
+const hasEquipmentBonuses = computed(() => {
+  const b = props.itemBonuses
+  if (!b) return false
+  return Object.values(b).some(v => (v ?? 0) > 0)
+})
+
 const maxStatValue = computed(() => {
-  const values = combatStats.value.map(s => s.value)
+  const values = combatStats.value.map(s => s.value + s.bonus)
   return values.length > 0 ? Math.max(...values) : 1
 })
 
@@ -294,7 +316,7 @@ const cmHakiPercent = (value: number) => {
 
 // ✅ METHODS
 const calculatePower = (character: Character): number => {
-  return GameLogic.calculatePower(character, props.devilFruit)
+  return GameLogic.calculatePower(character, props.devilFruit, props.itemBonuses)
 }
 
 const getTypeColor = (type: string): string => {
@@ -528,12 +550,20 @@ const getKindnessDescription = (kindness: number): string => {
   background: rgba(255,255,255,0.06);
   border-radius: 3px;
   overflow: hidden;
+  position: relative;
 }
 
 .cm-stat-bar {
   height: 100%;
   border-radius: 3px;
   transition: width 0.5s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.cm-stat-bar-bonus {
+  background: linear-gradient(90deg, rgba(212,175,55,0.5), rgba(212,175,55,0.85)) !important;
 }
 
 .cm-stat-val {
@@ -541,6 +571,36 @@ const getKindnessDescription = (kindness: number): string => {
   font-weight: 700;
   text-align: right;
   font-family: 'Courier New', monospace;
+  white-space: nowrap;
+}
+
+.cm-stat-bonus-val {
+  font-size: 0.62rem;
+  color: #D4AF37;
+  margin-left: 1px;
+  font-weight: 700;
+}
+
+.cm-equip-bonus-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: rgba(212,175,55,0.08);
+  border: 1px solid rgba(212,175,55,0.2);
+}
+
+.cm-equip-bonus-label {
+  font-size: 0.68rem;
+  color: #D4AF37;
+  flex: 1;
+}
+
+.cm-equip-bonus-power {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #D4AF37;
 }
 
 .cm-haki-stat-row { grid-template-columns: 18px 82px 1fr auto; }

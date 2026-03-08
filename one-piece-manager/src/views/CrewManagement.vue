@@ -453,11 +453,12 @@
               👑 CAPITÃO
             </v-card-title>
             <v-card-text class="pa-4" v-if="playerCharacter">
-              <CrewMemberCard 
-                :member="playerCharacter" 
+              <CrewMemberCard
+                :member="playerCharacter"
                 :is-captain="true"
                 :style="styleCombat(playerCharacter.styleCombatId)"
                 :devil-fruit="devilFruit(playerCharacter.devilFruitId) as DevilFruit"
+                :item-bonuses="memberItemBonuses.get(playerCharacter.id!)"
                 @member-click="showMemberDetails"
               />
             </v-card-text>
@@ -530,11 +531,12 @@
                   xl="4"
                   xs="12"
                 >
-                  <CrewMemberCard 
-                    :member="member" 
+                  <CrewMemberCard
+                    :member="member"
                     :is-captain="false"
                     :style="styleCombat(member.styleCombatId)"
                     :devil-fruit="devilFruit(member.devilFruitId) as DevilFruit"
+                    :item-bonuses="memberItemBonuses.get(member.id!)"
                     @member-click="showMemberDetails"
                   />
                 </v-col>
@@ -566,12 +568,13 @@
     
     <!-- MODAL DE DETALHES DO MEMBRO -->
     <v-dialog v-model="showDetailsModal" max-width="800">
-      <MemberDetailsModal 
+      <MemberDetailsModal
         v-if="selectedMember"
         :member="selectedMember"
         :is-captain="selectedMember.id === playerCharacter?.id"
         :style="styleCombat(selectedMember.styleCombatId)"
         :devil-fruit="devilFruit(selectedMember.devilFruitId) as DevilFruit"
+        :item-bonuses="memberItemBonuses.get(selectedMember.id!)"
         @remove-member="handleRemoveMember"
         @close="closeDetailsModal"
       />
@@ -601,6 +604,7 @@ import { useShipUpgrade } from '@/composables/useShipUpgrade'
 import { GameLogic } from '@/utils/gameLogic'
 import { db } from '@/utils/database'
 import CrewMemberCard from '@/components/CrewMemberCard.vue'
+import { InventorySystem } from '@/utils/inventorySystem'
 import MemberDetailsModal from '@/components/MemberDetailsModal.vue'
 import ShipUpgradeModal from '@/components/ShipUpgradeModal.vue'
 import { RecruitmentSystem } from '@/utils/recruitmentSystem'
@@ -641,6 +645,9 @@ const shipCanUpgrade = ref(false)
 
 // ✅ COMPOSABLE INSTANCE
 let shipUpgradeComposable: ReturnType<typeof useShipUpgrade> | null = null
+
+// 🗡️ ITEM BONUSES (mapa memberId → bonuses)
+const memberItemBonuses = ref<Map<number, Record<string, number>>>(new Map())
 
 // 🤝 ALLIANCES
 const activeAlliances = ref<Alliance[]>([])
@@ -1045,7 +1052,17 @@ const loadCrewMembers = async () => {
     
     crewMembers.value = members
     crewMembersLoaded.value = true
-    
+
+    // Carregar bônus de equipamentos de cada membro (incl. capitão)
+    const allChars = playerCharacter.value ? [playerCharacter.value, ...members] : members
+    const bonusMap = new Map<number, Record<string, number>>()
+    await Promise.all(
+      allChars.map(async (c) => {
+        if (c.id) bonusMap.set(c.id, await InventorySystem.calculateItemBonuses(c))
+      }),
+    )
+    memberItemBonuses.value = bonusMap
+
     console.log(`✅ ${members.length} membros da tripulação carregados`)
     
   } catch (error) {

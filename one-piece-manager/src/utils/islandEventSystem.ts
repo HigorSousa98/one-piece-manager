@@ -1,6 +1,7 @@
 // src/utils/islandEventSystem.ts
 import { db } from './database'
 import { GameLogic } from './gameLogic'
+import { NameGenerator } from '@/data/characterNames'
 import type { IslandEvent, IslandEventData, Character, Island, Item } from './database'
 
 export interface IslandEventResult {
@@ -135,31 +136,31 @@ export class IslandEventSystem {
     type: IslandEvent['type'],
     difficulty: number,
   ): IslandEventData['rewards'] {
-    const base = difficulty * 100
+    const base = difficulty * 200  // dobrado de 100 para 200
     switch (type) {
       case 'marine_invasion':
         return {
-          experience: base * 5,
-          bounty: base * 1000,
-          reputation: 50 * difficulty,
+          experience: base * 8,
+          bounty: base * 1500,
+          reputation: 80 * difficulty,
         }
       case 'pirate_festival':
         return {
-          experience: base * 3,
-          bounty: base * 2000,
-          reputation: 30 * difficulty,
+          experience: base * 5,
+          bounty: base * 3000,
+          reputation: 50 * difficulty,
         }
       case 'ancient_shipwreck':
         return {
-          experience: base * 4,
+          experience: base * 6,
           bounty: 0,
-          reputation: 20 * difficulty,
+          reputation: 35 * difficulty,
         }
       case 'escaped_prisoner':
         return {
-          experience: base * 2,
-          bounty: 0,
-          reputation: 15 * difficulty,
+          experience: base * 4,
+          bounty: difficulty * 50000,
+          reputation: 30 * difficulty,
         }
     }
   }
@@ -366,39 +367,105 @@ export class IslandEventSystem {
 
     const styleId = styleCombats[Math.floor(Math.random() * styleCombats.length)].id!
     const stats = GameLogic.generateStats(prisonerLevel, styleCombats.find(s => s.id === styleId)?.name ?? 'Swordsman', 0.1)
+    const prisonerName = NameGenerator.generateRandomName(prisonerType)
+    const prisonerBounty = prisonerLevel * 15000
 
-    const prisoner: Omit<Character, 'id'> = {
-      name: `Prisioneiro Evadido #${Math.floor(Math.random() * 9000) + 1000}`,
-      level: prisonerLevel,
-      experience: 0,
-      bounty: prisonerLevel * 10000,
-      type: prisonerType,
-      crewId,
-      stats,
-      styleCombatId: styleId,
-      devilFruitId: 0,
-      potentialToHaveKngHaki: 0.1,
-      position: 'Crew Member',
-      isPlayer: 0,
-      createdAt: new Date(),
-      defendingBase: 0,
-      kindness: 80,  // grateful for rescue
-      loyalty: 90,
-    }
+    // ── Verificar capacidade do bando ────────────────────────────
+    const crewMembers = await db.characters.where('crewId').equals(crewId).toArray()
+    const ship = await db.ships.where('crewId').equals(crewId).first()
+    const shipFactor = 3 // padrão do GenerationConfig
+    const maxCapacity = ship ? ship.level * shipFactor : 3
+    const hasRoom = crewMembers.length < maxCapacity
 
-    // Add prisoner to the crew immediately
-    const newMemberId = await db.characters.add(prisoner as Character)
-    const newMember = { ...prisoner, id: newMemberId } as Character
+    if (hasRoom) {
+      // Recrutar para o bando atual
+      const prisoner: Omit<Character, 'id'> = {
+        name: prisonerName,
+        level: prisonerLevel,
+        experience: 0,
+        bounty: prisonerBounty,
+        type: prisonerType,
+        crewId,
+        stats,
+        styleCombatId: styleId,
+        devilFruitId: 0,
+        potentialToHaveKngHaki: GameLogic.randomBetween(1, 100) / 100,
+        position: 'Crew Member',
+        isPlayer: 0,
+        createdAt: new Date(),
+        defendingBase: 0,
+        kindness: 80,
+        loyalty: 90,
+      }
+      const newMemberId = await db.characters.add(prisoner as Character)
+      const newMember = { ...prisoner, id: newMemberId } as Character
 
-    return {
-      success: true,
-      message: `${newMember.name} juntou-se à sua tripulação!`,
-      rewards: {
-        experience: event.data.rewards.experience ?? 0,
-        bounty: 0,
-        reputation: event.data.rewards.reputation ?? 0,
-        newMember,
-      },
+      return {
+        success: true,
+        message: `${newMember.name} juntou-se à sua tripulação com gratidão!`,
+        rewards: {
+          experience: event.data.rewards.experience ?? 0,
+          bounty: event.data.rewards.bounty ?? 0,
+          reputation: event.data.rewards.reputation ?? 0,
+          newMember,
+        },
+      }
+    } else {
+      // Sem espaço — o prisioneiro funda seu próprio bando
+      const crew = await db.crews.get(crewId)
+      const islandId = crew?.currentIsland ?? event.islandId
+
+      // Criar novo bando para o prisioneiro
+      const newCrewId = await db.crews.add({
+        name: `Bando de ${prisonerName}`,
+        type: prisonerType as 'Pirate' | 'Marine' | 'BountyHunter' | 'Government',
+        captainId: 0,
+        currentIsland: islandId,
+        docked: 1,
+        reputation: prisonerLevel * 10,
+        foundedAt: new Date(),
+        treasury: prisonerLevel * 5000,
+      })
+
+      const prisoner: Omit<Character, 'id'> = {
+        name: prisonerName,
+        level: prisonerLevel,
+        experience: 0,
+        bounty: prisonerBounty,
+        type: prisonerType,
+        crewId: newCrewId as number,
+        stats,
+        styleCombatId: styleId,
+        devilFruitId: 0,
+        potentialToHaveKngHaki: GameLogic.randomBetween(1, 100) / 100,
+        position: 'Captain',
+        isPlayer: 0,
+        createdAt: new Date(),
+        defendingBase: 0,
+        kindness: 70,
+        loyalty: 100,
+      }
+      const newMemberId = await db.characters.add(prisoner as Character)
+      await db.crews.update(newCrewId as number, { captainId: newMemberId as number })
+
+      // Criar navio nível 1 para o novo bando
+      await db.ships.add({
+        name: `Navio de ${prisonerName}`,
+        crewId: newCrewId as number,
+        level: 1,
+        needRepair: false,
+        destroyed: false,
+      })
+
+      return {
+        success: true,
+        message: `Seu bando está lotado! ${prisonerName} fundou seu próprio bando na ilha e parte como aliado em potencial.`,
+        rewards: {
+          experience: Math.floor((event.data.rewards.experience ?? 0) * 0.6),
+          bounty: Math.floor((event.data.rewards.bounty ?? 0) * 0.4),
+          reputation: Math.floor((event.data.rewards.reputation ?? 0) * 0.75),
+        },
+      }
     }
   }
 

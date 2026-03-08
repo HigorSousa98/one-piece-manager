@@ -109,10 +109,27 @@
           <v-col cols="12" md="8">
             <!-- Baú -->
             <div class="inv-card mb-4">
-              <div class="inv-card-title">
-                <v-icon size="16" color="#D4AF37" class="mr-1">mdi-treasure-chest</v-icon>
-                Baú da Tripulação ({{ playerInventory.length }} itens)
+              <div class="inv-card-title d-flex align-center justify-space-between">
+                <span>
+                  <v-icon size="16" color="#D4AF37" class="mr-1">mdi-treasure-chest</v-icon>
+                  Baú da Tripulação ({{ playerInventory.length }} itens)
+                </span>
+                <v-btn
+                  v-if="playerInventory.filter(s => !isEquippedBy(s.item, playerCharacter!)).length > 0 && isPlayerCaptain"
+                  size="x-small"
+                  variant="outlined"
+                  color="#78909C"
+                  :loading="sellAllLoading"
+                  @click="handleSellAll"
+                >
+                  <v-icon start size="12">mdi-tag-multiple</v-icon>
+                  Vender não utilizados
+                </v-btn>
               </div>
+
+              <v-alert v-if="sellAllMessage" :type="sellAllSuccess ? 'success' : 'error'" density="compact" variant="tonal" class="mb-2">
+                {{ sellAllMessage }}
+              </v-alert>
 
               <div v-if="playerInventory.length === 0" class="inv-empty-small">
                 Baú vazio. Explore ilhas ou compre na loja!
@@ -139,6 +156,7 @@
                       <div class="inv-bag-name">{{ slot.item.name }}</div>
                       <div class="d-flex align-center gap-1">
                         <div class="inv-bag-class" :style="{ color: classColor(slot.item.class) }">{{ slot.item.class }}</div>
+                        <div class="inv-rarity-mini" :style="{ color: rarityColor(slot.item.rarity) }">{{ slot.item.rarity }}</div>
                         <div v-if="isEquippedBy(slot.item, playerCharacter!)" class="inv-bag-eq-dot" title="Equipado por você" />
                       </div>
                     </div>
@@ -147,6 +165,7 @@
                     <div class="inv-tt-header">
                       <span>{{ slot.item.name }}</span>
                       <span class="inv-class-badge" :style="{ background: classColor(slot.item.class) }">{{ slot.item.class }}</span>
+                      <span class="inv-rarity-badge" :style="{ color: rarityColor(slot.item.rarity) }">✦{{ slot.item.rarity }}</span>
                     </div>
                     <div class="inv-tt-sub">{{ slotLabel(slot.item.type) }}</div>
                     <div class="inv-tt-divider" />
@@ -189,9 +208,9 @@
                 <div class="inv-rarity-bar-wrap">
                   <span class="inv-rarity-label">Raridade</span>
                   <div class="inv-rarity-bar">
-                    <div class="inv-rarity-fill" :style="{ width: (selectedItem.rarity * 100) + '%' }" />
+                    <div class="inv-rarity-fill" :style="{ width: selectedItem.rarity + '%', background: rarityColor(selectedItem.rarity) }" />
                   </div>
-                  <span class="inv-rarity-pct">{{ Math.round(selectedItem.rarity * 100) }}%</span>
+                  <span class="inv-rarity-pct" :style="{ color: rarityColor(selectedItem.rarity) }">{{ selectedItem.rarity }}</span>
                 </div>
               </div>
 
@@ -396,6 +415,7 @@
                         <div class="inv-bag-name">{{ slot.item.name }}</div>
                         <div class="d-flex align-center gap-1">
                           <div class="inv-bag-class" :style="{ color: classColor(slot.item.class) }">{{ slot.item.class }}</div>
+                          <div class="inv-rarity-mini" :style="{ color: rarityColor(slot.item.rarity) }">{{ slot.item.rarity }}</div>
                           <div v-if="isEquippedBy(slot.item, selectedCrewMember.character)" class="inv-bag-eq-dot" title="Equipado por este membro" />
                         </div>
                       </div>
@@ -404,6 +424,7 @@
                       <div class="inv-tt-header">
                         <span>{{ slot.item.name }}</span>
                         <span class="inv-class-badge" :style="{ background: classColor(slot.item.class) }">{{ slot.item.class }}</span>
+                        <span class="inv-rarity-badge" :style="{ color: rarityColor(slot.item.rarity) }">✦{{ slot.item.rarity }}</span>
                       </div>
                       <div class="inv-tt-sub">{{ slotLabel(slot.item.type) }}</div>
                       <div class="inv-tt-divider" />
@@ -619,6 +640,7 @@
                       <div class="d-flex align-center gap-1 mt-1">
                         <span class="inv-class-badge" :style="{ background: classColor(entry.item.class) }">{{ entry.item.class }}</span>
                         <span v-if="entry.item.unique" class="inv-unique-badge">ÚNICO</span>
+                        <span class="inv-rarity-badge" :style="{ color: rarityColor(entry.item.rarity) }">✦{{ entry.item.rarity }}</span>
                       </div>
                     </div>
                   </div>
@@ -657,6 +679,7 @@
                 <div class="inv-tt-header">
                   <span>{{ entry.item.name }}</span>
                   <span class="inv-class-badge" :style="{ background: classColor(entry.item.class) }">{{ entry.item.class }}</span>
+                  <span class="inv-rarity-badge" :style="{ color: rarityColor(entry.item.rarity) }">✦{{ entry.item.rarity }}</span>
                 </div>
                 <div class="inv-tt-sub">{{ slotLabel(entry.item.type) }} · Nível {{ entry.item.requirements.level }}</div>
                 <div class="inv-tt-divider" />
@@ -739,6 +762,9 @@ const bestBuyResult = ref<{
   budgetAfter: number
 } | null>(null)
 const showBestBuyResult = ref(false)
+const sellAllLoading = ref(false)
+const sellAllMessage = ref('')
+const sellAllSuccess = ref(false)
 
 // ── Countdown de atualização da loja ───────────────────────────────────────────
 const storeNextRefreshIn = ref(0) // milissegundos restantes
@@ -871,6 +897,14 @@ const statColor = (key: string): string => ({
 }[key] ?? '#B0BFDA')
 
 const formatBerry = (n: number): string => n.toLocaleString('pt-BR')
+
+const rarityColor = (rarity: number): string => {
+  if (rarity >= 80) return '#FFD700'
+  if (rarity >= 60) return '#E91E63'
+  if (rarity >= 40) return '#7C4DFF'
+  if (rarity >= 20) return '#42A5F5'
+  return '#78909C'
+}
 
 // ── Estilos de combate + slot label + auto-equip + diff de stats ───────────────
 // stylesOrdered: estilos ordenados por ID (mesma ordem de inserção)
@@ -1017,9 +1051,25 @@ const handleSell = async () => {
   setTimeout(() => { sellMessage.value = '' }, 3500)
 }
 
-// Mesmo multiplicador de classe que inventorySystem.ts → calculateItemBonuses
-const CLASS_MULT: Record<string, number> = { F: 3, E: 3, D: 4, C: 5, B: 6, A: 7, S: 8 }
-const itemMult = (item: Item) => CLASS_MULT[item.class] ?? 3
+const handleSellAll = async () => {
+  if (!playerCrew.value?.id) return
+  sellAllLoading.value = true
+  try {
+    const res = await InventorySystem.sellAllUnusedItems(playerCrew.value.id)
+    sellAllSuccess.value = res.success
+    sellAllMessage.value = res.message
+    if (res.success) {
+      await characterStore.loadPlayerCharacter()
+      await loadAll()
+    }
+  } finally {
+    sellAllLoading.value = false
+  }
+  setTimeout(() => { sellAllMessage.value = '' }, 4000)
+}
+
+// Rarity scale factor only — statsInfluence values are already absolute stat points
+const itemMult = (_item: Item) => 1
 
 interface StatDiff {
   stat: string; label: string; diff: number; newVal: number; icon: string; color: string
@@ -1032,20 +1082,20 @@ const getStatDiff = (item: Item, character: Character | null): StatDiff[] => {
     .map(stat => {
       const inf = item.statsInfluence as Record<string, number>
       const curInf = (currentItem?.statsInfluence ?? {}) as Record<string, number>
-      const newVal = Math.round((inf[stat] ?? 0) * item.rarity * itemMult(item))
+      const newVal = Math.round((inf[stat] ?? 0) * (1 + item.rarity / 100) * itemMult(item))
       const curMult = currentItem ? itemMult(currentItem) : 1
-      const curVal = currentItem ? Math.round((curInf[stat] ?? 0) * currentItem.rarity * curMult) : 0
+      const curVal = currentItem ? Math.round((curInf[stat] ?? 0) * (1 + currentItem.rarity / 100) * curMult) : 0
       return { stat, label: statLabel(stat), diff: newVal - curVal, newVal, icon: statIcon(stat), color: statColor(stat) }
     })
-    .filter(s => s.newVal > 0 || (currentItem != null && Math.round(((currentItem.statsInfluence as any)[s.stat] ?? 0) * currentItem.rarity * itemMult(currentItem)) > 0))
+    .filter(s => s.newVal > 0 || (currentItem != null && Math.round(((currentItem.statsInfluence as any)[s.stat] ?? 0) * (1 + currentItem.rarity / 100) * itemMult(currentItem)) > 0))
 }
 
-// ── Bônus efetivos do item (statsInfluence × rarity × CLASS_MULT) ─────────────
+// ── Bônus efetivos do item (statsInfluence × (1 + rarity/100)) ────────────────
 const effectiveBonuses = (item: Item): Record<string, number> => {
   const result: Record<string, number> = {}
   const m = itemMult(item)
   for (const [k, v] of Object.entries(item.statsInfluence)) {
-    const eff = Math.round((v ?? 0) * item.rarity * m)
+    const eff = Math.round((v ?? 0) * (1 + item.rarity / 100) * m)
     if (eff > 0) result[k] = eff
   }
   return result
@@ -1134,8 +1184,8 @@ const loadAll = async () => {
   // Loja da ilha atual
   const islandId = playerCrew.value?.currentIsland
   if (islandId) {
-    // Verificar se passou 1 hora desde a última atualização
-    const { nextRefreshIn } = await InventorySystem.checkAndRefreshStore(islandId)
+    // Verificar se passou 1 hora desde a última atualização global
+    const { nextRefreshIn } = await InventorySystem.checkAndRefreshAllStores()
     storeNextRefreshIn.value = nextRefreshIn
     storeItems.value = await InventorySystem.getIslandStore(islandId)
     const island = await db.islands.get(islandId)
@@ -1149,7 +1199,7 @@ const loadAll = async () => {
         clearInterval(countdownInterval!)
         countdownInterval = null
         // Recarregar loja automaticamente quando o tempo expirar
-        InventorySystem.refreshIslandStore(islandId).then(() => {
+        InventorySystem.refreshAllIslandStores().then(() => {
           InventorySystem.getIslandStore(islandId).then(items => {
             storeItems.value = items
             storeNextRefreshIn.value = InventorySystem.STORE_REFRESH_INTERVAL
@@ -1505,6 +1555,18 @@ watch(playerCharacter, loadAll)
 .inv-bag-class {
   font-size: 0.65rem;
   font-weight: 800;
+}
+
+.inv-rarity-mini {
+  font-size: 0.6rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.inv-rarity-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* ── Detalhe item ────────────────────────────────────────────────────── */

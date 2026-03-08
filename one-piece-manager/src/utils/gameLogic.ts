@@ -551,8 +551,8 @@ export class GameLogic {
   } {
     const score = Math.floor(
       Math.log10(character.bounty + 1) * 500
-      + character.level * 100
-      + Math.log10(crewReputation + 1) * 200,
+      + character.level * 200
+      + Math.log10(crewReputation + 1) * 300,
     )
 
     const tiers = GameLogic.FAME_TIERS
@@ -1043,8 +1043,12 @@ export class GameLogic {
     }, 0)
   }
 
-  static calculatePower(character: Character, fruit: DevilFruit | null = null): number {
-    return PowerCalculationSystem.calculatePower(character, fruit)
+  static calculatePower(
+    character: Character,
+    fruit: DevilFruit | null = null,
+    itemBonuses?: import('./powerCalculationSystem').ItemBonuses,
+  ): number {
+    return PowerCalculationSystem.calculatePower(character, fruit, itemBonuses)
   }
 
   static adjustBounty(bounty: number): number {

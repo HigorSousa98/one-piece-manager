@@ -25,6 +25,7 @@ import ISLANDS from '@/data/islands'
 import STYLES from '@/data/styleCombats'
 import EQUIPMENT_CONCEPTS from '@/data/equipmentConcept'
 import { LEGENDARY_WEAPONS } from '@/data/legendaryWeapons'
+import { InventorySystem } from './inventorySystem'
 
 export class GameDataGenerator {
   private config: GenerationConfig
@@ -1540,19 +1541,18 @@ export class GameDataGenerator {
     console.log(`🏆 ${uniqueItems.length} itens únicos distribuídos.`)
   }
 
-  // Distribui 1-3 itens comuns (C/D/E/F) para NPCs com base no nível do personagem
+  // Distribui itens comuns (C/D/E/F) para NPCs como instâncias únicas com rarity próprio
   private async distributeCommonItems(): Promise<void> {
-    const commonItems = await db.items.filter((item) => item.unique === false).toArray()
-    if (commonItems.length === 0) return
+    // Apenas templates (sem templateId) não-únicos
+    const templates = await db.items.filter(item => item.unique === false && item.templateId == null).toArray()
+    if (templates.length === 0) return
 
-    // Separar itens por classe
-    const byClass: Record<string, typeof commonItems> = {}
-    for (const item of commonItems) {
+    const byClass: Record<string, typeof templates> = {}
+    for (const item of templates) {
       if (!byClass[item.class]) byClass[item.class] = []
       byClass[item.class].push(item)
     }
 
-    // Classe de item para cada faixa de nível
     const classForLevel = (level: number): string => {
       if (level >= 81) return 'C'
       if (level >= 61) return 'D'
@@ -1565,35 +1565,27 @@ export class GameDataGenerator {
       (c) => c.type !== 'Civilian' && c.isPlayer === 0 && c.crewId,
     )
 
-    const inventoryEntries: { crewId: number; itemId: number; acquiredAt: Date }[] = []
-
+    let totalDistributed = 0
     for (const char of npcs) {
       const cls = classForLevel(char.level)
       const pool = byClass[cls] ?? byClass['F'] ?? []
       if (pool.length === 0) continue
 
-      const count = Math.floor(Math.random() * 2) + 1 // 1 ou 2 itens por NPC
+      const count = Math.floor(Math.random() * 2) + 1
       const shuffled = this.shuffleArray([...pool])
       for (let i = 0; i < Math.min(count, shuffled.length); i++) {
-        inventoryEntries.push({
-          crewId: char.crewId!,
-          itemId: shuffled[i].id!,
-          acquiredAt: new Date(),
-        })
+        const instance = await InventorySystem.createItemInstance(shuffled[i])
+        await db.inventories.add({ crewId: char.crewId!, itemId: instance.id!, acquiredAt: new Date() })
+        totalDistributed++
       }
     }
 
-    if (inventoryEntries.length > 0) {
-      await db.inventories.bulkAdd(inventoryEntries as any)
-    }
-    console.log(`🎒 ${inventoryEntries.length} itens comuns distribuídos para ${npcs.length} NPCs.`)
+    console.log(`🎒 ${totalDistributed} instâncias de itens distribuídas para ${npcs.length} NPCs.`)
   }
 
   private async populateIslandStores(): Promise<void> {
     const islands = await db.islands.toArray()
-    const allItems = await db.items.filter(item => item.unique === false).toArray()
 
-    // Mapeamento de dificuldade → classes permitidas
     const classesForDifficulty = (difficulty: number): string[] => {
       if (difficulty <= 5)  return ['F', 'E']
       if (difficulty <= 10) return ['E', 'D']
@@ -1602,36 +1594,39 @@ export class GameDataGenerator {
       return ['B', 'A']
     }
 
-    // Preço base por classe (calibrado com economia real: bounty min = level × 1.000 Berry)
     const basePrice: Record<string, number> = {
       F: 6_000_000, E: 30_000_000, D: 120_000_000,
       C: 450_000_000, B: 1_500_000_000, A: 4_500_000_000,
     }
 
-    const calcPrice = (item: { class: string; rarity: number }): number => {
-      const bp = basePrice[item.class] ?? 5_000
-      return Math.round(bp * (0.5 + item.rarity))
-    }
+    // Templates = itens sem templateId (inseridos durante generateItems)
+    const allTemplates = await db.items.filter(item => item.unique === false && item.templateId == null).toArray()
 
-    const storeEntries: { currentIslandId: number; itemId: number; price: number }[] = []
-
+    let totalEntries = 0
     for (const island of islands) {
       const allowedClasses = classesForDifficulty(island.difficulty)
-      const eligible = allItems.filter(item => allowedClasses.includes(item.class))
+      const eligible = allTemplates.filter(item => allowedClasses.includes(item.class))
       const shuffled = this.shuffleArray([...eligible])
       const count = GameLogic.randomBetween(12, 18)
       const selected = shuffled.slice(0, Math.min(count, shuffled.length))
 
-      for (const item of selected) {
-        storeEntries.push({
-          currentIslandId: island.id!,
-          itemId: item.id!,
-          price: calcPrice(item),
-        })
+      for (const template of selected) {
+        const instance = await InventorySystem.createItemInstance(template)
+        const price = Math.round((basePrice[instance.class] ?? 5_000_000) * (0.5 + instance.rarity / 100))
+        await db.stores.add({ currentIslandId: island.id!, itemId: instance.id!, price })
+        totalEntries++
       }
     }
 
-    await db.stores.bulkAdd(storeEntries)
-    console.log(`🏪 ${storeEntries.length} entradas de loja criadas para ${islands.length} ilhas.`)
+    // Registrar timestamp global de refresh
+    const key = InventorySystem['GLOBAL_STORE_REFRESH_KEY']
+    const existing = await db.gameState.where('key').equals(key).first()
+    if (existing) {
+      await db.gameState.update(existing.id!, { value: Date.now(), updatedAt: new Date() })
+    } else {
+      await db.gameState.add({ key, value: Date.now(), updatedAt: new Date() })
+    }
+
+    console.log(`🏪 ${totalEntries} instâncias de itens criadas para ${islands.length} lojas.`)
   }
 }

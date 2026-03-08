@@ -845,7 +845,6 @@ const formatBounty = (bounty: number): string => {
 }
 
 // ── Legendary weapons helpers ─────────────────────────────────────────────────
-const LEG_CLASS_MULT: Record<string, number> = { F: 3, E: 3, D: 4, C: 5, B: 6, A: 7, S: 8 }
 const LEG_CLASS_ORDER = ['S', 'A', 'B', 'C', 'D', 'E', 'F']
 
 const legClassColor = (cls: string): string => ({
@@ -878,10 +877,9 @@ const legendaryWeaponsByClass = computed(() => {
 })
 
 const legWeaponEffective = (item: Item): Record<string, number> => {
-  const m = LEG_CLASS_MULT[item.class] ?? 3
   const result: Record<string, number> = {}
   for (const [k, v] of Object.entries(item.statsInfluence)) {
-    const eff = Math.round((v ?? 0) * item.rarity * m)
+    const eff = Math.round((v ?? 0) * (1 + item.rarity / 100))
     if (eff > 0) result[k] = eff
   }
   return result

@@ -44,11 +44,48 @@
                   label="Estilo de Combate"
                   :rules="styleRules"
                   variant="outlined"
-                  class="mb-4"
+                  class="mb-2"
                   prepend-inner-icon="mdi-sword"
                   required
                 ></v-select>
-                
+
+                <!-- Preview de Stats do Estilo -->
+                <v-expand-transition>
+                  <v-card
+                    v-if="selectedStyle"
+                    variant="tonal"
+                    color="blue-darken-4"
+                    class="mb-4 pa-3"
+                  >
+                    <div class="text-caption text-blue-lighten-3 mb-2 font-weight-bold">
+                      STATS BASE — {{ selectedStyle.name }}
+                    </div>
+                    <v-row dense>
+                      <v-col
+                        v-for="row in styleStatRows"
+                        :key="row.label"
+                        cols="6"
+                      >
+                        <div class="d-flex align-center ga-2 mb-1">
+                          <v-icon size="14" :color="row.color">{{ row.icon }}</v-icon>
+                          <span class="text-caption" style="min-width:80px">{{ row.label }}</span>
+                          <v-progress-linear
+                            :model-value="row.value"
+                            :max="100"
+                            :color="row.color"
+                            height="6"
+                            rounded
+                            class="flex-1-1"
+                          />
+                          <span class="text-caption font-weight-bold" :style="{ color: row.color }">
+                            {{ row.value }}
+                          </span>
+                        </div>
+                      </v-col>
+                    </v-row>
+                  </v-card>
+                </v-expand-transition>
+
                 <!-- Crew Name -->
                 <v-text-field
                   v-model="characterData.crewName"
@@ -119,12 +156,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCharacterStore } from '@/stores/characterStore'
 import { WorldResetSystem } from '@/utils/worldResetSystem'
 import { db } from '@/utils/database'
 import { GameDataGenerator } from '@/utils/gameDataGenerator'
+import type { StyleCombat } from '@/utils/database'
 
 const router = useRouter()
 const characterStore = useCharacterStore()
@@ -150,7 +188,27 @@ const characterTypes = [
   { title: 'Governo Mundial', value: 'Government' }
 ]
 
-const combatStyles = ref<string[]>([])
+const combatStyleObjects = ref<Omit<StyleCombat, 'id'>[]>([])
+const combatStyles = computed(() => combatStyleObjects.value.map(s => s.name))
+
+const selectedStyle = computed(() =>
+  combatStyleObjects.value.find(s => s.name === characterData.value.combatStyle) ?? null
+)
+
+const styleStatRows = computed(() => {
+  if (!selectedStyle.value) return []
+  const s = selectedStyle.value
+  return [
+    { label: 'Ataque',       value: s.attack,        icon: 'mdi-sword',        color: '#EF5350' },
+    { label: 'Defesa',       value: s.defense,       icon: 'mdi-shield',       color: '#42A5F5' },
+    { label: 'Velocidade',   value: s.speed,         icon: 'mdi-run-fast',     color: '#66BB6A' },
+    { label: 'Habilidade',   value: s.skill,         icon: 'mdi-star-four-points', color: '#FFA726' },
+    { label: 'Inteligência', value: s.intelligence,  icon: 'mdi-brain',        color: '#AB47BC' },
+    { label: 'Haki Armado',  value: s.armHaki,       icon: 'mdi-arm-flex',     color: '#8D6E63' },
+    { label: 'Haki Obs.',    value: s.obsHaki,       icon: 'mdi-eye',          color: '#26C6DA' },
+  ]
+})
+
 const devilFruits = ref<any[]>([])
 
 // Regras de validação
@@ -171,11 +229,8 @@ const styleRules = [
 // Métodos
 const loadData = async () => {
   try {
-    // Carregar estilos de combate
     const generator = new GameDataGenerator('EPIC')
-    const styles = await generator.mockStyleCombact()
-    combatStyles.value = styles.map(style => style.name)
-    
+    combatStyleObjects.value = generator.mockStyleCombact()
   } catch (error) {
     console.error('❌ Erro ao carregar dados:', error)
   }

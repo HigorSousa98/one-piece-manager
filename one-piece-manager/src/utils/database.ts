@@ -343,10 +343,11 @@ export interface Item {
   id?: number
   name: string
   description: string
-  type: 'weapon' | 'clothing' | 'helmet' | 'gloves' | 'boots' 
+  type: 'weapon' | 'clothing' | 'helmet' | 'gloves' | 'boots'
   subtype?: string // 'sword', 'gun', 'marine_uniform', 'pirate_coat', etc.
   class: 'S' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
-  rarity: number
+  rarity: number // 0-100 (each acquired item instance gets a unique rolled rarity)
+  templateId?: number // if set, this item is an instance cloned from the template with this ID
   
   statsInfluence: {
     attack?: number
