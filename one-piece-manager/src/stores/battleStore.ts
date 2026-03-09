@@ -18,6 +18,7 @@ interface BattleResult {
   opponent: Character
   experienceGained: number
   bountyChange: number
+  bountyLost?: number   // bounty deducted from the player when they lose
   treasuryStole: number
   battleLog: string[]
   canShowRecruitment: boolean
@@ -749,6 +750,12 @@ export const useBattleStore = defineStore('battle', {
         canShowRecruitment = recruitmentData.canRecruit
       }
 
+      // Calcular penalidade de recompensa se o jogador perdeu
+      const isPlayerLoser = loser.isPlayer === 1
+      const bountyLost = isPlayerLoser
+        ? Math.floor(bountyChange * GenerationConfig.createLarge().bountyLossFactor / 10000) * 10000
+        : undefined
+
       return {
         winner,
         loser,
@@ -756,6 +763,7 @@ export const useBattleStore = defineStore('battle', {
         opponent: char2,
         experienceGained,
         bountyChange,
+        bountyLost,
         treasuryStole,
         battleLog,
         canShowRecruitment,
@@ -830,7 +838,11 @@ export const useBattleStore = defineStore('battle', {
           true,
         )
 
-        // Atualizar stats do perdedor (pode perder experiência ou bounty)
+        // Atualizar stats do perdedor — se for o jogador, aplica penalidade de recompensa
+        const loserBountyDelta = result.loser.isPlayer === 1
+          ? -(Math.floor(result.bountyChange * GenerationConfig.createLarge().bountyLossFactor / 10000) * 10000)
+          : 0
+
         await this.updateCharacterAfterBattle(
           result.loser,
           Math.ceil(
@@ -838,7 +850,7 @@ export const useBattleStore = defineStore('battle', {
               GameLogic.randomBetween(1, GenerationConfig.createEpic().lossGain)) /
               100,
           ),
-          0,
+          loserBountyDelta,
           false,
         )
       } catch (error) {
@@ -976,9 +988,11 @@ export const useBattleStore = defineStore('battle', {
         updates.experience = newExp
       }
 
-      // ✅ Atualizar bounty (apenas para piratas vencedores)
+      // ✅ Atualizar bounty: vencedor ganha, jogador perdedor perde (mín 0)
       if (isWinner && bountyGained > 0) {
         updates.bounty = character.bounty + bountyGained
+      } else if (!isWinner && bountyGained < 0) {
+        updates.bounty = Math.max(0, character.bounty + bountyGained)
       }
 
       return updates

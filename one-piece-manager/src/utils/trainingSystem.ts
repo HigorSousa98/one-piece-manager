@@ -1,6 +1,7 @@
 // src/utils/trainingSystem.ts
 import { db } from './database'
 import { GameLogic } from './gameLogic'
+import { GenerationConfig } from './generationConfig'
 import { useBattleStore } from '@/stores/battleStore'
 import type { Task, Character, Crew } from './database'
 
@@ -140,8 +141,9 @@ export class TrainingSystem {
       // Multiplicar pela intensidade
       const intensityExp = baseExp * intensity
 
-      // Aplicar multiplicador aleatório (1-5)
-      const randomMultiplier = Math.floor(Math.random() * 5) + 1
+      // Aplicar multiplicador aleatório (1–trainingExpRandomMax)
+      const randomMax = GenerationConfig.createLarge().trainingExpRandomMax
+      const randomMultiplier = Math.floor(Math.random() * randomMax) + 1
 
       const finalExp = intensityExp * randomMultiplier
 

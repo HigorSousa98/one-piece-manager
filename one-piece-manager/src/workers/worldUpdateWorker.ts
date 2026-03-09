@@ -752,7 +752,7 @@ export class UltraOptimizedWorldUpdateWorker {
 
       // ✅ CALCULAR RECOMPENSAS
       const expGain = GameLogic.calculateExperienceGain(winnerCaptain, loserCaptain)
-      const bountyGain = GameLogic.calculateBountyGain(winnerCaptain, loserCaptain)
+      const bountyGain = Math.round(GameLogic.calculateBountyGain(winnerCaptain, loserCaptain) * GenerationConfig.createLarge().simulationBountyMultiplier)
 
       // ✅ PROCESSAR UPDATES EM BATCH
       const captainUpdates = await this.processCaptainUpdates(
@@ -2149,9 +2149,14 @@ private weightedRandomSelection(options: { island: Island; weight: number }[]): 
     try {
       const { InventorySystem } = await import('../utils/inventorySystem')
 
-      const npcCrews = this.cache.crews.length > 0
-        ? this.cache.crews.filter((c) => c.type !== 'Player')
-        : (await db.crews.toArray()).filter((c) => c.type !== 'Player')
+      // Excluir crew do jogador verificando se o capitão tem isPlayer === 1
+      const playerChar = await db.characters.where('isPlayer').equals(1).first()
+      const playerCrewId = playerChar?.crewId ?? -1
+
+      const allCrews = this.cache.crews.length > 0
+        ? this.cache.crews
+        : await db.crews.toArray()
+      const npcCrews = allCrews.filter((c) => c.id !== playerCrewId)
 
       const buyPromises: Promise<void>[] = []
 

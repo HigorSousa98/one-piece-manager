@@ -117,7 +117,7 @@ export class WorldSimulator {
 
       // Calcular recompensas
       const expGain = GameLogic.calculateExperienceGain(winner, loser)
-      const bountyGain = GameLogic.calculateBountyGain(winner, loser)
+      const bountyGain = Math.round(GameLogic.calculateBountyGain(winner, loser) * GenerationConfig.createLarge().simulationBountyMultiplier)
 
       // Aplicar recompensas
       const oldLevel = winner.level

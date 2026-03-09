@@ -41,6 +41,9 @@ export interface GenerationSettings {
   seaRequirements: Array<{ minLevel: number; minBounty: number }>
   eventChancePerIsland: number   // 0.0–1.0, chance of spawning an event per island per world cycle
   eventIslandSampleSize: number  // how many islands are sampled per world cycle
+  bountyLossFactor: number       // 0.0–1.0, fraction of potential bounty gain deducted when player loses
+  simulationBountyMultiplier: number // multiplier applied to NPC bounty gains in world simulation (keeps bounties alive)
+  trainingExpRandomMax: number   // max value of training random multiplier (1..N), lower = more predictable progression
 }
 
 export class GenerationConfig {
@@ -91,6 +94,9 @@ export class GenerationConfig {
     ],
     eventChancePerIsland: 0.20,  // 20% chance per sampled island per cycle
     eventIslandSampleSize: 30,   // islands sampled per cycle
+    bountyLossFactor: 0.50,      // player loses 50% of would-be gain on defeat
+    simulationBountyMultiplier: 3,  // NPCs get 2x exp in simulation for a livelier world
+    trainingExpRandomMax: 3,     // training random factor 1–3 (was 1–5)
   }
 
   // 🎮 CONFIGURAÇÕES PREDEFINIDAS
@@ -294,6 +300,15 @@ export class GenerationConfig {
   }
   get eventIslandSampleSize(): number {
     return this.config.eventIslandSampleSize
+  }
+  get bountyLossFactor(): number {
+    return this.config.bountyLossFactor
+  }
+  get simulationBountyMultiplier(): number {
+    return this.config.simulationBountyMultiplier
+  }
+  get trainingExpRandomMax(): number {
+    return this.config.trainingExpRandomMax
   }
   // 📊 GETTERS CALCULADOS
   get totalCharacters(): number {

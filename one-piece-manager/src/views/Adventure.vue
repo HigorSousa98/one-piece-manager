@@ -468,6 +468,21 @@
                 </v-row>
               </div>
 
+              <!-- Penalidade de recompensa (jogador perdeu) -->
+              <div v-if="lastBattleResult.loser.id === playerCharacter?.id && lastBattleResult.bountyLost && lastBattleResult.bountyLost > 0">
+                <v-divider class="my-4"></v-divider>
+                <div class="text-h6 mb-3" style="color:#EF5350">⚠️ Penalidade de Derrota:</div>
+                <v-row>
+                  <v-col cols="12" md="4">
+                    <div class="text-center">
+                      <v-icon size="30" class="mb-2" color="error">mdi-trending-down</v-icon>
+                      <div class="text-h6" style="color:#EF5350">-{{ formatBounty(lastBattleResult.bountyLost) }}</div>
+                      <div class="text-body-2">Bounty Perdido</div>
+                    </div>
+                  </v-col>
+                </v-row>
+              </div>
+
               <!-- 🗡️ ITENS ROUBADOS -->
               <div v-if="theftResult && theftResult.stolenItems.length > 0">
                 <v-divider class="my-4"></v-divider>

@@ -641,8 +641,8 @@ export class InventorySystem {
 
   // ── Loja ───────────────────────────────────────────────────────────────────
 
-  /** Intervalo de atualização global de todas as lojas (1 hora). */
-  static readonly STORE_REFRESH_INTERVAL = 60 * 60 * 1000
+  /** Intervalo de atualização global de todas as lojas (10 minutos). */
+  static readonly STORE_REFRESH_INTERVAL = 10 * 60 * 1000
 
   private static readonly GLOBAL_STORE_REFRESH_KEY = 'storeGlobalLastRefresh'
 

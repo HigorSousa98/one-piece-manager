@@ -119,8 +119,8 @@
         <!-- Bônus de equipamento -->
         <div v-if="hasEquipmentBonuses" class="cm-equip-bonus-row mt-2">
           <v-icon size="13" color="#D4AF37" class="mr-1">mdi-sword-cross</v-icon>
-          <span class="cm-equip-bonus-label">Equipamentos</span>
-          <span class="cm-equip-bonus-power">+{{ calculatePower(member) - GameLogic.calculatePower(member, devilFruit) }}</span>
+          <span class="cm-equip-bonus-label">Poder (equipamentos)</span>
+          <span class="cm-equip-bonus-power">+{{ PowerCalculationSystem.calculatePowerBreakdown(member, props.devilFruit, props.itemBonuses).equipment }} pwr</span>
         </div>
 
         <!-- HAKI STATS (se tiver) -->
@@ -254,6 +254,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { GameLogic } from '@/utils/gameLogic'
+import { PowerCalculationSystem } from '@/utils/powerCalculationSystem'
 import type { Character, DevilFruit } from '@/utils/database'
 import CharacterBountyDisplay from '@/components/CharacterBountyDisplay.vue'
 import WantedPoster from '@/components/WantedPoster.vue'
