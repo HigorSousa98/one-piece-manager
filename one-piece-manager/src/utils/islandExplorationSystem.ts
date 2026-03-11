@@ -491,8 +491,8 @@ export class IslandExplorationSystem {
           throw new Error(`Style Combat não encontrado para o personagem ${character.name}`)
         }
 
-        // Aumentar stats no level up
-        const statIncrease = GameLogic.increaseStats(character, newLevel, styleCombat, devilFruit)
+        const updatedChar = { ...character, level: newLevel, experience: remainingExp }
+        const statIncrease = GameLogic.increaseStats(updatedChar, newLevel, styleCombat, devilFruit)
 
         updates.level = newLevel
         updates.experience = remainingExp

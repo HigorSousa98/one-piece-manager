@@ -1071,6 +1071,17 @@ const onTaskCompleted = async () => {
 }
 
 const winChance = ref(0)
+const playerItemBonuses = ref<Record<string, number>>({})
+
+watch(
+  playerCharacter,
+  async (char) => {
+    if (char) {
+      playerItemBonuses.value = (await InventorySystem.calculateItemBonuses(char)) as Record<string, number>
+    }
+  },
+  { immediate: true },
+)
 
 watchEffect(async () => {
   if (!playerCharacter.value || !currentEncounter.value) {
@@ -1079,15 +1090,24 @@ watchEffect(async () => {
   }
 
   try {
-    
+    const opponent = currentEncounter.value.opponent
+    const opponentDevilFruit = devilFruit(opponent.devilFruitId) ?? null
+    const opponentItemBonuses = await InventorySystem.calculateItemBonuses(opponent)
+
     const playerCrewHelp = await battleStore.calculateCrewHelp(playerCharacter.value, null)
-    const opponentCrewHelp = await battleStore.calculateCrewHelp(currentEncounter.value.opponent, playerCharacter.value)
-    const playerPower = GameLogic.calculatePower(playerCharacter.value) + playerCrewHelp
-    const opponentPower = GameLogic.calculatePower(currentEncounter.value.opponent) + opponentCrewHelp
-    
+    const opponentCrewHelp = await battleStore.calculateCrewHelp(opponent, playerCharacter.value)
+
+    const playerPower =
+      GameLogic.calculatePower(
+        playerCharacter.value,
+        devilFruit(playerCharacter.value.devilFruitId) ?? null,
+        playerItemBonuses.value as any,
+      ) + playerCrewHelp
+    const opponentPower =
+      GameLogic.calculatePower(opponent, opponentDevilFruit, opponentItemBonuses) + opponentCrewHelp
+
     const chance = (playerPower / (playerPower + opponentPower)) * 100
     winChance.value = Math.round(chance)
-    
   } catch (error) {
     console.error('❌ Erro ao calcular chance de vitória:', error)
     winChance.value = 0
@@ -1135,17 +1155,10 @@ const startBattle = async () => {
   theftResult.value = null
 
   try {
-    // Aplicar bônus de itens equipados ao personagem do jogador
-    const itemBonuses = await InventorySystem.calculateItemBonuses(playerCharacter.value)
-    const playerWithItems = {
-      ...playerCharacter.value,
-      stats: InventorySystem.applyBonusesToStats(playerCharacter.value.stats, itemBonuses),
-    }
-
     const specialBounty = currentEncounter.value.specialReward && currentEncounter.value.specialReward.type === 'bounty' ? currentEncounter.value.specialReward.value : 0
     const specialExp = currentEncounter.value.specialReward && currentEncounter.value.specialReward.type === 'experience' ? currentEncounter.value.specialReward.value : 0
     const result = await battleStore.simulateBattle(
-      playerWithItems,
+      playerCharacter.value,
       currentEncounter.value.opponent,
       specialBounty,
       specialExp
@@ -1259,8 +1272,9 @@ const viewCrew = () => {
 
 // 🎨 FUNÇÕES DE CORES MELHORADAS
 const calculatePower = (character: Character): number => {
-  const df = devilFruit(character.devilFruitId)
-  return GameLogic.calculatePower(character, df)
+  const df = devilFruit(character.devilFruitId) ?? null
+  const isPlayer = character.id === playerCharacter.value?.id
+  return GameLogic.calculatePower(character, df, isPlayer ? (playerItemBonuses.value as any) : undefined)
 }
 
 const getTypeColor = (type: string): string => {

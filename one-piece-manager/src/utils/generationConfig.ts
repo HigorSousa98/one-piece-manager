@@ -95,7 +95,7 @@ export class GenerationConfig {
     eventChancePerIsland: 0.20,  // 20% chance per sampled island per cycle
     eventIslandSampleSize: 30,   // islands sampled per cycle
     bountyLossFactor: 0.50,      // player loses 50% of would-be gain on defeat
-    simulationBountyMultiplier: 3,  // NPCs get 2x exp in simulation for a livelier world
+    simulationBountyMultiplier: 1,  // NPCs get 2x exp in simulation for a livelier world
     trainingExpRandomMax: 3,     // training random factor 1–3 (was 1–5)
   }
 

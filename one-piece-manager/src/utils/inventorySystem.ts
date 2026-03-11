@@ -793,9 +793,13 @@ export class InventorySystem {
 
     await db.crews.update(crewId, { treasury: crew.treasury - storeEntry.price })
 
-    // Mover instância para inventário e remover da loja
-    await db.inventories.add({ crewId, itemId: storeEntry.itemId, acquiredAt: new Date() })
-    await db.stores.delete(storeId)
+    // Criar cópia do item para o comprador (loja mantém o original intacto)
+    const { id: _drop, ...itemData } = item
+    const newItemId = await db.items.add({
+      ...itemData,
+      templateId: item.templateId ?? item.id!,
+    })
+    await db.inventories.add({ crewId, itemId: newItemId, acquiredAt: new Date() })
 
     return { success: true, message: `${item.name} comprado para o baú da tripulação!` }
   }

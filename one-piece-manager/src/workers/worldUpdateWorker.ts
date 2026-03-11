@@ -931,8 +931,6 @@ export class UltraOptimizedWorldUpdateWorker {
       }
 
       const updatedCharacter = { ...character, level: newLevel, experience: remainingExp }
-      updatedCharacter.stats = GameLogic.calculateStatIncrease(updatedCharacter)
-
       const statIncrease = GameLogic.increaseStats(
         updatedCharacter,
         newLevel,
@@ -1001,8 +999,6 @@ export class UltraOptimizedWorldUpdateWorker {
               level: newLevelMember,
               experience: remainingExpMember,
             }
-            updatedMember.stats = GameLogic.calculateStatIncrease(updatedMember)
-
             const statIncreaseMember = GameLogic.increaseStats(
               updatedMember,
               newLevelMember,
@@ -1316,7 +1312,11 @@ export class UltraOptimizedWorldUpdateWorker {
                 ? GameLogic.getMaxAccessibleDifficulty(captain, seaRequirements)
                 : 5 // East Blue apenas se não encontrar capitão
 
-              const destinationDecision = await this.selectDestinationIsland(currentIsland, percent, maxDifficulty)
+              // Mínimo: início do mar atual do capitão (impede retorno a ilhas muito fáceis)
+              const currentSea = GameLogic.getSea(currentIsland.difficulty)
+              const minDifficulty = currentSea.range[0]
+
+              const destinationDecision = await this.selectDestinationIsland(currentIsland, percent, maxDifficulty, minDifficulty)
 
               if (destinationDecision) {
                 this.cache.crewsUsed.add(crew.id)
@@ -1390,11 +1390,15 @@ export class UltraOptimizedWorldUpdateWorker {
   currentIsland: Island,
   percent: number,
   maxDifficulty: number = 30,
+  minDifficulty: number = 1,
 ): Promise<{ island: Island; type: 'easier' | 'same' | 'harder' } | null> {
   try {
-    // Filtrar apenas ilhas acessíveis pelo capitão (respeitar requisitos de mar)
+    // Filtrar ilhas dentro do intervalo de dificuldade do capitão (sem retornar a mares já superados)
     const availableIslands = this.cache.islands.filter(
-      (island) => island.id !== currentIsland.id && island.difficulty <= maxDifficulty,
+      (island) =>
+        island.id !== currentIsland.id &&
+        island.difficulty >= minDifficulty &&
+        island.difficulty <= maxDifficulty,
     )
 
     if (availableIslands.length === 0) return null

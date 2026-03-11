@@ -330,7 +330,12 @@
                 <v-icon size="14" color="#B0BFDA">
                   {{ member.character.isPlayer ? 'mdi-crown' : 'mdi-account' }}
                 </v-icon>
-                <div class="inv-crew-name">{{ member.character.name }}</div>
+                <div class="inv-crew-info">
+                  <div class="inv-crew-name">{{ member.character.name }}</div>
+                  <div class="inv-crew-style">
+                    {{ (styleCombatMap.get(member.character.styleCombatId) ?? '').split(' - ')[1] ?? styleCombatMap.get(member.character.styleCombatId) ?? '' }}
+                  </div>
+                </div>
                 <div class="inv-crew-level">Lv{{ member.character.level }}</div>
               </div>
             </div>
@@ -1717,6 +1722,12 @@ watch(playerCharacter, loadAll)
   background: rgba(212,175,55,0.07) !important;
 }
 
+.inv-crew-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .inv-crew-name {
   font-size: 0.78rem;
   color: #F0E6D8;
@@ -1724,6 +1735,14 @@ watch(playerCharacter, loadAll)
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.inv-crew-style {
+  font-size: 0.65rem;
+  color: #8899BB;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .inv-crew-level {

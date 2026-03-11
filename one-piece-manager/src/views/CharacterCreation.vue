@@ -71,7 +71,7 @@
                           <span class="text-caption" style="min-width:80px">{{ row.label }}</span>
                           <v-progress-linear
                             :model-value="row.value"
-                            :max="100"
+                            :max="10"
                             :color="row.color"
                             height="6"
                             rounded

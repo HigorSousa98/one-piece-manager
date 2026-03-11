@@ -189,14 +189,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: 0,
         stats: {
-          attack: combatStyle.attack * 2,
-          defense: combatStyle.defense * 2,
-          speed: combatStyle.speed * 2,
-          intelligence: combatStyle.intelligence * 2,
-          skill: combatStyle.skill * 2,
-          armHaki: 0,
-          obsHaki: 0,
-          kingHaki: 0,
+          ...GameLogic.generateStats(1, combatStyle.name, 1),
           devilFruit: characterData.devilFruitId ? 5 : 0,
         },
         styleCombatId: combatStyle.id!, // ✅ PROPRIEDADE FALTANTE
@@ -311,8 +304,9 @@ export class GameDataGenerator {
 
     for (let i = 0; i < this.config.totalPirates; i++) {
       const level = GameLogic.generate(1, 100, 'weighted', 'medium')
-      const styleCombatId =
-        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
+      const styleCombat =
+        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
+      const styleCombatId = styleCombat.id || 0
 
       const potentialToHaveKngHaki = Math.random()
 
@@ -322,11 +316,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'Pirate')),
         type: 'Pirate',
-        stats: GameLogic.generateStats(
-          level,
-          allStyleCombat.find((st) => st.id == styleCombatId).name,
-          potentialToHaveKngHaki,
-        ),
+        stats: GameLogic.buildStatsToLevel(level, styleCombat, null, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0, // Será atribuído depois
         potentialToHaveKngHaki: potentialToHaveKngHaki,
@@ -352,8 +342,9 @@ export class GameDataGenerator {
 
     for (let i = 0; i < this.config.totalBountyHunter; i++) {
       const level = GameLogic.generate(1, 100, 'weighted', 'medium')
-      const styleCombatId =
-        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
+      const styleCombat =
+        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
+      const styleCombatId = styleCombat.id || 0
       const potentialToHaveKngHaki = Math.random()
 
       bountyHunters.push({
@@ -362,11 +353,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'BountyHunter')),
         type: 'BountyHunter',
-        stats: GameLogic.generateStats(
-          level,
-          allStyleCombat.find((st) => st.id == styleCombatId).name,
-          potentialToHaveKngHaki,
-        ),
+        stats: GameLogic.buildStatsToLevel(level, styleCombat, null, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0, // Será atribuído depois
         potentialToHaveKngHaki: potentialToHaveKngHaki,
@@ -397,8 +384,9 @@ export class GameDataGenerator {
 
     for (let i = 0; i < this.config.totalMarines; i++) {
       const level = GameLogic.generate(1, 100, 'weighted', 'medium')
-      const styleCombatId =
-        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
+      const styleCombat =
+        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
+      const styleCombatId = styleCombat.id || 0
       const potentialToHaveKngHaki = Math.random()
 
       marines.push({
@@ -407,11 +395,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'Marine')),
         type: 'Marine',
-        stats: GameLogic.generateStats(
-          level,
-          allStyleCombat.find((st) => st.id == styleCombatId).name,
-          potentialToHaveKngHaki,
-        ),
+        stats: GameLogic.buildStatsToLevel(level, styleCombat, null, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0,
         potentialToHaveKngHaki: potentialToHaveKngHaki,
@@ -437,8 +421,9 @@ export class GameDataGenerator {
 
     for (let i = 0; i < this.config.totalGovernment; i++) {
       const level = GameLogic.generate(1, 100, 'weighted', 'medium')
-      const styleCombatId =
-        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
+      const styleCombat =
+        allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
+      const styleCombatId = styleCombat.id || 0
       const potentialToHaveKngHaki = Math.random()
 
       government.push({
@@ -447,11 +432,7 @@ export class GameDataGenerator {
         experience: 0,
         bounty: GameLogic.adjustBounty(this.calculateBounty(level, 'Government')),
         type: 'Government',
-        stats: GameLogic.generateStats(
-          level,
-          allStyleCombat.find((st) => st.id == styleCombatId).name,
-          potentialToHaveKngHaki,
-        ),
+        stats: GameLogic.buildStatsToLevel(level, styleCombat, null, potentialToHaveKngHaki),
         styleCombatId,
         devilFruitId: 0,
         potentialToHaveKngHaki: potentialToHaveKngHaki,

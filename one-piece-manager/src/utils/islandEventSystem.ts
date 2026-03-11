@@ -234,6 +234,9 @@ export class IslandEventSystem {
 
     if (victory) {
       battleLog.push(`🎉 Vitória! A Marinha foi repelida!`)
+      // Drop de item: comum a incomum (raridade ≤ 40), chance 60%
+      const item = await this.rollItemDrop(40, 0.6)
+      if (item) battleLog.push(`🎁 Item encontrado entre os destroços: ${item.name}!`)
       return {
         success: true,
         message: 'Você repeliu a invasão da Marinha!',
@@ -241,6 +244,7 @@ export class IslandEventSystem {
           experience: event.data.rewards.experience ?? 0,
           bounty: event.data.rewards.bounty ?? 0,
           reputation: event.data.rewards.reputation ?? 0,
+          item,
         },
         battleLog,
       }
@@ -289,6 +293,10 @@ export class IslandEventSystem {
     const victory = wins >= 2
     battleLog.push(victory ? `🏆 Campeão do Festival! (${wins}/3)` : `😔 Eliminado no torneio (${wins}/3)`)
 
+    // Drop de item na vitória: comum a raro (raridade ≤ 60), chance 50%
+    const item = victory ? await this.rollItemDrop(60, 0.5) : undefined
+    if (item) battleLog.push(`🏅 Prêmio do torneio: ${item.name}!`)
+
     return {
       success: victory,
       message: victory
@@ -299,6 +307,7 @@ export class IslandEventSystem {
             experience: event.data.rewards.experience ?? 0,
             bounty: event.data.rewards.bounty ?? 0,
             reputation: event.data.rewards.reputation ?? 0,
+            item,
           }
         : {
             experience: Math.floor((event.data.rewards.experience ?? 0) * 0.3 * wins),
@@ -469,6 +478,20 @@ export class IslandEventSystem {
     }
   }
 
+  /**
+   * Tenta dropar um item aleatório com raridade até maxRarity (escala 0-100).
+   * dropChance: probabilidade de haver drop (0-1).
+   */
+  private static async rollItemDrop(
+    maxRarity: number,
+    dropChance: number,
+  ): Promise<Item | undefined> {
+    if (Math.random() > dropChance) return undefined
+    const candidates = await db.items.filter((i) => i.rarity <= maxRarity).toArray()
+    if (candidates.length === 0) return undefined
+    return candidates[Math.floor(Math.random() * candidates.length)]
+  }
+
   private static async applyRewards(
     character: Character,
     crewId: number,
@@ -476,20 +499,42 @@ export class IslandEventSystem {
   ): Promise<void> {
     const updates: Promise<any>[] = []
 
-    if (rewards.experience > 0 && character.id) {
-      updates.push(
-        db.characters.update(character.id, {
-          experience: (character.experience || 0) + rewards.experience,
-        }),
-      )
-    }
+    if (character.id) {
+      const charUpdates: Partial<Character> = {}
 
-    if (rewards.bounty > 0 && character.id) {
-      updates.push(
-        db.characters.update(character.id, {
-          bounty: (character.bounty || 0) + rewards.bounty,
-        }),
-      )
+      if (rewards.experience > 0) {
+        const newExp = (character.experience || 0) + rewards.experience
+        const tempChar = { ...character, experience: newExp }
+        const levelCheck = GameLogic.checkLevelUp(tempChar)
+
+        if (levelCheck.shouldLevelUp) {
+          const newLevel = levelCheck.newLevel!
+          const remainingExp = newExp - levelCheck.expNeeded!
+          const [devilFruit, styleCombat] = await Promise.all([
+            character.devilFruitId ? db.devilFruits.get(character.devilFruitId) : Promise.resolve(null),
+            db.styleCombats.get(character.styleCombatId),
+          ])
+          if (styleCombat) {
+            const updatedChar = { ...character, level: newLevel, experience: remainingExp }
+            const statIncrease = GameLogic.increaseStats(updatedChar, newLevel, styleCombat, devilFruit ?? null)
+            charUpdates.level = newLevel
+            charUpdates.experience = remainingExp
+            charUpdates.stats = { ...character.stats, ...statIncrease }
+          } else {
+            charUpdates.experience = newExp
+          }
+        } else {
+          charUpdates.experience = newExp
+        }
+      }
+
+      if (rewards.bounty > 0) {
+        charUpdates.bounty = (character.bounty || 0) + rewards.bounty
+      }
+
+      if (Object.keys(charUpdates).length > 0) {
+        updates.push(db.characters.update(character.id, charUpdates))
+      }
     }
 
     if (rewards.reputation !== 0) {

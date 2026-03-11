@@ -137,7 +137,14 @@ export class WorldSimulator {
         winner.experience -= expNeeded
         levelUp = true
 
-        kingHakiAwakened = this.applyLevelUpBonus(winner)
+        const styleCombat = await db.styleCombats.get(winner.styleCombatId)
+        const devilFruit = winner.devilFruitId ? await db.devilFruits.get(winner.devilFruitId) : null
+        if (styleCombat) {
+          const statIncrease = GameLogic.increaseStats(winner, winner.level, styleCombat, devilFruit ?? null)
+          winner.stats = { ...winner.stats, ...statIncrease }
+        } else {
+          kingHakiAwakened = this.applyLevelUpBonus(winner)
+        }
       }
 
       // Verificar mudanças importantes
@@ -443,7 +450,9 @@ export class WorldSimulator {
     try {
       const { InventorySystem } = await import('./inventorySystem')
 
-      const npcCrews = await db.crews.filter((c) => c.type !== 'Player').toArray()
+      const playerChar = await db.characters.where('isPlayer').equals(1).first()
+      const playerCrewId = playerChar?.crewId ?? -1
+      const npcCrews = (await db.crews.toArray()).filter((c) => c.id !== playerCrewId)
 
       for (const crew of npcCrews) {
         if (!crew.currentIsland || !crew.id) continue

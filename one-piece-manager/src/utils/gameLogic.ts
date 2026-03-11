@@ -957,59 +957,62 @@ export class GameLogic {
     style: StyleCombat,
     fruit: DevilFruit | null = null,
   ): Partial<Character['stats']> {
-    const totalPoints = newLevel
-    const styleMultipliers = this.mockStyleCombact().find((st) => st.name == style.name)
-    let statsPoints = 0
-    let hakiPoints = 0
+    const pointsPerLevel = (newLevel + 1) + Math.floor(Math.random() * 5) // (level+1) + 0-4 pts
 
-    for (let stat in styleMultipliers) {
-      if (['armHaki', 'obsHaki'].includes(stat)) {
-        hakiPoints += styleMultipliers[stat]
-      } else if (stat != 'name') {
-        statsPoints += styleMultipliers[stat]
-      }
+    // Usa o nome do estilo para obter as prioridades corretas (não character.type que é 'Pirate'/etc)
+    const typePriorities = this.getTypePriorities(style.name)
+
+    // Stats elegíveis — garante que devilFruit entre no pool se o personagem tem uma fruta
+    const eligibleStats = this.getEligibleStats(character)
+    if (fruit && !eligibleStats.includes('devilFruit')) {
+      eligibleStats.push('devilFruit')
     }
 
-    var statsAvailable = statsPoints
-    var unlockHaki = false
-    if (newLevel >= 50) {
-      statsAvailable += hakiPoints
-      if (character.potentialToHaveKngHaki > GenerationConfig.createEpic().allowKingHakiFor) {
-        if (
-          (Math.random() >
-            (1 - character.potentialToHaveKngHaki) *
-              (1 / GenerationConfig.createEpic().allowKingHakiFor) &&
-            character.stats.kingHaki == 0) ||
-          character.stats.kingHaki > 0
-        ) {
-          unlockHaki = true
-          statsAvailable += 1
-        }
-      }
+    const distributedPoints = this.distributePointsRandomly(pointsPerLevel, eligibleStats, typePriorities)
+
+    const c = character.stats
+    return {
+      attack:       c.attack       + (distributedPoints.attack       || 0),
+      defense:      c.defense      + (distributedPoints.defense      || 0),
+      speed:        c.speed        + (distributedPoints.speed        || 0),
+      intelligence: c.intelligence + (distributedPoints.intelligence || 0),
+      skill:        c.skill        + (distributedPoints.skill        || 0),
+      armHaki:      c.armHaki      + (distributedPoints.armHaki      || 0),
+      obsHaki:      c.obsHaki      + (distributedPoints.obsHaki      || 0),
+      kingHaki:     c.kingHaki     + (distributedPoints.kingHaki     || 0),
+      devilFruit:   c.devilFruit   + (distributedPoints.devilFruit   || 0),
     }
-    if (fruit) {
-      statsAvailable += 1
+  }
+
+  /**
+   * Constrói os stats de um personagem simulando level-ups do nível 1 até targetLevel.
+   * Garante que NPCs gerados com level > 1 tenham o mesmo histórico de progressão
+   * que um personagem que tivesse levado up naturalmente.
+   */
+  static buildStatsToLevel(
+    targetLevel: number,
+    style: StyleCombat,
+    fruit: DevilFruit | null,
+    potentialToHaveKngHaki: number,
+    startDevilFruitPts: number = 0,
+  ): Character['stats'] {
+    // Stats base no nível 1
+    let stats: Character['stats'] = {
+      ...this.generateStats(1, style.name, potentialToHaveKngHaki),
+      devilFruit: startDevilFruitPts,
     }
 
-    const factor = totalPoints / statsAvailable
+    if (targetLevel <= 1) return stats
 
-    const stats: Partial<Character['stats']> = {}
-
-    stats.attack = character.stats.attack + Math.ceil(style.attack * factor)
-    stats.defense = character.stats.defense + Math.ceil(style.defense * factor)
-    stats.speed = character.stats.speed + Math.ceil(style.speed * factor)
-    stats.intelligence = character.stats.intelligence + Math.ceil(style.intelligence * factor)
-    stats.skill = character.stats.skill + Math.ceil(style.skill * factor)
-    if (newLevel >= 50) {
-      stats.armHaki = character.stats.armHaki + Math.ceil(style.armHaki * factor)
-      stats.obsHaki = character.stats.obsHaki + Math.ceil(style.obsHaki * factor)
-      if (unlockHaki) {
-        stats.kingHaki =
-          character.stats.kingHaki + Math.ceil(character.potentialToHaveKngHaki * factor)
-      }
-    }
-    if (fruit) {
-      stats.devilFruit = character.stats.devilFruit + Math.ceil(factor)
+    // Simula cada level-up de 2 até targetLevel
+    for (let lvl = 2; lvl <= targetLevel; lvl++) {
+      const tempChar = {
+        stats,
+        level: lvl,
+        devilFruitId: fruit?.id ?? null,
+        potentialToHaveKngHaki,
+      } as Character
+      stats = this.increaseStats(tempChar, lvl, style, fruit) as Character['stats']
     }
 
     return stats

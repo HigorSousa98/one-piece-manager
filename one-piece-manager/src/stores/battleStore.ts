@@ -2,12 +2,12 @@
 import { defineStore } from 'pinia'
 import { GameLogic } from '@/utils/gameLogic'
 import { BattleNarrator } from '@/utils/battleNarrator'
-import { WorldSimulator } from '@/utils/worldSimulator'
 import { AdventureSystem } from '@/utils/adventureSystem'
 import { RecruitmentSystem, type RecruitmentAttempt } from '@/utils/recruitmentSystem'
 import { db, Character, Battle, DevilFruit, StyleCombat, Crew } from '@/utils/database'
 import { useCharacterStore } from '@/stores/characterStore'
 import { GenerationConfig } from '@/utils/generationConfig'
+import { InventorySystem } from '@/utils/inventorySystem'
 import { CrewNameGenerator } from '@/data/crewNames'
 import { ShipNameGenerator } from '@/data/shipNameGenerator'
 
@@ -66,13 +66,18 @@ export const useBattleStore = defineStore('battle', {
           ? await db.devilFruits.get(char2.devilFruitId)
           : null
 
-        // Buscar Devil Fruits dos personagens (se tiverem)
-        const char1StyleCombat = await db.styleCombats.get(char1.styleCombatId)
-        const char2StyleCombat = await db.styleCombats.get(char2.styleCombatId)
+        // Buscar Style Combats e bônus de itens em paralelo
+        const [char1StyleCombat, char2StyleCombat, char1ItemBonuses, char2ItemBonuses] =
+          await Promise.all([
+            db.styleCombats.get(char1.styleCombatId),
+            db.styleCombats.get(char2.styleCombatId),
+            InventorySystem.calculateItemBonuses(char1),
+            InventorySystem.calculateItemBonuses(char2),
+          ])
 
-        // Calcular poder com frutas
-        const attackerPower = GameLogic.calculatePower(char1, char1DevilFruit)
-        const defenderPower = GameLogic.calculatePower(char2, char2DevilFruit)
+        // Calcular poder com frutas e itens
+        const attackerPower = GameLogic.calculatePower(char1, char1DevilFruit, char1ItemBonuses)
+        const defenderPower = GameLogic.calculatePower(char2, char2DevilFruit, char2ItemBonuses)
 
         const attackerCrewHelp = withoutHelp ? 0 : await this.calculateCrewHelp(char1, null)
         const defenderCrewHelp = withoutHelp ? 0 : await this.calculateCrewHelp(char2, char1)
@@ -664,11 +669,16 @@ export const useBattleStore = defineStore('battle', {
 
       const crewHelpFactor = GenerationConfig.createEpic().regularCrewHelp
 
-      for (const member of eligibleMembers) {
+      const memberItemBonuses = await Promise.all(
+        eligibleMembers.map((m) => InventorySystem.calculateItemBonuses(m)),
+      )
+
+      for (let i = 0; i < eligibleMembers.length; i++) {
+        const member = eligibleMembers[i]
         const devilFruit = member.devilFruitId
           ? (devilFruitMap.get(member.devilFruitId) ?? null)
           : null
-        crewHelp += GameLogic.calculatePower(member, devilFruit) * crewHelpFactor
+        crewHelp += GameLogic.calculatePower(member, devilFruit, memberItemBonuses[i]) * crewHelpFactor
       }
 
       return Math.round(crewHelp)
@@ -969,8 +979,6 @@ export const useBattleStore = defineStore('battle', {
           experience: remainingExp,
         }
 
-        updatedCharacter.stats = GameLogic.calculateStatIncrease(updatedCharacter)
-
         const statIncrease = GameLogic.increaseStats(
           updatedCharacter,
           newLevel,
@@ -1053,8 +1061,6 @@ export const useBattleStore = defineStore('battle', {
               experience: remainingExpMember,
             }
 
-            updatedMember.stats = GameLogic.calculateStatIncrease(updatedMember)
-
             const statIncreaseMember = GameLogic.increaseStats(
               updatedMember,
               newLevelMember,
@@ -1082,6 +1088,15 @@ export const useBattleStore = defineStore('battle', {
         } else {
           // ✅ Diminuir loyalty por derrota
           updates.loyalty = Math.max(-100, member.loyalty - (1 + Math.random() * 2)) // -1 a -3
+
+          // ✅ Perda de recompensa por derrota (proporcional ao capitão)
+          if (bountyGained < 0 && member.bounty > 0) {
+            const memberBountyLoss =
+              Math.floor(
+                (Math.abs(bountyGained) * percentage * GenerationConfig.createLarge().bountyLossFactor) / 10000,
+              ) * 10000
+            updates.bounty = Math.max(0, member.bounty - memberBountyLoss)
+          }
         }
 
         return {

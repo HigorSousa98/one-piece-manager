@@ -305,8 +305,11 @@ import { ref, onMounted, computed, reactive, watch, onUnmounted } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import { useCharacterStore } from '@/stores/characterStore'
 import { useWorldStore } from '@/stores/worldStore'
-import { GameLogic } from '@/utils/gameLogic' 
+import { GameLogic } from '@/utils/gameLogic'
 import { BossDetectionSystem } from '@/utils/bossDetectionSystem'
+import { InventorySystem, type StatBonuses } from '@/utils/inventorySystem'
+import { db } from '@/utils/database'
+import type { DevilFruit } from '@/utils/database'
 import CharacterBountyDisplay from './components/CharacterBountyDisplay.vue'
 
 const drawer = ref(true)
@@ -353,9 +356,26 @@ const expForNextLevel = computed(() => {
   return GameLogic.nextLevelUp(playerCharacter.value)
 })
 
+const playerDevilFruit = ref<DevilFruit | null>(null)
+const playerItemBonuses = ref<StatBonuses>({ attack: 0, defense: 0, speed: 0, skill: 0, intelligence: 0 })
+
+watch(
+  playerCharacter,
+  async (char) => {
+    if (!char) return
+    const [df, bonuses] = await Promise.all([
+      char.devilFruitId ? db.devilFruits.get(char.devilFruitId) : Promise.resolve(null),
+      InventorySystem.calculateItemBonuses(char),
+    ])
+    playerDevilFruit.value = df ?? null
+    playerItemBonuses.value = bonuses
+  },
+  { immediate: true },
+)
+
 const playerPower = computed(() => {
   if (!playerCharacter.value) return 0
-  return GameLogic.calculatePower(playerCharacter.value)
+  return GameLogic.calculatePower(playerCharacter.value, playerDevilFruit.value, playerItemBonuses.value)
 })
 
 // ✅ COMPUTED PARA MOSTRAR BOSS FIGHT

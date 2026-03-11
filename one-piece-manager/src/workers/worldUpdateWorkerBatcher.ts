@@ -576,8 +576,6 @@ async function processCaptainUpdatesOptimized(
     }
 
     const updatedCharacter = { ...character, level: newLevel, experience: remainingExp }
-    updatedCharacter.stats = GameLogic.calculateStatIncrease(updatedCharacter)
-
     const statIncrease = GameLogic.increaseStats(updatedCharacter, newLevel, styleCombat, devilFruit)
 
     updates.level = newLevel
@@ -628,8 +626,6 @@ async function processCrewMemberUpdatesOptimized(
           }
 
           const updatedMember = { ...member, level: newLevelMember, experience: remainingExpMember }
-          updatedMember.stats = GameLogic.calculateStatIncrease(updatedMember)
-
           const statIncreaseMember = GameLogic.increaseStats(updatedMember, newLevelMember, styleCombatMember, devilFruitMember)
 
           updates.level = newLevelMember

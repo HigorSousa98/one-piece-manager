@@ -866,9 +866,11 @@ const filteredAndSortedMembers = computed(() => {
       case 'level_asc':
         return a.level - b.level
       case 'power':
-        return GameLogic.calculatePower(b, devilFruit(b.devilFruitId)) - GameLogic.calculatePower(a, devilFruit(a.devilFruitId))
+        return GameLogic.calculatePower(b, devilFruit(b.devilFruitId), memberItemBonuses.value.get(b.id!) as any)
+             - GameLogic.calculatePower(a, devilFruit(a.devilFruitId), memberItemBonuses.value.get(a.id!) as any)
       case 'power_asc':
-        return GameLogic.calculatePower(a, devilFruit(a.devilFruitId)) - GameLogic.calculatePower(b, devilFruit(b.devilFruitId))
+        return GameLogic.calculatePower(a, devilFruit(a.devilFruitId), memberItemBonuses.value.get(a.id!) as any)
+             - GameLogic.calculatePower(b, devilFruit(b.devilFruitId), memberItemBonuses.value.get(b.id!) as any)
       case 'bounty':
         return b.bounty - a.bounty
       case 'bounty_asc':
@@ -894,17 +896,11 @@ const syncComposableStates = async () => {
   if (!shipUpgradeComposable) return
 
   shipUpgradeTask.value = shipUpgradeComposable.currentTask.value
-  shipIsUpgrading.value = await shipUpgradeComposable.isUpgrading.value
+  shipIsUpgrading.value = shipUpgradeComposable.isUpgrading.value
   shipUpgradeProgress.value = shipUpgradeComposable.upgradeProgress.value
   shipTimeRemaining.value = shipUpgradeComposable.timeRemaining.value
   shipFormattedTimeRemaining.value = shipUpgradeComposable.formattedTimeRemaining.value
   shipCanUpgrade.value = shipUpgradeComposable.canUpgrade.value
-
-  console.log('�� Estados sincronizados:', {
-    isUpgrading: shipIsUpgrading.value,
-    canUpgrade: shipCanUpgrade.value,
-    progress: shipUpgradeProgress.value
-  })
 }
 
 // ✅ INICIALIZAR COMPOSABLE DE SHIP UPGRADE
@@ -931,20 +927,30 @@ const initializeShipUpgradeComposable = async () => {
     // Configurar watchers para sincronização contínua
     watch(
       () => shipUpgradeComposable?.canUpgrade.value,
-      (newValue) => {
-        console.log('🔄 canUpgrade mudou:', newValue)
-        syncComposableStates()
-      },
+      () => syncComposableStates(),
       { immediate: true }
     )
 
     watch(
       () => shipUpgradeComposable?.isUpgrading.value,
-      (newValue) => {
-        console.log('�� isUpgrading mudou:', newValue)
-        syncComposableStates()
-      },
+      () => syncComposableStates(),
       { immediate: true }
+    )
+
+    // Timer: atualizar progresso e tempo restante a cada tick
+    watch(
+      () => shipUpgradeComposable?.upgradeProgress.value,
+      (newValue) => {
+        shipUpgradeProgress.value = newValue ?? 0
+      }
+    )
+
+    watch(
+      () => shipUpgradeComposable?.timeRemaining.value,
+      (newValue) => {
+        shipTimeRemaining.value = newValue ?? 0
+        shipFormattedTimeRemaining.value = shipUpgradeComposable?.formattedTimeRemaining.value ?? '0m 0s'
+      }
     )
 
     composableInitialized.value = true
