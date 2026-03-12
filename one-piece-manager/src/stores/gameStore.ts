@@ -1,6 +1,7 @@
 // src/stores/gameStore.ts
 import { defineStore } from 'pinia'
 import { db } from '@/utils/database'
+import { InventorySystem } from '@/utils/inventorySystem'
 
 export const useGameStore = defineStore('game', {
   state: () => ({
@@ -9,6 +10,7 @@ export const useGameStore = defineStore('game', {
     currentTime: new Date(),
     gameSpeed: 1,
     _gameLoopInterval: null as ReturnType<typeof setInterval> | null,
+    _lastStoreCheck: 0,
   }),
 
   actions: {
@@ -52,6 +54,12 @@ export const useGameStore = defineStore('game', {
       if (this._gameLoopInterval) return
       this._gameLoopInterval = setInterval(() => {
         this.currentTime = new Date()
+        // Background store refresh check — once per minute, fire-and-forget
+        const now = Date.now()
+        if (now - this._lastStoreCheck > 60_000) {
+          this._lastStoreCheck = now
+          InventorySystem.checkAndRefreshAllStores().catch(() => {})
+        }
       }, 1000)
     },
 

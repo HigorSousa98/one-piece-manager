@@ -462,18 +462,55 @@ export class GameLogic {
   // ── Sea Progression ─────────────────────────────────────────────────────
 
   static readonly SEAS = [
-    { name: 'East Blue',  range: [1, 5]   as [number, number], color: '#1565C0', gradient: 'linear-gradient(135deg,#0D47A1,#1E88E5)', icon: 'mdi-waves',   index: 0 },
-    { name: 'Grand Line', range: [6, 14]  as [number, number], color: '#00695C', gradient: 'linear-gradient(135deg,#004D40,#00897B)', icon: 'mdi-compass', index: 1 },
-    { name: 'New World',  range: [15, 24] as [number, number], color: '#B71C1C', gradient: 'linear-gradient(135deg,#7F0000,#E53935)', icon: 'mdi-fire',    index: 2 },
-    { name: 'End Game',   range: [25, 30] as [number, number], color: '#4A148C', gradient: 'linear-gradient(135deg,#1A0050,#7B1FA2)', icon: 'mdi-skull',   index: 3 },
+    { name: 'East Blue',         range: [1,  3]  as [number, number], color: '#1565C0', gradient: 'linear-gradient(135deg,#0D47A1,#1E88E5)', icon: 'mdi-waves',            index: 0 },
+    { name: 'Reverse Mountain',  range: [4,  6]  as [number, number], color: '#0277BD', gradient: 'linear-gradient(135deg,#01579B,#039BE5)', icon: 'mdi-mountain',         index: 1 },
+    { name: 'Paradise',          range: [7,  11] as [number, number], color: '#00695C', gradient: 'linear-gradient(135deg,#004D40,#00897B)', icon: 'mdi-compass',          index: 2 },
+    { name: 'Sabaody',           range: [12, 15] as [number, number], color: '#F57F17', gradient: 'linear-gradient(135deg,#E65100,#FFA000)', icon: 'mdi-approximately-equal', index: 3 },
+    { name: 'New World Entry',   range: [16, 19] as [number, number], color: '#AD1457', gradient: 'linear-gradient(135deg,#880E4F,#E91E63)', icon: 'mdi-wave',             index: 4 },
+    { name: 'New World',         range: [20, 24] as [number, number], color: '#B71C1C', gradient: 'linear-gradient(135deg,#7F0000,#E53935)', icon: 'mdi-fire',             index: 5 },
+    { name: 'Yonkou Territory',  range: [25, 27] as [number, number], color: '#4527A0', gradient: 'linear-gradient(135deg,#1A237E,#7E57C2)', icon: 'mdi-crown',            index: 6 },
+    { name: 'End Game',          range: [28, 30] as [number, number], color: '#212121', gradient: 'linear-gradient(135deg,#000000,#37474F)', icon: 'mdi-skull',            index: 7 },
   ]
 
   static readonly SEA_REQUIREMENTS = [
-    { minLevel: 1,  minBounty: 0 },
-    { minLevel: 20, minBounty: 15_000_000 },
-    { minLevel: 50, minBounty: 400_000_000 },
-    { minLevel: 80, minBounty: 1_500_000_000 },
+    { minLevel: 1,  minBounty: 0 },                //  East Blue
+    { minLevel: 15, minBounty: 5_000_000 },        //  Reverse Mountain
+    { minLevel: 25, minBounty: 50_000_000 },       //  Paradise
+    { minLevel: 40, minBounty: 200_000_000 },      //  Sabaody
+    { minLevel: 55, minBounty: 500_000_000 },      //  New World Entry
+    { minLevel: 65, minBounty: 1_000_000_000 },    //  New World
+    { minLevel: 80, minBounty: 2_000_000_000 },    //  Yonkou Territory
+    { minLevel: 90, minBounty: 5_000_000_000 },    //  End Game
   ]
+
+  /** Ranges de level para cada zona, usados na geração de NPCs. */
+  static readonly ZONE_LEVEL_RANGES = [
+    { min: 1,  max: 14  }, // East Blue
+    { min: 12, max: 24  }, // Reverse Mountain
+    { min: 20, max: 40  }, // Paradise
+    { min: 36, max: 54  }, // Sabaody
+    { min: 50, max: 67  }, // New World Entry
+    { min: 63, max: 80  }, // New World
+    { min: 76, max: 90  }, // Yonkou Territory
+    { min: 86, max: 100 }, // End Game
+  ]
+
+  /**
+   * Gera um level de NPC com distribuição proporcional às zonas.
+   * Zonas mais fáceis têm mais NPCs; zonas difíceis têm menos.
+   */
+  static generateNPCLevel(): number {
+    const weights = [30, 22, 18, 12, 8, 5, 3, 2] // soma = 100
+    const total = weights.reduce((a, b) => a + b, 0)
+    let rand = Math.random() * total
+    let zoneIndex = 0
+    for (let i = 0; i < weights.length; i++) {
+      rand -= weights[i]
+      if (rand <= 0) { zoneIndex = i; break }
+    }
+    const { min, max } = this.ZONE_LEVEL_RANGES[zoneIndex]
+    return this.randomBetween(min, max)
+  }
 
   static getSea(difficulty: number): typeof GameLogic.SEAS[0] {
     for (let i = GameLogic.SEAS.length - 1; i >= 0; i--) {
@@ -663,7 +700,7 @@ export class GameLogic {
     const eligibleStats = this.getEligibleStats(character)
 
     // ✅ DISTRIBUIR PONTOS ALEATORIAMENTE
-    const distributedPoints = this.distributePointsRandomly(
+    const distributedPoints = this.distributePointsByFactor(
       pointsPerLevel,
       eligibleStats,
       typePriorities,
@@ -899,57 +936,59 @@ export class GameLogic {
     return eligible
   }
 
-  static distributePointsRandomly(
+  /**
+   * Distribui pontos proporcionalmente aos pesos dos stats, com arredondamento ceiling.
+   * Isso garante que todo stat elegível receba ao menos 1 ponto (enquanto totalPoints permitir),
+   * evitando concentração excessiva num único atributo.
+   *
+   * O excesso gerado pelo ceiling é corrigido removendo 1 ponto dos stats que mais se
+   * beneficiaram do arredondamento (aqueles com maior diferença ceil-exato, i.e., menor
+   * parte fracionária — foram "favorecidos" pelo ceil).
+   */
+  static distributePointsByFactor(
     totalPoints: number,
     eligibleStats: string[],
     priorities: { [key: string]: number },
   ): { [key: string]: number } {
-    const distribution: { [key: string]: number } = {}
-    let remainingPoints = totalPoints
+    if (eligibleStats.length === 0 || totalPoints <= 0) return {}
 
-    // Inicializar todos os stats elegíveis com 0
-    eligibleStats.forEach((stat) => {
-      distribution[stat] = 0
-    })
+    const totalWeight = eligibleStats.reduce((sum, s) => sum + (priorities[s] ?? 10), 0)
 
-    // ✅ DISTRIBUIR PONTOS UM POR VEZ
-    while (remainingPoints > 0) {
-      // Criar array ponderado baseado nas prioridades
-      const weightedStats: string[] = []
+    // Parte exata proporcional e alocação com ceiling
+    const exact: { [key: string]: number } = {}
+    const alloc: { [key: string]: number } = {}
+    for (const stat of eligibleStats) {
+      exact[stat] = totalPoints * (priorities[stat] ?? 10) / totalWeight
+      alloc[stat] = Math.ceil(exact[stat])
+    }
 
-      eligibleStats.forEach((stat) => {
-        const weight = priorities[stat] || 10
-        // Adicionar o stat múltiplas vezes baseado no peso
-        for (let i = 0; i < weight; i++) {
-          weightedStats.push(stat)
-        }
-      })
+    // Corrigir excesso: ordenar por (alloc - exact) decrescente → os que mais ganharam com o ceil saem primeiro
+    let excess = eligibleStats.reduce((s, stat) => s + alloc[stat], 0) - totalPoints
+    const byGain = [...eligibleStats].sort((a, b) => (alloc[b] - exact[b]) - (alloc[a] - exact[a]))
 
-      // Selecionar stat aleatório do array ponderado
-      const selectedStat = weightedStats[Math.floor(Math.random() * weightedStats.length)]
+    for (const stat of byGain) {
+      if (excess <= 0) break
+      if (alloc[stat] > 1) { // mantém mínimo 1 enquanto totalPoints permite
+        alloc[stat]--
+        excess--
+      }
+    }
 
-      // ✅ APLICAR LIMITADORES PARA EVITAR CONCENTRAÇÃO EXCESSIVA
-      const maxPointsPerStat = Math.ceil(totalPoints * 0.6) // Máximo 60% dos pontos em um stat
-
-      if (distribution[selectedStat] < maxPointsPerStat) {
-        distribution[selectedStat]++
-        remainingPoints--
-      } else {
-        // Se o stat atingiu o limite, remover das opções temporariamente
-        const statIndex = eligibleStats.indexOf(selectedStat)
-        if (statIndex > -1 && eligibleStats.length > 1) {
-          eligibleStats.splice(statIndex, 1)
-        }
-
-        // Se todos os stats atingiram o limite, quebrar o loop
-        if (eligibleStats.length === 0) {
-          break
+    // Fallback: se ainda há excesso (mais stats que pontos), zera os de menor peso
+    if (excess > 0) {
+      const byPriority = [...eligibleStats].sort((a, b) => (priorities[a] ?? 10) - (priorities[b] ?? 10))
+      for (const stat of byPriority) {
+        if (excess <= 0) break
+        if (alloc[stat] > 0) {
+          alloc[stat]--
+          excess--
         }
       }
     }
 
-    return distribution
+    return alloc
   }
+
 
   static increaseStats(
     character: Character,
@@ -959,16 +998,31 @@ export class GameLogic {
   ): Partial<Character['stats']> {
     const pointsPerLevel = (newLevel + 1) + Math.floor(Math.random() * 5) // (level+1) + 0-4 pts
 
-    // Usa o nome do estilo para obter as prioridades corretas (não character.type que é 'Pirate'/etc)
-    const typePriorities = this.getTypePriorities(style.name)
-
     // Stats elegíveis — garante que devilFruit entre no pool se o personagem tem uma fruta
     const eligibleStats = this.getEligibleStats(character)
     if (fruit && !eligibleStats.includes('devilFruit')) {
       eligibleStats.push('devilFruit')
     }
 
-    const distributedPoints = this.distributePointsRandomly(pointsPerLevel, eligibleStats, typePriorities)
+    // Prioridades brutas do estilo
+    const rawPriorities = this.getTypePriorities(style.name)
+
+    // Fator de nível: 0 no level 1 → 1 no level 100
+    // No início a distribuição é quase uniforme; ao longo dos levels vai concentrando no estilo
+    const levelFactor = Math.min(1, (newLevel - 1) / 99)
+
+    // Peso médio entre os stats elegíveis (base para distribuição uniforme)
+    const totalRaw = eligibleStats.reduce((sum, s) => sum + (rawPriorities[s] ?? 10), 0)
+    const avgWeight = totalRaw / eligibleStats.length
+
+    // Interpolação: pesoEfetivo = uniforme × (1 - fator) + prioridade × fator
+    const blendedPriorities: { [key: string]: number } = {}
+    for (const stat of eligibleStats) {
+      const raw = rawPriorities[stat] ?? 10
+      blendedPriorities[stat] = avgWeight * (1 - levelFactor) + raw * levelFactor
+    }
+
+    const distributedPoints = this.distributePointsByFactor(pointsPerLevel, eligibleStats, blendedPriorities)
 
     const c = character.stats
     return {

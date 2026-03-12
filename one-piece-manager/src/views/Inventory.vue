@@ -778,12 +778,13 @@ let countdownInterval: ReturnType<typeof setInterval> | null = null
 const storeCountdown = computed(() => {
   const ms = storeNextRefreshIn.value
   if (ms <= 0) return 'Atualizando...'
-  const totalSec = Math.ceil(ms / 1000)
-  const h = Math.floor(totalSec / 3600)
-  const m = Math.floor((totalSec % 3600) / 60)
-  const s = totalSec % 60
-  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`
-  return `${String(m).padStart(2, '0')}m ${String(s).padStart(2, '0')}s`
+  const totalMin = Math.ceil(ms / 60_000)
+  const d = Math.floor(totalMin / 1440)
+  const h = Math.floor((totalMin % 1440) / 60)
+  const m = totalMin % 60
+  if (d > 0) return `${d}d ${h}h ${String(m).padStart(2, '0')}m`
+  if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`
+  return `${m}m`
 })
 
 // Progresso da barra (0–1): quanto do intervalo já passou
@@ -1189,33 +1190,21 @@ const loadAll = async () => {
   // Loja da ilha atual
   const islandId = playerCrew.value?.currentIsland
   if (islandId) {
-    // Verificar se passou 1 hora desde a última atualização global
-    const { nextRefreshIn } = await InventorySystem.checkAndRefreshAllStores()
-    storeNextRefreshIn.value = nextRefreshIn
-    storeItems.value = await InventorySystem.getIslandStore(islandId)
-    const island = await db.islands.get(islandId)
+    // Lê o estoque atual e o tempo até o próximo refresh (sem bloquear — o refresh é feito em background pelo game loop)
+    const [items, timeLeft, island] = await Promise.all([
+      InventorySystem.getIslandStore(islandId),
+      InventorySystem.getTimeUntilRefresh(),
+      db.islands.get(islandId),
+    ])
+    storeItems.value = items
+    storeNextRefreshIn.value = timeLeft
     currentIslandName.value = island?.name ?? 'Ilha desconhecida'
 
-    // Iniciar (ou reiniciar) o ticker do countdown
+    // Ticker de countdown para exibição (atualiza a cada minuto — intervalo de 30 dias torna tick por segundo desnecessário)
     if (countdownInterval) clearInterval(countdownInterval)
     countdownInterval = setInterval(() => {
-      storeNextRefreshIn.value = Math.max(0, storeNextRefreshIn.value - 1000)
-      if (storeNextRefreshIn.value === 0) {
-        clearInterval(countdownInterval!)
-        countdownInterval = null
-        // Recarregar loja automaticamente quando o tempo expirar
-        InventorySystem.refreshAllIslandStores().then(() => {
-          InventorySystem.getIslandStore(islandId).then(items => {
-            storeItems.value = items
-            storeNextRefreshIn.value = InventorySystem.STORE_REFRESH_INTERVAL
-            if (countdownInterval) clearInterval(countdownInterval)
-            countdownInterval = setInterval(() => {
-              storeNextRefreshIn.value = Math.max(0, storeNextRefreshIn.value - 1000)
-            }, 1000)
-          })
-        })
-      }
-    }, 1000)
+      storeNextRefreshIn.value = Math.max(0, storeNextRefreshIn.value - 60_000)
+    }, 60_000)
   }
 
   await loadEquippedItems()

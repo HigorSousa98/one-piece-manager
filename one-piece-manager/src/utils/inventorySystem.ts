@@ -273,6 +273,12 @@ export class InventorySystem {
   /**
    * Vende todos os itens do baú que NÃO estão equipados por nenhum membro da tripulação.
    */
+  /**
+   * Vende todos os itens do baú que:
+   * - NÃO estão equipados por nenhum membro, E
+   * - O requisito de nível é ≤ ao nível do membro de menor nível do bando.
+   *   (Itens que exigem nível acima do mais fraco são "itens futuros" e são mantidos.)
+   */
   static async sellAllUnusedItems(crewId: number): Promise<SellAllResult> {
     const crew = await db.crews.get(crewId)
     if (!crew) return { success: false, message: 'Tripulação não encontrada.', itemsSold: 0, berryGained: 0 }
@@ -281,6 +287,8 @@ export class InventorySystem {
       this.getCrewChest(crewId),
       db.characters.where('crewId').equals(crewId).toArray(),
     ])
+
+    const minMemberLevel = members.length > 0 ? Math.min(...members.map(m => m.level)) : 0
 
     // IDs de todos os itens equipados por qualquer membro
     const equippedIds = new Set<number>()
@@ -291,16 +299,21 @@ export class InventorySystem {
       }
     }
 
-    const unusedSlots = chestSlots.filter(s => !equippedIds.has(s.item.id!))
-    if (unusedSlots.length === 0) {
-      return { success: true, message: 'Nenhum item não utilizado para vender.', itemsSold: 0, berryGained: 0 }
+    const sellableSlots = chestSlots.filter(s => {
+      if (equippedIds.has(s.item.id!)) return false
+      // Só vende se até o membro de menor level já pode equipar (nível-wise)
+      return s.item.requirements.level <= minMemberLevel
+    })
+
+    if (sellableSlots.length === 0) {
+      return { success: true, message: 'Nenhum item disponível para vender.', itemsSold: 0, berryGained: 0 }
     }
 
     let totalBerry = 0
     const entryIdsToDelete: number[] = []
     const instanceIdsToDelete: number[] = []
 
-    for (const slot of unusedSlots) {
+    for (const slot of sellableSlots) {
       const item = slot.item
       const sellPrice = Math.round((BASE_PRICE[item.class] ?? 6_000_000) * (0.5 + item.rarity / 100) * 0.5)
       totalBerry += sellPrice
@@ -318,8 +331,8 @@ export class InventorySystem {
 
     return {
       success: true,
-      message: `${unusedSlots.length} item(s) vendido(s) por ${totalBerry.toLocaleString('pt-BR')} Berry!`,
-      itemsSold: unusedSlots.length,
+      message: `${sellableSlots.length} item(s) vendido(s) por ${totalBerry.toLocaleString('pt-BR')} Berry!`,
+      itemsSold: sellableSlots.length,
       berryGained: totalBerry,
     }
   }
@@ -641,8 +654,8 @@ export class InventorySystem {
 
   // ── Loja ───────────────────────────────────────────────────────────────────
 
-  /** Intervalo de atualização global de todas as lojas (10 minutos). */
-  static readonly STORE_REFRESH_INTERVAL = 10 * 60 * 1000
+  /** Intervalo de atualização global de todas as lojas (30 minutos). */
+  static readonly STORE_REFRESH_INTERVAL = 30 * 60 * 1000 // 30 minutes
 
   private static readonly GLOBAL_STORE_REFRESH_KEY = 'storeGlobalLastRefresh'
 

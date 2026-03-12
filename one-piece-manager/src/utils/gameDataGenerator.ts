@@ -279,10 +279,8 @@ export class GameDataGenerator {
   }
 
   private getIslandDescription(difficulty: number): string {
-    if (difficulty <= 5) return 'East Blue - Mar mais fraco'
-    if (difficulty <= 15) return 'Paradise - Primeira metade da Grand Line'
-    if (difficulty <= 25) return 'New World - Segunda metade da Grand Line'
-    return 'End Game - Localização final'
+    const sea = GameLogic.getSea(difficulty)
+    return sea.name
   }
 
   private async generateDevilFruits(): Promise<void> {
@@ -303,7 +301,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalPirates; i++) {
-      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
+      const level = GameLogic.generateNPCLevel()
       const styleCombat =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
       const styleCombatId = styleCombat.id || 0
@@ -341,7 +339,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalBountyHunter; i++) {
-      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
+      const level = GameLogic.generateNPCLevel()
       const styleCombat =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
       const styleCombatId = styleCombat.id || 0
@@ -383,7 +381,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalMarines; i++) {
-      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
+      const level = GameLogic.generateNPCLevel()
       const styleCombat =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
       const styleCombatId = styleCombat.id || 0
@@ -420,7 +418,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalGovernment; i++) {
-      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
+      const level = GameLogic.generateNPCLevel()
       const styleCombat =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)]
       const styleCombatId = styleCombat.id || 0
@@ -454,7 +452,7 @@ export class GameDataGenerator {
     const allStyleCombat = await db.styleCombats.toArray()
 
     for (let i = 0; i < this.config.totalCivilians; i++) {
-      const level = GameLogic.generate(1, 100, 'weighted', 'medium')
+      const level = GameLogic.generateNPCLevel()
       const styleCombatId =
         allStyleCombat[GameLogic.randomBetween(0, allStyleCombat.length - 1)].id || 0
       const potentialToHaveKngHaki = Math.random()
